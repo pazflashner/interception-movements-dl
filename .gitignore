@@ -1,0 +1,37 @@
+# Data
+data/raw/
+data/processed/
+data/stimuli/
+
+# Models
+models/*.pt
+models/*.json
+
+# Results
+results/*.csv
+results/*.png
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.eggs/
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Jupyter
+.ipynb_checkpoints/
