@@ -74,6 +74,10 @@ def main():
 
     processed_path = config.DATA_PROCESSED_DIR / "trials.pkl"
 
+    # Ensure output directories exist
+    config.RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+    config.MODELS_DIR.mkdir(parents=True, exist_ok=True)
+
     # ── Load & preprocess ─────────────────────────────────────────────────
     if processed_path.exists():
         print(f"Loading preprocessed data from {processed_path}")
@@ -146,6 +150,8 @@ def main():
             print(f"Model not found: {model_path}. Train first with --phase 3")
             return
 
+        from src.vae_model import ConditionalVAE
+
         device = "cuda" if torch.cuda.is_available() else "cpu"
         ckpt = torch.load(model_path, map_location=device, weights_only=False)
         model = ConditionalVAE(latent_dim=ckpt["latent_dim"]).to(device)
@@ -155,8 +161,6 @@ def main():
 
         # Spline baseline for comparison
         spline_result = evaluate_spline_baseline(test_trials)
-
-        from src.vae_model import ConditionalVAE
         results = run_full_evaluation(
             model, test_trials,
             train_mean, train_std,
@@ -164,7 +168,7 @@ def main():
             device=device,
         )
 
-    print("\n✅ Pipeline complete!")
+    print("\nPipeline complete!")
 
 
 if __name__ == "__main__":

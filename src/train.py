@@ -88,7 +88,7 @@ def train_vae(
     model = ConditionalVAE(latent_dim=latent_dim).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-        optimizer, mode="min", factor=0.5, patience=15, verbose=True
+        optimizer, mode="min", factor=0.5, patience=15
     )
 
     history = {"train_loss": [], "val_loss": [], "train_recon": [], "val_recon": [], "train_kl": [], "val_kl": []}
