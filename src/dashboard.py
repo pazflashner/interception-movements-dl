@@ -15,12 +15,14 @@ from pathlib import Path
 import numpy as np
 import streamlit as st
 import torch
+import yaml
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D  # noqa: F401
 
 import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import config
+from src.run_config import RunConfig, find_runs
 from src.vae_model import ConditionalVAE, encode_condition
 from src.preprocessing import (
     lowpass_filter,
@@ -62,22 +64,32 @@ def main():
     st.set_page_config(page_title="Interception Movements VAE", layout="wide")
     st.title("🎯 Interception Movements – CVAE Dashboard")
 
-    # Sidebar: model loading
+    # Sidebar: model loading — one checkpoint per run directory
     st.sidebar.header("Model")
-    model_dir = Path(config.MODELS_DIR)
-    model_files = sorted(model_dir.glob("cvae_z*_best.pt"))
+    runs = find_runs()
 
-    if not model_files:
-        st.warning("No trained models found. Train a model first with `python main.py`.")
+    if not runs:
+        st.warning(
+            f"No trained runs found in {config.RUNS_DIR}. "
+            "Train a model first with `python main.py --phase 3`."
+        )
         return
 
-    selected = st.sidebar.selectbox(
-        "Select model",
-        model_files,
-        format_func=lambda p: p.stem,
+    selected_run = st.sidebar.selectbox(
+        "Select run",
+        runs,
+        format_func=lambda p: p.name,
+        index=len(runs) - 1,
     )
-    latent_dim = int(selected.stem.split("z")[1].split("_")[0])
-    model, train_mean, train_std = load_model(str(selected), latent_dim)
+    run_cfg = RunConfig.load(selected_run)
+    latent_dim = run_cfg.latent_dim
+    model, train_mean, train_std = load_model(str(selected_run / "checkpoint.pt"), latent_dim)
+
+    st.sidebar.caption(
+        f"seed {run_cfg.seed} · z={run_cfg.latent_dim} · lr={run_cfg.lr} · β={run_cfg.kl_weight}"
+    )
+    with st.sidebar.expander("Run config"):
+        st.code(yaml.safe_dump(run_cfg.to_dict(), sort_keys=False), language="yaml")
 
     tm = torch.tensor(train_mean)
     ts = torch.tensor(train_std)

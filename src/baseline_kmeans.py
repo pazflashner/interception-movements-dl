@@ -7,6 +7,8 @@ kinematic features.
 """
 from __future__ import annotations
 
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 from sklearn.cluster import KMeans
@@ -23,6 +25,7 @@ def cluster_trajectories(
     n_clusters_range: range = config.KMEANS_N_CLUSTERS_RANGE,
     use_features: bool = False,
     feature_df: pd.DataFrame | None = None,
+    seed: int = config.SEED,
 ) -> dict:
     """
     Cluster trials using K-Means and evaluate against true subject labels.
@@ -33,6 +36,7 @@ def cluster_trajectories(
     n_clusters_range : range of K values to try
     use_features : if True, cluster on extracted features instead of raw trajectories
     feature_df : required if use_features is True
+    seed : passed to KMeans as random_state, so runs are reproducible
 
     Returns
     -------
@@ -62,7 +66,7 @@ def cluster_trajectories(
     best_k = n_clusters_range.start
 
     for k in n_clusters_range:
-        km = KMeans(n_clusters=k, n_init=10, random_state=42)
+        km = KMeans(n_clusters=k, n_init=10, random_state=seed)
         pred = km.fit_predict(X_scaled)
         ari = adjusted_rand_score(true_labels, pred)
         nmi = normalized_mutual_info_score(true_labels, pred)
@@ -80,4 +84,48 @@ def cluster_trajectories(
         "best_ari": float(best_row["ari"]),
         "best_nmi": float(best_row["nmi"]),
         "results": results_df,
+        "seed": seed,
     }
+
+
+# ── Repeated runs across seeds ────────────────────────────────────────────────
+def sweep_seeds(
+    trials: list[dict],
+    seeds: list[int],
+    feature_df: pd.DataFrame | None = None,
+    n_clusters_range: range = config.KMEANS_N_CLUSTERS_RANGE,
+    out_csv: Path | None = None,
+) -> pd.DataFrame:
+    """
+    Repeat the K-Means baseline across seeds, for both representations.
+
+    Returns a tidy frame with one row per (seed, representation, k). Note that
+    the seed only re-initialises K-Means here: unlike the VAE phase there is no
+    train/test split, so every seed clusters the identical 4763 trials. The
+    resulting spread is algorithmic variance only and is a floor on, not an
+    estimate of, the run-to-run noise of the baseline.
+    """
+    rows = []
+    for seed in seeds:
+        for name, use_features in (("trajectories", False), ("features", True)):
+            if use_features and feature_df is None:
+                continue
+            print(f"\n--- seed {seed} | {name} ---")
+            res = cluster_trajectories(
+                trials,
+                n_clusters_range=n_clusters_range,
+                use_features=use_features,
+                feature_df=feature_df,
+                seed=seed,
+            )
+            df = res["results"].copy()
+            df.insert(0, "representation", name)
+            df.insert(0, "seed", seed)
+            rows.append(df)
+
+    out = pd.concat(rows, ignore_index=True)
+    if out_csv is not None:
+        Path(out_csv).parent.mkdir(parents=True, exist_ok=True)
+        out.to_csv(out_csv, index=False)
+        print(f"\nSaved {len(out)} rows to {out_csv}")
+    return out

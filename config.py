@@ -10,6 +10,13 @@ DATA_PROCESSED_DIR = PROJECT_ROOT / "data" / "processed"
 STIMULI_DIR = PROJECT_ROOT / "data" / "stimuli"
 MODELS_DIR = PROJECT_ROOT / "models"
 RESULTS_DIR = PROJECT_ROOT / "results"
+RUNS_DIR = RESULTS_DIR / "runs"   # one subdirectory per run: config.yaml + checkpoint
+
+# ── Reproducibility ───────────────────────────────────────────────────────────
+SEED = 42                   # default seed; overridden per run via --seed/--seeds
+# Only 28 subjects, so single-run metrics are noisy — repeat across these seeds
+# and report the spread rather than one number.
+REPEAT_SEEDS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 
 # ── Recording parameters ──────────────────────────────────────────────────────
 RECORDING_HZ = 240          # Raw data sampling rate
@@ -37,15 +44,17 @@ STIMULUS_ONSET_MARKER = 5
 # ── Data splits (leave-N-subjects-out) ────────────────────────────────────────
 N_TRAIN = 17
 N_VAL = 4
-N_TEST = 7
+N_TEST = 7   # 17 + 4 + 7 = 28 subjects
 
 # ── VAE hyperparameters ──────────────────────────────────────────────────────
 LATENT_DIMS_SWEEP = [2, 3, 4, 8, 16]
 DEFAULT_LATENT_DIM = 3
+HIDDEN_DIM = 256
 BATCH_SIZE = 64
 LEARNING_RATE = 1e-3
 NUM_EPOCHS = 200
 KL_WEIGHT = 1.0  # β for β-VAE; 1.0 = standard VAE
+EARLY_STOPPING_PATIENCE = 30
 
 # ── Spline baseline ──────────────────────────────────────────────────────────
 SPLINE_DEGREE = 3

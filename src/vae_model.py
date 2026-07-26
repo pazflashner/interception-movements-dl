@@ -50,7 +50,7 @@ class ConditionalVAE(nn.Module):
         self,
         input_dim: int = config.NORMALISED_LENGTH * 3,
         condition_dim: int = CONDITION_DIM,
-        hidden_dim: int = 256,
+        hidden_dim: int = config.HIDDEN_DIM,
         latent_dim: int = config.DEFAULT_LATENT_DIM,
     ):
         super().__init__()

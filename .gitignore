@@ -2,14 +2,22 @@
 data/raw/
 data/processed/
 data/stimuli/
+data/*.zip
 
 # Models
 models/*.pt
 models/*.json
 
-# Results
-results/*.csv
-results/*.png
+# Results: everything here is regenerable from the code plus the raw data.
+# Run directories (results/runs/<name>/config.yaml + checkpoint.pt + history.json)
+# stay local; the config.yaml in each one is the local record of that run.
+results/
+
+# Office lock files (created while a .docx/.xlsx is open)
+~$*
+
+# Session artefacts
+session-transcript.pdf
 
 # Python
 __pycache__/

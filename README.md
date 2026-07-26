@@ -67,6 +67,39 @@ python main.py --phase eval           # Evaluation
 python main.py --sweep                # Latent-dim hyperparameter sweep
 ```
 
+### Reproducibility & repeated runs
+
+Every training run is described by a single `RunConfig` and gets its own
+directory under `results/runs/`:
+
+```
+results/runs/z3_seed7_20260725-143012/
+├── config.yaml       # seed, split sizes, model, optimiser, git commit, versions
+├── checkpoint.pt     # best-val weights, with the same config embedded
+└── history.json      # per-epoch train/val losses
+```
+
+`config.yaml` is written before training starts, so an interrupted run is still
+identifiable, and the checkpoint carries its own copy of the config — a
+checkpoint can never drift from the settings that produced it.
+
+```bash
+python main.py --phase 3 --seed 7            # one seeded run
+python main.py --phase 3 --seeds 0 1 2 3 4   # repeat, one run dir per seed
+python main.py --phase 3 --config results/runs/z3_seed7_.../config.yaml
+python main.py --phase eval --run results/runs/z3_seed7_.../
+python main.py --summarise                   # table of all runs + mean ± sd
+```
+
+The seed drives the subject split, weight initialisation, DataLoader shuffling,
+the VAE's sampling, and the K-Means baseline.
+
+**Read results as distributions, not point estimates.** With 28 subjects
+(17 train / 4 val / 7 test), a single run is noisy: changing only the seed
+changes which 7 subjects are held out. Repeat each configuration over several
+seeds and compare mean ± sd via `--summarise` before concluding that one
+setting beats another.
+
 ### Interactive Dashboard
 ```bash
 streamlit run src/dashboard.py
@@ -109,6 +142,7 @@ The dashboard provides:
 │   ├── baseline_kmeans.py # Phase 1: K-Means baseline
 │   ├── baseline_spline.py # Phase 2: Spline baseline
 │   ├── vae_model.py       # Phase 3: CVAE model & dataset
+│   ├── run_config.py      # Per-run config (config.yaml) & seeding
 │   ├── train.py           # Training loop & data splitting
 │   ├── evaluate.py        # Full evaluation suite
 │   └── dashboard.py       # Streamlit interactive dashboard
@@ -116,8 +150,10 @@ The dashboard provides:
 │   ├── raw/               # Raw subject data (from Dropbox)
 │   ├── processed/         # Preprocessed trial cache
 │   └── stimuli/           # Stimulus trajectory files
-├── models/                # Saved model checkpoints
-└── results/               # Evaluation outputs
+├── models/                # Legacy checkpoint location
+└── results/
+    ├── runs/              # One directory per run: config.yaml + checkpoint.pt
+    └── runs_summary.csv   # Aggregated across runs (--summarise)
 ```
 
 ## Authors
