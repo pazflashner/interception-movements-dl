@@ -33,6 +33,43 @@ from src.vae_model import ConditionalVAE, TrajectoryDataset, vae_loss
 
 
 # ── Data splitting ────────────────────────────────────────────────────────────
+def split_subject_ids(
+    subjects: list[str],
+    n_train: int = config.N_TRAIN,
+    n_val: int = config.N_VAL,
+    n_test: int = config.N_TEST,
+    seed: int = config.SEED,
+) -> tuple[list[str], list[str], list[str]]:
+    """
+    Assign subject IDs to train / val / test (leave-N-subjects-out).
+
+    The single source of truth for the split: ``split_subjects`` and
+    ``scripts/make_dataset.py`` both go through here, so the ``splits.json``
+    written next to the dataset always matches what training uses.
+
+    Sorts before shuffling so the result depends only on the set of subjects and
+    the seed, not on the order they were loaded in, and uses a dedicated
+    ``RandomState`` so it does not depend on how much global RNG state has
+    already been consumed.
+    """
+    subjects = sorted(set(subjects))
+    requested = n_train + n_val + n_test
+    if len(subjects) < requested:
+        print(
+            f"  WARNING: split asks for {requested} subjects but only "
+            f"{len(subjects)} are available; later splits will be short."
+        )
+
+    rng = np.random.RandomState(seed)
+    rng.shuffle(subjects)
+
+    return (
+        subjects[:n_train],
+        subjects[n_train : n_train + n_val],
+        subjects[n_train + n_val : n_train + n_val + n_test],
+    )
+
+
 def split_subjects(
     trials: list[dict],
     n_train: int = config.N_TRAIN,
@@ -40,19 +77,12 @@ def split_subjects(
     n_test: int = config.N_TEST,
     seed: int = config.SEED,
 ) -> tuple[list[dict], list[dict], list[dict]]:
-    """
-    Split trials by subject into train / val / test.
-
-    Uses a dedicated ``RandomState`` so the split depends only on ``seed`` and
-    not on how much global RNG state has already been consumed.
-    """
-    subjects = sorted(set(t["metadata"]["subject"] for t in trials))
-    rng = np.random.RandomState(seed)
-    rng.shuffle(subjects)
-
-    train_subj = set(subjects[:n_train])
-    val_subj = set(subjects[n_train : n_train + n_val])
-    test_subj = set(subjects[n_train + n_val : n_train + n_val + n_test])
+    """Split trials by subject into train / val / test."""
+    all_subjects = [t["metadata"]["subject"] for t in trials]
+    train_ids, val_ids, test_ids = split_subject_ids(
+        all_subjects, n_train=n_train, n_val=n_val, n_test=n_test, seed=seed
+    )
+    train_subj, val_subj, test_subj = set(train_ids), set(val_ids), set(test_ids)
 
     train = [t for t in trials if t["metadata"]["subject"] in train_subj]
     val = [t for t in trials if t["metadata"]["subject"] in val_subj]
@@ -110,7 +140,10 @@ def train_vae(
     cfg.save(run_dir)
 
     print(f"Run: {run_dir.name}")
-    print(f"Training on {device}, latent_dim={cfg.latent_dim}, seed={cfg.seed}")
+    print(
+        f"Training on {device}, latent_dim={cfg.latent_dim}, seed={cfg.seed}, "
+        f"timing_dim={cfg.timing_dim}"
+    )
 
     # Datasets & loaders
     train_ds = TrajectoryDataset(train_trials)
@@ -125,32 +158,58 @@ def train_vae(
     )
     val_loader = DataLoader(val_ds, batch_size=cfg.batch_size, shuffle=False)
 
-    # Normalisation statistics (fit on train)
+    # Normalisation statistics (fit on train). Timing is standardised
+    # separately: seconds and millimetres are not on a comparable scale.
     train_mean = torch.from_numpy(train_ds.trajectories.mean(axis=0)).to(device)
     train_std = torch.from_numpy(train_ds.trajectories.std(axis=0) + 1e-8).to(device)
+    timing_mean = torch.from_numpy(train_ds.timings.mean(axis=0)).to(device)
+    timing_std = torch.from_numpy(train_ds.timings.std(axis=0) + 1e-8).to(device)
 
     # Model
-    model = ConditionalVAE(latent_dim=cfg.latent_dim, hidden_dim=cfg.hidden_dim).to(device)
+    model = ConditionalVAE(
+        latent_dim=cfg.latent_dim,
+        hidden_dim=cfg.hidden_dim,
+        timing_dim=cfg.timing_dim,
+    ).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=cfg.lr)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
         optimizer, mode="min", factor=0.5, patience=15
     )
 
-    history = {"train_loss": [], "val_loss": [], "train_recon": [], "val_recon": [], "train_kl": [], "val_kl": []}
+    history = {
+        "train_loss": [], "val_loss": [],
+        "train_recon": [], "val_recon": [],
+        "train_kl": [], "val_kl": [],
+        "train_timing": [], "val_timing": [],
+    }
     best_val = float("inf")
     patience_counter = 0
     patience_limit = cfg.patience
 
+    def run_batch(traj, timing, cond):
+        """Standardise a batch, run the model, return (loss, recon, kl, timing)."""
+        traj = traj.to(device)
+        timing = timing.to(device)
+        cond = cond.to(device)
+        traj_z = (traj - train_mean) / train_std          # z-score
+        timing_z = (timing - timing_mean) / timing_std
+        if cfg.timing_dim == 0:
+            timing_z = None
+
+        recon, recon_timing, mu, logvar, _ = model(traj_z, cond, timing_z)
+        return vae_loss(
+            recon, traj_z, mu, logvar, cfg.kl_weight,
+            recon_timing=recon_timing,
+            target_timing=timing_z,
+            timing_weight=cfg.timing_weight,
+        )
+
     for epoch in range(1, cfg.epochs + 1):
         # ── Train ──
         model.train()
-        epoch_loss, epoch_recon, epoch_kl, n = 0, 0, 0, 0
-        for traj, cond, _ in train_loader:
-            traj, cond = traj.to(device), cond.to(device)
-            traj_z = (traj - train_mean) / train_std  # z-score
-
-            recon, mu, logvar, _ = model(traj_z, cond)
-            loss, rl, kl = vae_loss(recon, traj_z, mu, logvar, cfg.kl_weight)
+        epoch_loss, epoch_recon, epoch_kl, epoch_timing, n = 0, 0, 0, 0, 0
+        for traj, timing, cond, _ in train_loader:
+            loss, rl, kl, tl = run_batch(traj, timing, cond)
 
             optimizer.zero_grad()
             loss.backward()
@@ -160,33 +219,33 @@ def train_vae(
             epoch_loss += loss.item() * bs
             epoch_recon += rl.item() * bs
             epoch_kl += kl.item() * bs
+            epoch_timing += tl.item() * bs
             n += bs
 
         history["train_loss"].append(epoch_loss / n)
         history["train_recon"].append(epoch_recon / n)
         history["train_kl"].append(epoch_kl / n)
+        history["train_timing"].append(epoch_timing / n)
 
         # ── Validate ──
         model.eval()
-        val_loss, val_recon, val_kl, nv = 0, 0, 0, 0
+        val_loss, val_recon, val_kl, val_timing, nv = 0, 0, 0, 0, 0
         with torch.no_grad():
-            for traj, cond, _ in val_loader:
-                traj, cond = traj.to(device), cond.to(device)
-                traj_z = (traj - train_mean) / train_std
-
-                recon, mu, logvar, _ = model(traj_z, cond)
-                loss, rl, kl = vae_loss(recon, traj_z, mu, logvar, cfg.kl_weight)
+            for traj, timing, cond, _ in val_loader:
+                loss, rl, kl, tl = run_batch(traj, timing, cond)
 
                 bs = traj.size(0)
                 val_loss += loss.item() * bs
                 val_recon += rl.item() * bs
                 val_kl += kl.item() * bs
+                val_timing += tl.item() * bs
                 nv += bs
 
         vl = val_loss / nv
         history["val_loss"].append(vl)
         history["val_recon"].append(val_recon / nv)
         history["val_kl"].append(val_kl / nv)
+        history["val_timing"].append(val_timing / nv)
 
         scheduler.step(vl)
 
@@ -194,7 +253,10 @@ def train_vae(
             print(
                 f"Epoch {epoch:3d} | "
                 f"Train {history['train_loss'][-1]:.5f} | "
-                f"Val {vl:.5f}"
+                f"Val {vl:.5f} | "
+                f"recon {history['val_recon'][-1]:.5f} | "
+                f"timing {history['val_timing'][-1]:.5f} | "
+                f"KL {history['val_kl'][-1]:.5f}"
             )
 
         # Early stopping
@@ -207,8 +269,12 @@ def train_vae(
                 {
                     "model_state": model.state_dict(),
                     "latent_dim": cfg.latent_dim,
+                    "timing_dim": cfg.timing_dim,
                     "train_mean": train_mean.cpu().numpy().tolist(),
                     "train_std": train_std.cpu().numpy().tolist(),
+                    "timing_mean": timing_mean.cpu().numpy().tolist(),
+                    "timing_std": timing_std.cpu().numpy().tolist(),
+                    "timing_features": config.TIMING_FEATURES,
                     "config": cfg.to_dict(),
                     "epoch": epoch,
                     "val_loss": vl,

@@ -231,6 +231,22 @@ def build_report(csv_path: Path, out_path: Path) -> Path:
         f"{csv_path.name} as one row per (seed, representation, k)."
     )
     doc.add_paragraph(
+        f"The 'features' representation is an explicit allowlist of "
+        f"{len(config.KMEANS_FEATURE_COLUMNS)} kinematic columns "
+        f"({', '.join(config.KMEANS_FEATURE_COLUMNS)}), all in physical units — "
+        f"seconds and mm/s. It deliberately excludes the trial counter (rep), the "
+        f"task labels (sp, side), a deterministic duplicate of sp "
+        f"(starting_position_mm) and the constant condition column. Those carry no "
+        f"subject identity — clustering on them alone scores ARI = -0.001 — but "
+        f"StandardScaler weights every column equally, so including them added five "
+        f"dimensions of pure noise that diluted the result (peak ARI 0.034 vs "
+        f"{stats_by_rep['features']['ari']['mean']:.4f} here, at matched seeds). "
+        f"Excluding the task variables also keeps this baseline answering the same "
+        f"question as the CVAE, which conditions on them for the same reason."
+        if "features" in reps else
+        "The 'features' representation was not run in this sweep."
+    )
+    doc.add_paragraph(
         "Important scope note: in this phase the seed changes only the K-Means "
         "centroid initialisation. There is no train/validation/test split — every "
         "seed clusters the identical set of trials from all 28 subjects. The spread "

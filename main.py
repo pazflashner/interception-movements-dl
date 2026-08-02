@@ -49,8 +49,6 @@ import argparse
 import pickle
 from pathlib import Path
 
-import numpy as np
-
 import config
 from src.data_loading import load_dataset
 from src.preprocessing import preprocess_dataset
@@ -244,7 +242,7 @@ def main():
             print(f"Checkpoint not found: {model_path}. Train first with --phase 3")
             return
 
-        from src.vae_model import ConditionalVAE
+        from src.vae_model import ConditionalVAE, NormStats
 
         # The run's own config governs evaluation, including the seed that
         # determines which subjects are held out.
@@ -256,17 +254,19 @@ def main():
         device = "cuda" if torch.cuda.is_available() else "cpu"
         ckpt = torch.load(model_path, map_location=device, weights_only=False)
         model = ConditionalVAE(
-            latent_dim=ckpt["latent_dim"], hidden_dim=run_cfg.hidden_dim
+            latent_dim=ckpt["latent_dim"],
+            hidden_dim=run_cfg.hidden_dim,
+            # Read from the checkpoint, not the config: a checkpoint trained
+            # before the timing head has no timing weights to load.
+            timing_dim=ckpt.get("timing_dim", 0),
         ).to(device)
         model.load_state_dict(ckpt["model_state"])
-        train_mean = np.array(ckpt["train_mean"])
-        train_std = np.array(ckpt["train_std"])
+        norm = NormStats.from_checkpoint(ckpt)
 
         # Spline baseline for comparison
         spline_result = evaluate_spline_baseline(test_trials)
         results = run_full_evaluation(
-            model, test_trials,
-            train_mean, train_std,
+            model, test_trials, norm,
             spline_mse=spline_result["mean_mse"],
             device=device,
         )

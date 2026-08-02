@@ -20,12 +20,46 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import config
 
 
+def select_feature_matrix(
+    feature_df: pd.DataFrame,
+    feature_columns: list[str] | None = None,
+    verbose: bool = True,
+) -> tuple[np.ndarray, list[str]]:
+    """
+    Build the clustering matrix from an explicit column allowlist.
+
+    Selecting every numeric column instead quietly includes the trial counter
+    and the task labels. Those carry no subject identity, and since
+    ``StandardScaler`` weights every column equally they act as pure noise
+    dimensions that dilute the signal. The allowlist lives in
+    ``config.KMEANS_FEATURE_COLUMNS``; see the note there for the measured
+    effect and what is excluded.
+    """
+    feature_columns = list(feature_columns or config.KMEANS_FEATURE_COLUMNS)
+
+    missing = [c for c in feature_columns if c not in feature_df.columns]
+    if missing:
+        raise KeyError(
+            f"feature_df is missing required columns: {missing}. "
+            f"Available: {sorted(feature_df.columns)}"
+        )
+
+    if verbose:
+        numeric = set(feature_df.select_dtypes(include=[np.number]).columns)
+        excluded = sorted(numeric - set(feature_columns))
+        print(f"  Clustering on {len(feature_columns)} kinematic features; "
+              f"excluding {len(excluded)} other numeric columns: {excluded}")
+
+    return feature_df[feature_columns].values, feature_columns
+
+
 def cluster_trajectories(
     trials: list[dict],
     n_clusters_range: range = config.KMEANS_N_CLUSTERS_RANGE,
     use_features: bool = False,
     feature_df: pd.DataFrame | None = None,
     seed: int = config.SEED,
+    feature_columns: list[str] | None = None,
 ) -> dict:
     """
     Cluster trials using K-Means and evaluate against true subject labels.
@@ -37,6 +71,7 @@ def cluster_trajectories(
     use_features : if True, cluster on extracted features instead of raw trajectories
     feature_df : required if use_features is True
     seed : passed to KMeans as random_state, so runs are reproducible
+    feature_columns : override for ``config.KMEANS_FEATURE_COLUMNS``
 
     Returns
     -------
@@ -44,13 +79,13 @@ def cluster_trajectories(
     """
     # Build data matrix
     if use_features and feature_df is not None:
-        numeric_cols = feature_df.select_dtypes(include=[np.number]).columns
-        X = feature_df[numeric_cols].values
+        X, feature_columns = select_feature_matrix(feature_df, feature_columns)
         subjects = feature_df["subject"].values
     else:
         # Flatten normalised trajectories: (n_trials, T*3)
         X = np.array([t["pos_norm"].flatten() for t in trials])
         subjects = np.array([t["metadata"]["subject"] for t in trials])
+        feature_columns = None
 
     # Standardise
     scaler = StandardScaler()
@@ -78,13 +113,18 @@ def cluster_trajectories(
     results_df = pd.DataFrame(results)
     best_row = results_df.loc[results_df["ari"].idxmax()]
 
-    print(f"K-Means best K={int(best_row['k'])}: ARI={best_row['ari']:.4f}, NMI={best_row['nmi']:.4f}")
+    # Chance level matters here: with 28 subjects ARI is near 0 for a random
+    # partition, so a small positive ARI is not self-evidently meaningful.
+    print(f"K-Means best K={int(best_row['k'])}: ARI={best_row['ari']:.4f}, NMI={best_row['nmi']:.4f} "
+          f"({len(unique_subjects)} subjects, {X.shape[1]} dims)")
     return {
         "best_k": int(best_row["k"]),
         "best_ari": float(best_row["ari"]),
         "best_nmi": float(best_row["nmi"]),
         "results": results_df,
         "seed": seed,
+        "feature_columns": feature_columns,
+        "n_features": int(X.shape[1]),
     }
 
 

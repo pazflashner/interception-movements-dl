@@ -23,7 +23,7 @@ import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import config
 from src.run_config import RunConfig, find_runs
-from src.vae_model import ConditionalVAE, encode_condition
+from src.vae_model import ConditionalVAE, NormStats, encode_condition
 from src.preprocessing import (
     lowpass_filter,
     find_stimulus_onset,
@@ -37,12 +37,13 @@ from src.preprocessing import (
 @st.cache_resource
 def load_model(model_path: str, latent_dim: int):
     ckpt = torch.load(model_path, map_location="cpu", weights_only=False)
-    model = ConditionalVAE(latent_dim=ckpt.get("latent_dim", latent_dim))
+    model = ConditionalVAE(
+        latent_dim=ckpt.get("latent_dim", latent_dim),
+        timing_dim=ckpt.get("timing_dim", 0),
+    )
     model.load_state_dict(ckpt["model_state"])
     model.eval()
-    train_mean = np.array(ckpt["train_mean"], dtype=np.float32)
-    train_std = np.array(ckpt["train_std"], dtype=np.float32)
-    return model, train_mean, train_std
+    return model, NormStats.from_checkpoint(ckpt)
 
 
 def plot_3d_trajectory(pos: np.ndarray, title: str = "Trajectory"):
@@ -83,7 +84,7 @@ def main():
     )
     run_cfg = RunConfig.load(selected_run)
     latent_dim = run_cfg.latent_dim
-    model, train_mean, train_std = load_model(str(selected_run / "checkpoint.pt"), latent_dim)
+    model, norm = load_model(str(selected_run / "checkpoint.pt"), latent_dim)
 
     st.sidebar.caption(
         f"seed {run_cfg.seed} · z={run_cfg.latent_dim} · lr={run_cfg.lr} · β={run_cfg.kl_weight}"
@@ -91,8 +92,7 @@ def main():
     with st.sidebar.expander("Run config"):
         st.code(yaml.safe_dump(run_cfg.to_dict(), sort_keys=False), language="yaml")
 
-    tm = torch.tensor(train_mean)
-    ts = torch.tensor(train_std)
+    tm, ts, tim_m, tim_s = norm.torch("cpu")
 
     mode = st.sidebar.radio("Mode", ["Inference", "Exploration"])
 
@@ -124,9 +124,19 @@ def main():
 
             pos_norm = normalise_spatial(normalise_temporal(movement))
 
+            # Timing, in seconds, from the raw frame indices — the part that
+            # temporal normalisation discards.
+            fs = config.RECORDING_HZ
+            movement_time_s = (end - start) / fs
+            initiation_time_s = (start - stim_idx) / fs
+
             col1, col2 = st.columns(2)
             with col1:
                 st.pyplot(plot_3d_trajectory(pos_norm, "Processed Trajectory"))
+                st.caption(
+                    f"Movement time {movement_time_s * 1000:.0f} ms · "
+                    f"Initiation time {initiation_time_s * 1000:.0f} ms"
+                )
 
             # Encode
             sp = st.sidebar.number_input("Starting position (1-3)", 1, 3, 2)
@@ -135,8 +145,15 @@ def main():
             traj_flat = torch.tensor(pos_norm.flatten(), dtype=torch.float32).unsqueeze(0)
             traj_z = (traj_flat - tm) / ts
 
+            timing_z = None
+            if model.timing_dim:
+                timing = torch.tensor(
+                    [[movement_time_s, initiation_time_s]], dtype=torch.float32
+                )
+                timing_z = (timing - tim_m) / tim_s
+
             with torch.no_grad():
-                mu, logvar = model.encode(traj_z, cond)
+                mu, logvar = model.encode(traj_z, cond, timing_z)
 
             with col2:
                 st.subheader("Latent Fingerprint")
@@ -160,11 +177,38 @@ def main():
         z = torch.tensor([z_values], dtype=torch.float32)
 
         with torch.no_grad():
-            recon_z = model.decode(z, cond)
+            recon_z, recon_timing_z = model.decode(z, cond)
             recon = (recon_z * ts + tm).numpy()[0]
             pos = recon.reshape(config.NORMALISED_LENGTH, 3)
+            timing = (
+                (recon_timing_z * tim_s + tim_m).numpy()[0]
+                if recon_timing_z is not None
+                else None
+            )
 
         st.pyplot(plot_3d_trajectory(pos, "Generated Trajectory"))
+
+        # The generated movement is a shape *and* a duration: without the timing
+        # head the sliders would only ever produce a path, with no speed.
+        if timing is not None:
+            cols = st.columns(len(config.TIMING_FEATURES) + 1)
+            for col, name, value in zip(cols, config.TIMING_FEATURES, timing):
+                col.metric(name.replace("_s", "").replace("_", " ").title(), f"{value * 1000:.0f} ms")
+
+            move_time = float(timing[config.TIMING_FEATURES.index("movement_time_s")])
+            if move_time > 0:
+                # Re-attaching the duration turns the normalised shape back into
+                # a velocity profile in physical units.
+                dt = move_time / (config.NORMALISED_LENGTH - 1)
+                speed = np.linalg.norm(np.gradient(pos, axis=0), axis=1) / dt
+                cols[-1].metric("Peak speed", f"{speed.max():.0f} mm/s")
+
+                fig, ax = plt.subplots(figsize=(8, 3))
+                ax.plot(np.linspace(0, move_time, config.NORMALISED_LENGTH) * 1000, speed)
+                ax.set_xlabel("Time (ms)")
+                ax.set_ylabel("Speed (mm/s)")
+                ax.set_title("Generated speed profile")
+                st.pyplot(fig)
 
 
 if __name__ == "__main__":

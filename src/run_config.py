@@ -109,13 +109,21 @@ class RunConfig:
     # Model
     latent_dim: int = config.DEFAULT_LATENT_DIM
     hidden_dim: int = config.HIDDEN_DIM
+    # Reconstruct movement/initiation time alongside the trajectory, so the
+    # latent keeps the temporal axis that resampling removes.
+    predict_timing: bool = config.PREDICT_TIMING
 
     # Optimisation
     epochs: int = config.NUM_EPOCHS
     batch_size: int = config.BATCH_SIZE
     lr: float = config.LEARNING_RATE
     kl_weight: float = config.KL_WEIGHT
+    timing_weight: float = config.TIMING_WEIGHT
     patience: int = config.EARLY_STOPPING_PATIENCE
+
+    @property
+    def timing_dim(self) -> int:
+        return config.TIMING_DIM if self.predict_timing else 0
 
     # Environment (filled in at save time; informational only)
     device: str = ""
@@ -164,12 +172,14 @@ class RunConfig:
             "model": {
                 "latent_dim": d["latent_dim"],
                 "hidden_dim": d["hidden_dim"],
+                "predict_timing": d["predict_timing"],
             },
             "train": {
                 "epochs": d["epochs"],
                 "batch_size": d["batch_size"],
                 "lr": d["lr"],
                 "kl_weight": d["kl_weight"],
+                "timing_weight": d["timing_weight"],
                 "patience": d["patience"],
             },
             "env": {
@@ -266,6 +276,8 @@ def summarise_runs(root: Path | None = None) -> list[dict]:
             "latent_dim": cfg.latent_dim,
             "lr": cfg.lr,
             "kl_weight": cfg.kl_weight,
+            "predict_timing": cfg.predict_timing,
+            "timing_weight": cfg.timing_weight,
             "best_val_loss": best_val,
             "epochs_trained": n_epochs,
         })

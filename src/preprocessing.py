@@ -161,8 +161,13 @@ def preprocess_trial(
     # 5. Spatial normalisation
     pos_norm = normalise_spatial(pos_norm)
 
-    # 6. Velocity on normalised trajectory
-    # After normalisation the "sampling rate" is T points over the movement
+    # 6. Velocity on normalised trajectory.
+    # After normalisation the "sampling rate" is T points over the movement, so
+    # this is mm per *normalised frame*, not mm/s — its physical scale depends on
+    # the movement duration, which resampling has removed. move_start_idx /
+    # move_end_idx below are what restore it; see features.compute_trial_features
+    # and vae_model.encode_timing, which are the single source of truth for the
+    # timing channels.
     vel_norm = np.gradient(pos_norm, axis=0)
     speed_norm = np.linalg.norm(vel_norm, axis=1)
 

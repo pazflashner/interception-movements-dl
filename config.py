@@ -41,6 +41,18 @@ CONDITION_FREE_EYE = 2  # Only analyse condition 2 (free eye movements)
 # ── Marker value ──────────────────────────────────────────────────────────────
 STIMULUS_ONSET_MARKER = 5
 
+# ── Timing plausibility (quality control) ─────────────────────────────────────
+# The task requires fast ballistic movements under one second, so a segmented
+# window far above that means find_movement_window ran past the interception
+# (it extends to the last frame above the velocity threshold, which can pick up
+# the return movement). Trials outside these bounds are flagged in the dataset,
+# not dropped: whether to exclude them is a decision for the analysis, but with
+# a timing head they can no longer be ignored — a 9 s outlier next to a 0.6 s
+# median dominates the timing loss.
+MAX_MOVEMENT_TIME_S = 1.0
+MIN_MOVEMENT_TIME_S = 0.1
+MAX_INITIATION_TIME_S = 1.0
+
 # ── Data splits (leave-N-subjects-out) ────────────────────────────────────────
 N_TRAIN = 17
 N_VAL = 4
@@ -56,12 +68,57 @@ NUM_EPOCHS = 200
 KL_WEIGHT = 1.0  # β for β-VAE; 1.0 = standard VAE
 EARLY_STOPPING_PATIENCE = 30
 
+# ── Timing head ───────────────────────────────────────────────────────────────
+# Resampling every trial to NORMALISED_LENGTH frames discards how long the
+# movement actually took, so the network only ever sees trajectory *shape*.
+# The timing channels restore the temporal axis: they are encoded alongside the
+# trajectory and reconstructed by a dedicated decoder head, so a sampled latent
+# yields a shape *and* the duration to play it back over.
+PREDICT_TIMING = True
+TIMING_FEATURES = ["movement_time_s", "initiation_time_s"]  # seconds
+TIMING_DIM = len(TIMING_FEATURES)
+# Reconstruction MSE is averaged over 300 trajectory dims but only TIMING_DIM
+# timing dims; the weight keeps the timing term from being drowned out.
+TIMING_WEIGHT = 1.0
+
 # ── Spline baseline ──────────────────────────────────────────────────────────
 SPLINE_DEGREE = 3
 SPLINE_N_KNOTS = 5
 
 # ── K-Means baseline ─────────────────────────────────────────────────────────
 KMEANS_N_CLUSTERS_RANGE = range(5, 35)
+
+# Explicit allowlist of the columns the feature-based baseline clusters on.
+# Selecting every numeric column instead would sweep in:
+#   rep                   - trial counter (1..180); pure nuisance
+#   sp, side              - task labels, which the CVAE *conditions on* precisely
+#                           to keep them out of the latent
+#   starting_position_mm  - deterministic function of sp, so double-weights it
+#   condition             - constant (2) after filtering; contributes nothing
+#   index, timing_plausible - bookkeeping added by scripts/make_dataset.py
+#
+# Measured: those columns carry no subject identity at all (clustering on them
+# alone gives ARI = -0.001). Because StandardScaler weights every column
+# equally, they acted as 5 of 16 dimensions of pure noise and *diluted* the
+# result rather than inflating it - restricting to kinematics raises ARI from
+# 0.036 to 0.098 and NMI from 0.149 to 0.288 at seed 42.
+#
+# Phase 1 asks whether *individual* signatures are recoverable, so the matrix
+# holds kinematics only. Note straight_line_dist is the norm of (end_x, end_y,
+# end_z): related but not linearly redundant, and kept deliberately.
+KMEANS_FEATURE_COLUMNS = [
+    "initiation_time_s",
+    "movement_time_s",
+    "peak_speed_mm_s",
+    "time_to_peak_speed",
+    "path_length",
+    "straight_line_dist",
+    "curvature_index",
+    "max_lateral_deviation",
+    "end_x",
+    "end_y",
+    "end_z",
+]
 
 # ── CSV column names ──────────────────────────────────────────────────────────
 CSV_COLUMNS = [
