@@ -34,7 +34,9 @@ from src.vae_model import (
     ConditionalVAE,
     NormStats,
     TrajectoryDataset,
+    encode_condition,
     encode_timing,
+    kl_weight_at,
     vae_loss,
 )
 
@@ -81,6 +83,76 @@ def test_encoder_sees_timing():
     # Same trajectory + condition, same timing -> deterministic encoder output.
     mu_c, _ = model.encode(traj_t, cond_t, torch.from_numpy(timing))
     assert torch.allclose(mu_a, mu_c)
+
+
+def test_condition_reaches_encoder_and_decoder():
+    """
+    The condition vector must change both halves of the model.
+
+    If it reached only the encoder, the decoder could not be told which task it
+    is generating for, and z would have to absorb task variance — the opposite
+    of what conditioning is for.
+    """
+    set_seed(0)
+    model = ConditionalVAE(latent_dim=3, hidden_dim=32)
+    traj, timing, cond = make_dummy_batch(batch_size=8, seed=5)
+    traj_t, timing_t = torch.from_numpy(traj), torch.from_numpy(timing)
+
+    # Two different task conditions: sp=1/left vs sp=3/right.
+    c_a = torch.tensor(np.tile(encode_condition(1, 1), (8, 1)))
+    c_b = torch.tensor(np.tile(encode_condition(3, 2), (8, 1)))
+
+    mu_a, _ = model.encode(traj_t, c_a, timing_t)
+    mu_b, _ = model.encode(traj_t, c_b, timing_t)
+    assert not torch.allclose(mu_a, mu_b), "encoder ignores the condition vector"
+
+    z = torch.zeros(8, 3)
+    out_a, tim_a = model.decode(z, c_a)
+    out_b, tim_b = model.decode(z, c_b)
+    assert not torch.allclose(out_a, out_b), "decoder ignores the condition vector"
+    assert not torch.allclose(tim_a, tim_b), "timing head ignores the condition vector"
+
+
+def test_condition_encoding_is_correct():
+    """sp one-hot and side binary land in the documented slots."""
+    assert encode_condition(1, 1).tolist() == [1, 0, 0, 0]
+    assert encode_condition(2, 1).tolist() == [0, 1, 0, 0]
+    assert encode_condition(3, 2).tolist() == [0, 0, 1, 1]
+    # sp indexes the (start position, speed range) pair, so all three are distinct
+    assert len({tuple(encode_condition(sp, 1)) for sp in (1, 2, 3)}) == 3
+    assert len(encode_condition(1, 1)) == CONDITION_DIM
+
+
+def test_kl_annealing_schedules():
+    """β ramps from 0 to the target and never exceeds it."""
+    target = 1.0
+
+    # linear: starts at 0, reaches target exactly at the end of the ramp, holds
+    assert kl_weight_at(1, target, "linear", 10) == 0.0
+    assert kl_weight_at(6, target, "linear", 10) == pytest_approx(0.5)
+    assert kl_weight_at(11, target, "linear", 10) == target
+    assert kl_weight_at(500, target, "linear", 10) == target
+
+    linear = [kl_weight_at(e, target, "linear", 10) for e in range(1, 30)]
+    assert linear == sorted(linear), "linear schedule must be monotone"
+    assert max(linear) <= target
+
+    # cyclical: repeatedly returns to 0, then settles at target after the cycles
+    cyc = [kl_weight_at(e, target, "cyclical", 10, cycles=3) for e in range(1, 60)]
+    assert min(cyc) == 0.0 and max(cyc) <= target
+    assert cyc[:12].count(0.0) >= 2, "cyclical schedule should restart at 0"
+    assert kl_weight_at(55, target, "cyclical", 10, cycles=3) == target
+
+    # none: constant
+    assert all(kl_weight_at(e, target, "none", 10) == target for e in (1, 5, 100))
+
+
+def pytest_approx(x, tol=1e-9):
+    """Tiny local helper so the file runs without pytest installed."""
+    class _Approx(float):
+        def __eq__(self, other):
+            return abs(float(self) - other) < tol
+    return _Approx(x)
 
 
 def test_shape_only_model_still_works():
@@ -215,7 +287,13 @@ def test_timing_head_learns():
     first = float(np.mean(history["timing"][:10]))
     last = float(np.mean(history["timing"][-10:]))
     assert last < first, f"timing loss did not decrease: {first:.4f} -> {last:.4f}"
-    assert last < 0.5, f"timing MSE stayed near the target variance: {last:.4f}"
+    # vae_loss sums over the timing dims, so the target variance of the
+    # standardised targets is TIMING_DIM, not 1. Compare per dimension.
+    per_dim = last / TIMING_DIM
+    assert per_dim < 0.5, (
+        f"timing MSE stayed near the target variance: {per_dim:.4f} per dim "
+        f"({last:.4f} summed over {TIMING_DIM})"
+    )
 
 
 # ── Dataset & training loop ───────────────────────────────────────────────────

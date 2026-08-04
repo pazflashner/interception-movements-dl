@@ -30,7 +30,11 @@ from src.vae_model import (
     TrajectoryDataset,
     encode_condition,
 )
-from src.features import compute_trial_features
+from src.features import (
+    KINEMATIC_FEATURES,
+    compute_trial_features,
+    features_from_arrays,
+)
 
 
 # ── Encode trials ─────────────────────────────────────────────────────────────
@@ -82,6 +86,7 @@ def reconstruct(
     trials: list[dict],
     norm: NormStats,
     device: str = "cpu",
+    sample: bool = False,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """
     Pass trials through the full model.
@@ -89,6 +94,12 @@ def reconstruct(
     Returns (recon_traj, true_traj, recon_timing_s, true_timing_s), all in
     original units — millimetres for the trajectory, seconds for the timing.
     ``recon_timing_s`` is empty when the model has no timing head.
+
+    ``sample=False`` decodes from the posterior mean μ rather than a draw from
+    q(z|x). That is the standard way to measure VAE reconstruction: sampling
+    adds noise that has nothing to do with how well the model represents the
+    trial, and would handicap it against a deterministic baseline like PCA.
+    Set ``sample=True`` to include the stochasticity.
     """
     model.eval()
     ds = TrajectoryDataset(trials)
@@ -101,7 +112,9 @@ def reconstruct(
     with torch.no_grad():
         traj_z = (traj - tm) / ts
         timing_z = (timing - tim_m) / tim_s if model.timing_dim else None
-        recon_z, recon_timing_z, _, _, _ = model(traj_z, cond, timing_z)
+        mu, logvar = model.encode(traj_z, cond, timing_z)
+        z = model.reparameterize(mu, logvar) if sample else mu
+        recon_z, recon_timing_z = model.decode(z, cond)
         recon = recon_z * ts + tm
         recon_timing = (
             (recon_timing_z * tim_s + tim_m).cpu().numpy()
@@ -183,54 +196,284 @@ def latent_feature_correlations(
     return pd.DataFrame(corr_rows)
 
 
+# ── Latent traversal ─────────────────────────────────────────────────────────
+def latent_traversal(
+    model: ConditionalVAE,
+    norm: NormStats,
+    sp: int = 2,
+    side: int = 1,
+    n_steps: int = 7,
+    span: float = 2.0,
+    device: str = "cpu",
+) -> dict:
+    """
+    Decode a sweep of each latent dimension with the others held at the prior mean.
+
+    Proposal §4 asks whether traversing a latent dimension produces "distinct,
+    meaningful structural changes". This returns, per dimension, the decoded
+    trajectories and their timing across ``±span`` prior SDs, which the report
+    turns into figures and into a per-dimension summary of *what changes* — so
+    the reading is anchored to kinematics rather than to eyeballing a curve.
+
+    Held at a single task condition, since the decoder is conditional: the
+    traversal shows movement style at a fixed task, which is exactly the
+    quantity the conditioning is meant to isolate.
+    """
+    model.eval()
+    tm, ts, tim_m, tim_s = norm.torch(device)
+    cond = torch.tensor(encode_condition(sp, side), dtype=torch.float32, device=device)
+    steps = np.linspace(-span, span, n_steps)
+
+    out = {"steps": steps, "sp": sp, "side": side, "dims": {}}
+    for dim in range(model.latent_dim):
+        z = torch.zeros(n_steps, model.latent_dim, device=device)
+        z[:, dim] = torch.tensor(steps, dtype=torch.float32, device=device)
+        with torch.no_grad():
+            recon_z, timing_z = model.decode(z, cond.expand(n_steps, -1))
+            trajs = ((recon_z * ts + tm).cpu().numpy()
+                     .reshape(n_steps, config.NORMALISED_LENGTH, 3))
+            timing = (
+                (timing_z * tim_s + tim_m).cpu().numpy()
+                if timing_z is not None else None
+            )
+
+        rows = []
+        for i in range(n_steps):
+            mt = float(timing[i, 0]) if timing is not None else 0.5
+            it = float(timing[i, 1]) if timing is not None else 0.0
+            rows.append(features_from_arrays(trajs[i], max(mt, 1e-3), it))
+        out["dims"][dim] = {
+            "trajectories": trajs,
+            "timing": timing,
+            "features": pd.DataFrame(rows),
+        }
+    return out
+
+
+def traversal_summary(traversal: dict) -> pd.DataFrame:
+    """
+    What each latent dimension actually changes, as a range over the sweep.
+
+    Turns the qualitative traversal into numbers: for every dimension, how much
+    each kinematic feature moves from one end of the sweep to the other. A
+    dimension whose features barely move is an unused (collapsed) dimension.
+    """
+    rows = []
+    for dim, d in traversal["dims"].items():
+        f = d["features"]
+        row = {"latent_dim": f"z{dim}"}
+        for feat in KINEMATIC_FEATURES:
+            v = f[feat].values
+            row[f"{feat}_range"] = float(np.max(v) - np.min(v))
+        # Scale-free measure of whether this dimension does anything at all.
+        row["relative_span"] = float(
+            np.mean([
+                (np.max(f[c].values) - np.min(f[c].values)) / (abs(np.mean(f[c].values)) + 1e-9)
+                for c in ("path_length", "movement_time_s", "curvature_index")
+            ])
+        )
+        rows.append(row)
+    return pd.DataFrame(rows)
+
+
 # ── Behavioural probing (R²) ─────────────────────────────────────────────────
+#: Macro-level behaviour a subject fingerprint should predict for someone the
+#: model never saw. The first three are named in proposal §4.3; the rest are the
+#: other standard descriptors of an interception movement — how symmetric the
+#: velocity profile is, how far and how straight the hand travels.
+BEHAVIOURAL_TARGETS_MEAN = [
+    "initiation_time_s",
+    "movement_time_s",
+    "curvature_index",
+    "peak_speed_mm_s",
+    "time_to_peak_speed",
+    "path_length",
+    "max_lateral_deviation",
+]
+
+#: Within-subject variability of the same quantities: motor control treats a
+#: person's *consistency* as part of their signature, and §1 of the proposal
+#: asks the model to reproduce distributions rather than single movements.
+BEHAVIOURAL_TARGETS_SD = [
+    "movement_time_s",
+    "initiation_time_s",
+    "curvature_index",
+    "max_lateral_deviation",
+]
+
+
 def behavioural_probing(
     mus: np.ndarray,
     trials: list[dict],
     subjects: list[str],
+    use_variance: bool = True,
 ) -> pd.DataFrame:
     """
-    Fit linear and SVR probes from subject fingerprints to predict
-    macro-level behavioural metrics.
+    Predict macro-level behaviour from subject fingerprints, scored by
+    leave-one-subject-out cross-validation.
+
+    Proposal §4 asks for R² "for unseen subjects". Fitting and scoring on the
+    same 7 subjects — as this did previously — measures how well 7 points can be
+    interpolated by a model with as many free parameters, not generalisation;
+    it reported R² ≈ 0.96 for probes that carry no predictive content. Each
+    subject is now held out in turn, the scaler and probe are fitted on the
+    remaining ones only, and R² is computed across the held-out predictions.
+
+    With only 7 test subjects this is a 7-point estimate and will be unstable —
+    negative R² simply means the probe does worse than predicting the mean,
+    which is a meaningful (and common) outcome at this sample size. ``n_subjects``
+    is reported so the number is never read without it.
     """
-    feat_list = [compute_trial_features(t) for t in trials]
-    feat_df = pd.DataFrame(feat_list)
+    feat_df = pd.DataFrame([compute_trial_features(t) for t in trials])
     feat_df["subject"] = subjects
 
-    targets = [
-        "initiation_time_s", "movement_time_s",
-        "peak_speed_mm_s", "curvature_index",
-    ]
+    grouped = feat_df.groupby("subject")
+    means = grouped[BEHAVIOURAL_TARGETS_MEAN].mean()
+    # Intra-subject spread is a behavioural signature in its own right — how
+    # *consistent* a mover someone is. It is also the only thing that can test
+    # whether the variance half of the fingerprint (§3.3) carries information:
+    # a latent mean cannot predict variability unless the code encodes it.
+    sds = grouped[BEHAVIOURAL_TARGETS_SD].std().add_suffix("_sd")
+    subj_feats = pd.concat([means, sds], axis=1)
+    targets = list(subj_feats.columns)
 
-    # Per-subject averages
-    subj_feats = feat_df.groupby("subject")[targets].mean()
-
-    # Subject fingerprints
-    fp = compute_fingerprints(mus, subjects)
-    fp = fp.set_index("subject")
+    # Fingerprint = per-subject latent mean, optionally with the spread, which
+    # is the other half of the "distribution" the proposal asks fingerprints to
+    # capture (§3.3).
+    fp = compute_fingerprints(mus, subjects).set_index("subject")
     z_cols = [c for c in fp.columns if c.endswith("_mean")]
+    if use_variance:
+        z_cols += [c for c in fp.columns if c.endswith("_std")]
 
     common = subj_feats.index.intersection(fp.index)
-    X = fp.loc[common, z_cols].values
-    scaler = StandardScaler()
-    X_sc = scaler.fit_transform(X)
+    X = np.nan_to_num(fp.loc[common, z_cols].values)
+    n = len(common)
 
     results = []
     for target in targets:
         y = subj_feats.loc[common, target].values
-        # Linear
-        lr = LinearRegression().fit(X_sc, y)
-        r2_lin = r2_score(y, lr.predict(X_sc))
-        # SVR
-        svr = SVR(kernel="rbf").fit(X_sc, y)
-        r2_svr = r2_score(y, svr.predict(X_sc))
+        preds = {"linear": np.empty(n), "svr": np.empty(n)}
+
+        for i in range(n):  # leave-one-subject-out
+            tr = np.ones(n, dtype=bool)
+            tr[i] = False
+            scaler = StandardScaler().fit(X[tr])
+            Xtr, Xte = scaler.transform(X[tr]), scaler.transform(X[~tr])
+            preds["linear"][i] = LinearRegression().fit(Xtr, y[tr]).predict(Xte)[0]
+            preds["svr"][i] = SVR(kernel="rbf").fit(Xtr, y[tr]).predict(Xte)[0]
+
         results.append({
             "target": target,
-            "r2_linear": r2_lin,
-            "r2_svr": r2_svr,
+            "r2_linear_loso": r2_score(y, preds["linear"]),
+            "r2_svr_loso": r2_score(y, preds["svr"]),
+            # Predicting the training mean scores R2 = 0 by construction; a
+            # probe below that is worse than useless.
+            "baseline_r2": 0.0,
+            "n_subjects": n,
+            "n_features": X.shape[1],
         })
 
     return pd.DataFrame(results)
+
+
+# ── Two-sample comparison of feature distributions ───────────────────────────
+def compare_feature_distributions(
+    emp_feats: pd.DataFrame,
+    gen_feats: pd.DataFrame,
+    n_permutations: int = 200,
+    seed: int = 0,
+) -> dict:
+    """
+    Univariate (KS per feature) and multivariate (MMD, energy) comparison.
+
+    Shared by the CVAE and the spline/PCA representation so that a difference in
+    the numbers is a difference between the models, never between two
+    implementations of the same test.
+    """
+    entry = {"n_empirical": len(emp_feats), "n_generated": len(gen_feats)}
+    for feat in KINEMATIC_FEATURES:
+        ks_s, ks_p = stats.ks_2samp(emp_feats[feat].values, gen_feats[feat].values)
+        entry[f"ks_{feat}"] = ks_s
+        entry[f"ks_p_{feat}"] = ks_p
+    ks_cols = [c for c in entry if c.startswith("ks_p_")]
+    entry["n_features_rejected"] = int(sum(entry[c] < 0.05 for c in ks_cols))
+    entry["n_features"] = len(ks_cols)
+
+    E = emp_feats[KINEMATIC_FEATURES].values
+    G = gen_feats[KINEMATIC_FEATURES].values
+    scaler = StandardScaler().fit(E)
+    Es, Gs = scaler.transform(E), np.nan_to_num(scaler.transform(G))
+    entry["mmd_rbf"] = mmd_rbf(Es, Gs)
+    entry["energy_distance"] = energy_distance(Es, Gs)
+    entry["mmd_pvalue"] = permutation_pvalue(Es, Gs, mmd_rbf, n_permutations, seed)
+    entry["energy_pvalue"] = permutation_pvalue(Es, Gs, energy_distance, n_permutations, seed)
+    return entry
+
+
+# ── Multivariate distribution distances ──────────────────────────────────────
+def mmd_rbf(X: np.ndarray, Y: np.ndarray, gamma: float | None = None) -> float:
+    """
+    Unbiased squared Maximum Mean Discrepancy with an RBF kernel.
+
+    ``gamma`` defaults to the median heuristic (1 / median pairwise squared
+    distance over the pooled sample), which avoids hand-tuning a bandwidth per
+    subject. 0 means the two samples are indistinguishable to the kernel.
+    """
+    X = np.atleast_2d(X)
+    Y = np.atleast_2d(Y)
+    if gamma is None:
+        pooled = np.vstack([X, Y])
+        d2 = np.sum((pooled[:, None, :] - pooled[None, :, :]) ** 2, axis=-1)
+        med = np.median(d2[d2 > 0]) if np.any(d2 > 0) else 1.0
+        gamma = 1.0 / med
+
+    def k(A, B):
+        d2 = np.sum((A[:, None, :] - B[None, :, :]) ** 2, axis=-1)
+        return np.exp(-gamma * d2)
+
+    n, m = len(X), len(Y)
+    Kxx, Kyy, Kxy = k(X, X), k(Y, Y), k(X, Y)
+    np.fill_diagonal(Kxx, 0.0)
+    np.fill_diagonal(Kyy, 0.0)
+    return float(
+        Kxx.sum() / (n * (n - 1)) + Kyy.sum() / (m * (m - 1)) - 2 * Kxy.mean()
+    )
+
+
+def energy_distance(X: np.ndarray, Y: np.ndarray) -> float:
+    """
+    Multivariate energy distance: 2·E|X−Y| − E|X−X'| − E|Y−Y'|.
+
+    Zero exactly when the two distributions coincide, and unlike MMD it needs no
+    bandwidth choice — the two are reported side by side so a conclusion never
+    rests on one kernel setting.
+    """
+    X = np.atleast_2d(X)
+    Y = np.atleast_2d(Y)
+    d = lambda A, B: np.sqrt(np.sum((A[:, None, :] - B[None, :, :]) ** 2, axis=-1))
+    return float(2 * d(X, Y).mean() - d(X, X).mean() - d(Y, Y).mean())
+
+
+def permutation_pvalue(
+    X: np.ndarray, Y: np.ndarray, statistic, n_permutations: int = 200, seed: int = 0
+) -> float:
+    """
+    Permutation p-value for a two-sample statistic.
+
+    MMD and energy distance have no usable null distribution in closed form at
+    these sample sizes, so significance is obtained by shuffling the pooled
+    labels — the only way to say whether a non-zero distance is more than noise.
+    """
+    rng = np.random.default_rng(seed)
+    observed = statistic(X, Y)
+    pooled = np.vstack([X, Y])
+    n = len(X)
+    count = 0
+    for _ in range(n_permutations):
+        rng.shuffle(pooled)
+        if statistic(pooled[:n], pooled[n:]) >= observed:
+            count += 1
+    return (count + 1) / (n_permutations + 1)
 
 
 # ── Generative fidelity ──────────────────────────────────────────────────────
@@ -240,6 +483,8 @@ def generative_fidelity_ks(
     norm: NormStats,
     n_samples: int = 100,
     device: str = "cpu",
+    n_permutations: int = 200,
+    seed: int = 0,
 ) -> dict:
     """
     For each test subject, sample from the learned latent distribution and
@@ -269,12 +514,20 @@ def generative_fidelity_ks(
         agg_mu = subj_mus.mean(axis=0)
         agg_std = np.sqrt(np.exp(subj_logvars).mean(axis=0) + subj_mus.var(axis=0))
 
-        # Use first trial's condition for generation
-        meta0 = subj_trials[0]["metadata"]
+        # Draw conditions from the subject's *own* trial mix rather than reusing
+        # the first trial's. The empirical sample spans every (sp, side) the
+        # subject performed, so generating everything under one condition would
+        # compare a single-condition sample against a multi-condition one and
+        # charge the difference to the model.
+        rng = np.random.default_rng(seed)
+        subj_conds = np.stack([
+            encode_condition(t["metadata"].get("sp", 1), t["metadata"].get("side", 1))
+            for t in subj_trials
+        ])
         cond = torch.tensor(
-            encode_condition(meta0.get("sp", 1), meta0.get("side", 1)),
-            dtype=torch.float32
-        ).to(device).unsqueeze(0).repeat(n_samples, 1)
+            subj_conds[rng.integers(0, len(subj_conds), size=n_samples)],
+            dtype=torch.float32,
+        ).to(device)
 
         z = torch.tensor(
             np.random.randn(n_samples, *agg_mu.shape) * agg_std + agg_mu,
@@ -292,20 +545,44 @@ def generative_fidelity_ks(
                 else None
             )
 
-        # KS test on path length (shape)
-        emp_pl = emp_feats["path_length"].values
-        gen_pl = np.array([np.sum(np.linalg.norm(np.diff(t, axis=0), axis=1)) for t in gen_trajs])
-        ks_stat, ks_p = stats.ks_2samp(emp_pl, gen_pl)
-        entry = {"ks_stat": ks_stat, "ks_pvalue": ks_p}
+        # Describe generated samples with the *same* feature code as recorded
+        # trials, so the comparison is not partly measuring an implementation
+        # difference. Generated timing comes from the timing head; without it
+        # the empirical mean stands in, and only shape features are meaningful.
+        mt_idx = config.TIMING_FEATURES.index("movement_time_s")
+        it_idx = config.TIMING_FEATURES.index("initiation_time_s")
+        gen_rows = []
+        for i, traj in enumerate(gen_trajs):
+            if gen_timing is not None:
+                mt, it = float(gen_timing[i, mt_idx]), float(gen_timing[i, it_idx])
+            else:
+                mt = float(emp_feats["movement_time_s"].mean())
+                it = float(emp_feats["initiation_time_s"].mean())
+            gen_rows.append(features_from_arrays(traj, max(mt, 1e-3), it))
+        gen_feats = pd.DataFrame(gen_rows)
 
-        # KS test on movement time (temporal)
-        if gen_timing is not None:
-            mt_idx = config.TIMING_FEATURES.index("movement_time_s")
-            ks_t, ks_tp = stats.ks_2samp(
-                emp_feats["movement_time_s"].values, gen_timing[:, mt_idx]
-            )
-            entry["ks_stat_movement_time"] = ks_t
-            entry["ks_pvalue_movement_time"] = ks_tp
+        # Univariate: KS per feature
+        entry = {"n_empirical": len(emp_feats), "n_generated": len(gen_feats)}
+        for feat in KINEMATIC_FEATURES:
+            ks_s, ks_p = stats.ks_2samp(emp_feats[feat].values, gen_feats[feat].values)
+            entry[f"ks_{feat}"] = ks_s
+            entry[f"ks_p_{feat}"] = ks_p
+        ks_cols = [c for c in entry if c.startswith("ks_p_")]
+        entry["n_features_rejected"] = int(sum(entry[c] < 0.05 for c in ks_cols))
+        entry["n_features"] = len(ks_cols)
+
+        # Multivariate: MMD and energy distance over the standardised feature
+        # space, scaled on the empirical sample so both are on one footing.
+        E = emp_feats[KINEMATIC_FEATURES].values
+        G = gen_feats[KINEMATIC_FEATURES].values
+        scaler = StandardScaler().fit(E)
+        Es, Gs = scaler.transform(E), np.nan_to_num(scaler.transform(G))
+        entry["mmd_rbf"] = mmd_rbf(Es, Gs)
+        entry["energy_distance"] = energy_distance(Es, Gs)
+        entry["mmd_pvalue"] = permutation_pvalue(Es, Gs, mmd_rbf, n_permutations, seed)
+        entry["energy_pvalue"] = permutation_pvalue(
+            Es, Gs, energy_distance, n_permutations, seed
+        )
 
         ks_results[subj] = entry
 
@@ -320,6 +597,7 @@ def run_full_evaluation(
     spline_mse: float,
     device: str = "cpu",
     save_dir: Path | None = None,
+    spline_pca_mse: float | None = None,
 ) -> dict:
     """Run all evaluation metrics and print summary."""
     save_dir = Path(save_dir or config.RESULTS_DIR)
@@ -329,9 +607,18 @@ def run_full_evaluation(
     print("EVALUATION ON TEST SET")
     print("=" * 60)
 
-    # 1. Reconstruction MSE
+    # 1. Reconstruction MSE. Two reference points, which measure different
+    # things — see src/baseline_spline.py.
     vae_mse = compute_reconstruction_mse(model, test_trials, norm, device)
-    print(f"\nReconstruction MSE - VAE: {vae_mse:.6f} | Spline: {spline_mse:.6f}")
+    print(f"\nReconstruction MSE (mm^2), held-out test subjects:")
+    print(f"  CVAE (z={model.latent_dim}, generalises to unseen subjects) : {vae_mse:.6f}")
+    if spline_pca_mse is not None:
+        verdict = "BETTER" if vae_mse < spline_pca_mse else "worse"
+        print(f"  Spline+PCA (same {model.latent_dim} dims, fitted on train)      : "
+              f"{spline_pca_mse:.6f}   <- CVAE is {verdict}")
+    print(f"  Spline per-trial fit (27 params/trial, sees the trial)  : {spline_mse:.6f}")
+    print("  The per-trial spline is an interpolation ceiling, not a competing")
+    print("  representation; the capacity-matched comparison is Spline+PCA.")
 
     # 2. Timing reconstruction — the axis temporal normalisation removes
     timing_df = timing_reconstruction_error(model, test_trials, norm, device)
@@ -379,6 +666,7 @@ def run_full_evaluation(
     return {
         "vae_mse": vae_mse,
         "spline_mse": spline_mse,
+        "spline_pca_mse": spline_pca_mse,
         "timing": timing_df,
         "fingerprints": fp,
         "correlations": corr_df,

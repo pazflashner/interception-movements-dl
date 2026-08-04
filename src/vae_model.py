@@ -49,6 +49,27 @@ def encode_condition(sp: int, side: int) -> np.ndarray:
     side: starting side (1=left, 2=right)
 
     Returns a 4-dim vector: [one-hot sp (3)] + [side binary (1)]
+
+    Start config and target speed
+    -----------------------------
+    ``sp`` indexes *both* the stimulus starting position
+    (``config.STARTING_POSITIONS``: 120/140/160 mm) and the target speed range
+    (``config.SPEED_RANGES``: 255-300 / 298-350 / 340-400 mm/s). They are
+    confounded by the experimental design — the filename carries one index for
+    the pair — so the one-hot over sp *is* the joint (start config, target
+    speed) encoding. Adding separate start-position and speed columns would be
+    exactly collinear with this one-hot and buy nothing.
+
+    The exact speed within each range was randomised per trial and is not
+    recoverable from the filenames; ``data/stimuli/`` is empty in this
+    checkout, so the range index is the finest speed information available. If
+    per-trial stimulus speeds are recovered later, append them here as a
+    normalised continuous column and bump ``CONDITION_DIM``.
+
+    This vector is concatenated into the encoder input *and* the decoder input
+    (see ``ConditionalVAE.encode`` / ``.decode``), which is what lets the latent
+    model movement style rather than task-driven variance: the decoder is given
+    the task, so z does not need to encode it.
     """
     vec = np.zeros(4, dtype=np.float32)
     if 1 <= sp <= 3:
@@ -156,6 +177,47 @@ class ConditionalVAE(nn.Module):
         return recon, recon_timing, mu, logvar, z
 
 
+# ── KL annealing ──────────────────────────────────────────────────────────────
+def kl_weight_at(
+    epoch: int,
+    target: float = config.KL_WEIGHT,
+    schedule: str = config.KL_ANNEAL,
+    anneal_epochs: int = config.KL_ANNEAL_EPOCHS,
+    cycles: int = config.KL_ANNEAL_CYCLES,
+    ratio: float = config.KL_ANNEAL_RATIO,
+) -> float:
+    """
+    β for a given 1-indexed epoch.
+
+    Annealing exists to avoid posterior collapse: at full β from the start, the
+    cheapest way to cut the KL term is to make q(z|x) equal the prior and ignore
+    z, and a decoder that has learned to work without the latent gets no
+    gradient pulling it back. Ramping β from 0 lets reconstruction establish a
+    use for the latent first.
+
+    See ``config.KL_ANNEAL`` for the schedules.
+    """
+    if schedule == "none":
+        return target
+    if anneal_epochs <= 0:
+        return target
+
+    e = max(epoch - 1, 0)  # epochs are 1-indexed
+
+    if schedule == "linear":
+        return target * min(1.0, e / anneal_epochs)
+
+    if schedule == "cyclical":
+        # Each cycle ramps over `ratio` of its length, then holds at full β.
+        cycle_len = max(anneal_epochs, 1)
+        pos = (e % cycle_len) / cycle_len
+        if cycles > 0 and e >= cycle_len * cycles:
+            return target  # past the last cycle, stay at the true objective
+        return target * min(1.0, pos / ratio) if ratio > 0 else target
+
+    raise ValueError(f"unknown KL schedule: {schedule!r}")
+
+
 # ── Loss function ─────────────────────────────────────────────────────────────
 def vae_loss(
     recon: torch.Tensor,
@@ -175,12 +237,23 @@ def vae_loss(
     scaled by the 300:2 dimension ratio.
 
     Returns (total_loss, recon_loss, kl_loss, timing_loss).
+
+    Reduction
+    ---------
+    Every term is **summed over its own dimensions and averaged over the
+    batch** — the standard ELBO. This matters more than it looks: averaging the
+    reconstruction over 300 trajectory dims while averaging the KL over
+    ``latent_dim`` dims silently inflates the effective β by
+    ``input_dim / latent_dim`` (100x at z=3), which crushes the latent and
+    caps reconstruction quality regardless of how long the model trains.
     """
-    recon_loss = F.mse_loss(recon, target, reduction="mean")
-    kl_loss = -0.5 * torch.mean(1 + logvar - mu.pow(2) - logvar.exp())
+    recon_loss = F.mse_loss(recon, target, reduction="none").sum(dim=-1).mean()
+    kl_loss = (-0.5 * (1 + logvar - mu.pow(2) - logvar.exp()).sum(dim=-1)).mean()
 
     if recon_timing is not None and target_timing is not None:
-        timing_loss = F.mse_loss(recon_timing, target_timing, reduction="mean")
+        timing_loss = (
+            F.mse_loss(recon_timing, target_timing, reduction="none").sum(dim=-1).mean()
+        )
     else:
         timing_loss = torch.zeros((), device=recon.device, dtype=recon.dtype)
 

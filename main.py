@@ -54,7 +54,7 @@ from src.data_loading import load_dataset
 from src.preprocessing import preprocess_dataset
 from src.features import extract_features_dataframe
 from src.baseline_kmeans import cluster_trajectories, sweep_seeds
-from src.baseline_spline import evaluate_spline_baseline
+from src.baseline_spline import evaluate_spline_baseline, evaluate_spline_pca_baseline
 from src.run_config import RunConfig, find_runs, set_seed, summarise_runs
 from src.train import (
     split_subjects_for,
@@ -263,11 +263,18 @@ def main():
         model.load_state_dict(ckpt["model_state"])
         norm = NormStats.from_checkpoint(ckpt)
 
-        # Spline baseline for comparison
+        # Two spline references: the per-trial interpolation ceiling, and the
+        # capacity-matched population baseline the CVAE is actually competing
+        # against (same latent size, train-only fit, unseen test subjects).
+        train_trials, _, _ = split_subjects_for(trials, run_cfg)
         spline_result = evaluate_spline_baseline(test_trials)
+        spline_pca_result = evaluate_spline_pca_baseline(
+            train_trials, test_trials, n_components=ckpt["latent_dim"]
+        )
         results = run_full_evaluation(
             model, test_trials, norm,
             spline_mse=spline_result["mean_mse"],
+            spline_pca_mse=spline_pca_result["mean_mse"],
             device=device,
         )
 

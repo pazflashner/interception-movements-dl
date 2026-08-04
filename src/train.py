@@ -29,7 +29,7 @@ import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import config
 from src.run_config import RunConfig, make_run_dir, seed_worker, set_seed
-from src.vae_model import ConditionalVAE, TrajectoryDataset, vae_loss
+from src.vae_model import ConditionalVAE, TrajectoryDataset, kl_weight_at, vae_loss
 
 
 # ── Data splitting ────────────────────────────────────────────────────────────
@@ -181,12 +181,13 @@ def train_vae(
         "train_recon": [], "val_recon": [],
         "train_kl": [], "val_kl": [],
         "train_timing": [], "val_timing": [],
+        "beta": [], "val_objective": [],
     }
     best_val = float("inf")
     patience_counter = 0
     patience_limit = cfg.patience
 
-    def run_batch(traj, timing, cond):
+    def run_batch(traj, timing, cond, beta):
         """Standardise a batch, run the model, return (loss, recon, kl, timing)."""
         traj = traj.to(device)
         timing = timing.to(device)
@@ -198,21 +199,34 @@ def train_vae(
 
         recon, recon_timing, mu, logvar, _ = model(traj_z, cond, timing_z)
         return vae_loss(
-            recon, traj_z, mu, logvar, cfg.kl_weight,
+            recon, traj_z, mu, logvar, beta,
             recon_timing=recon_timing,
             target_timing=timing_z,
             timing_weight=cfg.timing_weight,
         )
 
     for epoch in range(1, cfg.epochs + 1):
+        # β for this epoch. Validation uses the same β so train and val losses
+        # stay on one scale; a rising β would otherwise look like divergence.
+        beta = kl_weight_at(
+            epoch,
+            target=cfg.kl_weight,
+            schedule=cfg.kl_anneal,
+            anneal_epochs=cfg.kl_anneal_epochs,
+            cycles=cfg.kl_anneal_cycles,
+        )
+        history["beta"].append(beta)
+
         # ── Train ──
         model.train()
         epoch_loss, epoch_recon, epoch_kl, epoch_timing, n = 0, 0, 0, 0, 0
         for traj, timing, cond, _ in train_loader:
-            loss, rl, kl, tl = run_batch(traj, timing, cond)
+            loss, rl, kl, tl = run_batch(traj, timing, cond, beta)
 
             optimizer.zero_grad()
             loss.backward()
+            if cfg.grad_clip > 0:
+                torch.nn.utils.clip_grad_norm_(model.parameters(), cfg.grad_clip)
             optimizer.step()
 
             bs = traj.size(0)
@@ -232,7 +246,7 @@ def train_vae(
         val_loss, val_recon, val_kl, val_timing, nv = 0, 0, 0, 0, 0
         with torch.no_grad():
             for traj, timing, cond, _ in val_loader:
-                loss, rl, kl, tl = run_batch(traj, timing, cond)
+                loss, rl, kl, tl = run_batch(traj, timing, cond, beta)
 
                 bs = traj.size(0)
                 val_loss += loss.item() * bs
@@ -247,21 +261,37 @@ def train_vae(
         history["val_kl"].append(val_kl / nv)
         history["val_timing"].append(val_timing / nv)
 
-        scheduler.step(vl)
+        # Model selection must not run on the annealed loss: while β ramps, the
+        # loss rises for reasons that have nothing to do with model quality, so
+        # the "best" epoch would always be epoch 1 at β=0. Select on the true
+        # objective (target β) instead, which is comparable across all epochs.
+        val_objective = (
+            val_recon / nv
+            + cfg.timing_weight * (val_timing / nv)
+            + cfg.kl_weight * (val_kl / nv)
+        )
+        history["val_objective"].append(val_objective)
+
+        scheduler.step(val_objective)
 
         if epoch % 10 == 0 or epoch == 1:
             print(
                 f"Epoch {epoch:3d} | "
                 f"Train {history['train_loss'][-1]:.5f} | "
                 f"Val {vl:.5f} | "
+                f"obj {val_objective:.5f} | "
                 f"recon {history['val_recon'][-1]:.5f} | "
                 f"timing {history['val_timing'][-1]:.5f} | "
-                f"KL {history['val_kl'][-1]:.5f}"
+                f"KL {history['val_kl'][-1]:.5f} | "
+                f"beta {beta:.3f}"
             )
 
-        # Early stopping
-        if vl < best_val:
-            best_val = vl
+        # Early stopping, on the true objective and only once β has finished
+        # ramping — stopping mid-anneal would end the run before the model has
+        # ever been trained at the objective it is judged on.
+        annealing_done = beta >= cfg.kl_weight - 1e-9
+        if val_objective < best_val:
+            best_val = val_objective
             patience_counter = 0
             # The checkpoint carries its own config, so it stays interpretable
             # even if moved away from its run directory.
@@ -278,12 +308,14 @@ def train_vae(
                     "config": cfg.to_dict(),
                     "epoch": epoch,
                     "val_loss": vl,
+                    "val_objective": val_objective,
+                    "beta": beta,
                 },
                 run_dir / "checkpoint.pt",
             )
         else:
             patience_counter += 1
-            if patience_counter >= patience_limit:
+            if patience_counter >= patience_limit and annealing_done:
                 print(f"Early stopping at epoch {epoch}")
                 break
 
@@ -296,7 +328,7 @@ def train_vae(
     model.load_state_dict(ckpt["model_state"])
     # ASCII only: Windows consoles default to cp1252, which cannot encode
     # arrows or box-drawing characters.
-    print(f"  -> Best val loss: {best_val:.6f} (epoch {ckpt['epoch']}) -> {run_dir}")
+    print(f"  -> Best val objective: {best_val:.6f} (epoch {ckpt['epoch']}) -> {run_dir}")
 
     return model, history, run_dir
 
@@ -320,7 +352,7 @@ def sweep_latent_dims(
         print(f"\n{'='*60}\nLatent dim = {d}\n{'='*60}")
         run_cfg = replace(base, latent_dim=d)
         model, hist, run_dir = train_vae(train_trials, val_trials, cfg=run_cfg, device=device)
-        best_val = min(hist["val_loss"])
+        best_val = min(hist["val_objective"])
         results[d] = {
             "best_val_loss": best_val,
             "epochs_trained": len(hist["val_loss"]),
@@ -355,7 +387,7 @@ def train_across_seeds(
         train_trials, val_trials, _ = split_subjects_for(trials, run_cfg)
         _, hist, run_dir = train_vae(train_trials, val_trials, cfg=run_cfg, device=device)
         results[seed] = {
-            "best_val_loss": min(hist["val_loss"]),
+            "best_val_loss": min(hist["val_objective"]),
             "epochs_trained": len(hist["val_loss"]),
             "run_dir": str(run_dir),
         }

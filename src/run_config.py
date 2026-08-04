@@ -120,6 +120,12 @@ class RunConfig:
     kl_weight: float = config.KL_WEIGHT
     timing_weight: float = config.TIMING_WEIGHT
     patience: int = config.EARLY_STOPPING_PATIENCE
+    # KL annealing: ramp beta from 0 so the latent is used before it is
+    # regularised. See config.KL_ANNEAL.
+    kl_anneal: str = config.KL_ANNEAL
+    kl_anneal_epochs: int = config.KL_ANNEAL_EPOCHS
+    kl_anneal_cycles: int = config.KL_ANNEAL_CYCLES
+    grad_clip: float = config.GRAD_CLIP_NORM
 
     @property
     def timing_dim(self) -> int:
@@ -181,6 +187,10 @@ class RunConfig:
                 "kl_weight": d["kl_weight"],
                 "timing_weight": d["timing_weight"],
                 "patience": d["patience"],
+                "kl_anneal": d["kl_anneal"],
+                "kl_anneal_epochs": d["kl_anneal_epochs"],
+                "kl_anneal_cycles": d["kl_anneal_cycles"],
+                "grad_clip": d["grad_clip"],
             },
             "env": {
                 "device": d["device"],
@@ -267,9 +277,13 @@ def summarise_runs(root: Path | None = None) -> list[dict]:
         if history_path.exists():
             with open(history_path) as f:
                 hist = json.load(f)
-            if hist.get("val_loss"):
-                best_val = min(hist["val_loss"])
-                n_epochs = len(hist["val_loss"])
+            # Prefer val_objective: with KL annealing, val_loss is measured at
+            # a beta that changes across epochs, so its minimum is not
+            # comparable between runs. Older runs have only val_loss.
+            curve = hist.get("val_objective") or hist.get("val_loss")
+            if curve:
+                best_val = min(curve)
+                n_epochs = len(curve)
         rows.append({
             "run": run_dir.name,
             "seed": cfg.seed,

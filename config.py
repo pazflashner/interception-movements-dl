@@ -65,8 +65,29 @@ HIDDEN_DIM = 256
 BATCH_SIZE = 64
 LEARNING_RATE = 1e-3
 NUM_EPOCHS = 200
-KL_WEIGHT = 1.0  # β for β-VAE; 1.0 = standard VAE
+KL_WEIGHT = 1.0  # target β for β-VAE; 1.0 = standard VAE (see vae_loss reduction)
 EARLY_STOPPING_PATIENCE = 30
+# One trial with a 9.7 s segmentation artefact standardises to a z-score of ~25
+# and produced a 3e5 loss spike; clipping keeps a single bad trial from wrecking
+# the run. 0 disables.
+GRAD_CLIP_NORM = 5.0
+
+# ── KL annealing ──────────────────────────────────────────────────────────────
+# Applying the full β from step 0 invites posterior collapse: the KL term is
+# cheapest to minimise by ignoring z entirely (q(z|x) -> prior), and once the
+# decoder has learned to work without the latent it has no gradient pulling it
+# back. Annealing β from 0 lets the model first learn to reconstruct, then pays
+# the regularisation cost — Bowman et al. (2016).
+#   "linear"   : 0 -> KL_WEIGHT over KL_ANNEAL_EPOCHS, constant thereafter
+#   "cyclical" : repeated 0 -> KL_WEIGHT ramps (Fu et al. 2019), which keeps
+#                re-opening the latent instead of collapsing once
+#   "none"     : constant KL_WEIGHT (the previous behaviour)
+KL_ANNEAL = "linear"
+KL_ANNEAL_EPOCHS = 50   # ramp length (linear) or cycle length (cyclical)
+KL_ANNEAL_CYCLES = 4    # cyclical only
+# Fraction of each cycle spent ramping; the rest holds at full β so the model
+# trains at the true objective before the next cycle.
+KL_ANNEAL_RATIO = 0.5
 
 # ── Timing head ───────────────────────────────────────────────────────────────
 # Resampling every trial to NORMALISED_LENGTH frames discards how long the
@@ -77,9 +98,12 @@ EARLY_STOPPING_PATIENCE = 30
 PREDICT_TIMING = True
 TIMING_FEATURES = ["movement_time_s", "initiation_time_s"]  # seconds
 TIMING_DIM = len(TIMING_FEATURES)
-# Reconstruction MSE is averaged over 300 trajectory dims but only TIMING_DIM
-# timing dims; the weight keeps the timing term from being drowned out.
-TIMING_WEIGHT = 1.0
+# With the summed ELBO reduction the trajectory contributes 300 squared errors
+# and the timing only TIMING_DIM, so an unweighted timing term would be ~0.7% of
+# the reconstruction signal. This weight restores per-dimension parity between a
+# timing channel and a trajectory channel (300 / TIMING_DIM), which is the
+# balance under which the timing head reached R2 = 0.54 / 0.79 on test subjects.
+TIMING_WEIGHT = (NORMALISED_LENGTH * 3) / TIMING_DIM
 
 # ── Spline baseline ──────────────────────────────────────────────────────────
 SPLINE_DEGREE = 3

@@ -228,6 +228,162 @@ All kinematic features are reported in **physical units** (seconds, mm/s) for
 the same reason: a gradient taken on the resampled trajectory is a shape
 derivative whose scale depends on the discarded duration.
 
+#### Reconstruction vs the spline baselines — current status
+
+```bash
+python scripts/baseline_report.py --seeds 0 1 2 3 4 5 6 7 8 9 --latent-dim 5 --pca-components 3
+```
+
+Three references, which measure different things:
+
+| baseline | capacity | sees the test trial? | generalises to new subjects? |
+|---|---|---|---|
+| Spline, per-trial fit | 27 params/trial | **yes** | n/a |
+| Spline+PCA | `n_components`/trial | no | yes (basis fitted on train) |
+| CVAE | `latent_dim`/trial | no | yes |
+
+The per-trial spline (MSE ≈ 0.012 mm²) is an **interpolation ceiling**, not a
+competing representation — it gets 9× the capacity *and* is fitted to the trial
+it reconstructs. Spline+PCA is the like-for-like comparison.
+
+**Held-out reconstruction MSE (mm²), 5 seeds, paired within seed:**
+
+| CVAE config | CVAE | Spline+PCA (z=3) | wins | mean Δ |
+|---|---|---|---|---|
+| z=3, with timing | 0.416 ± 0.061 | 0.317 | 0/5 | −34.6% |
+| z=3, shape-only | 0.305 ± 0.158 | 0.317 | 3/5 | +5.9% |
+| z=5, with timing | 0.262 ± 0.106 | 0.317 | 4/5 | +19.2% |
+
+The timing head costs roughly **two latent dimensions** (R² 0.88/0.94 has to be
+stored somewhere). At z=3 with timing only ~1 dim is left for shape against
+PCA's 3, which is why that row loses outright. The z=5 row is the matched-*shape*
+comparison: 3 shape dims + 2 for timing.
+
+The timing head costs roughly **two latent dimensions** (R² 0.88/0.94 has to be
+stored somewhere). At z=3 with timing only ~1 dim is left for shape against
+PCA's 3, which is why that row loses outright. The z=5 row is the matched-*shape*
+comparison: 3 shape dims + 2 for timing. Reconstruction MSE alone is
+inconclusive at 10 seeds (9/10 seeds, p = 0.065) — see the full battery below.
+
+### §4 evaluation — CVAE vs the spline representation
+
+```bash
+python scripts/evaluate_report.py                       # §4 plan on one run
+python scripts/compare_representations.py --seeds 0 1 2 3 4 5 6 7 8 9 --latent-dim 5
+```
+
+The proposal evaluates the CVAE alone, which answers "is it any good?" but not
+"is it worth it?". `compare_representations.py` runs the **same** battery on
+both representations, on the same held-out subjects, at the same code width,
+both encoding shape *and* timing — so no metric difference is a difference
+between two implementations of the same test.
+
+| | code/trial | shared params | form |
+|---|---|---|---|
+| CVAE | 5 | **292,920** | non-linear, stochastic, KL-regularised |
+| Spline+PCA | 5 | **174** | linear, deterministic, no prior |
+| Random codes | 5 | 0 | N(0, I) — the floor |
+
+The random control is not decoration: R² is unbounded below and leave-one-
+subject-out over 7 subjects is volatile, so a figure like "R² = −4.6" is
+uninterpretable without knowing what noise scores on the same subjects.
+
+**10 seeds, paired within seed** (n=10 allows p as low as 0.002):
+
+| Metric | CVAE | Spline+PCA | Random | wins | p |
+|---|---|---|---|---|---|
+| Movement time R² ↑ | **0.883 ± 0.104** | 0.597 ± 0.195 | — | 10/10 | **0.002** |
+| Initiation time R² ↑ | **0.940 ± 0.065** | 0.751 ± 0.086 | — | 10/10 | **0.002** |
+| Max \|Spearman\| ↑ | **0.873** | 0.814 | 0.068 | 10/10 | **0.002** |
+| Energy distance ↓ | **3.98 ± 1.37** | 31.5 ± 37.9 | — | 9/10 | **0.004** |
+| R² curvature (unseen subj) ↑ | **+0.382 ± 0.581** | −0.088 ± 0.555 | −0.530 | 8/10 | **0.049** |
+| KS features rejected ↓ | **9.51** | 9.96 | — | 7/10 | 0.043 |
+| Recon MSE ↓ | 0.503 ± 0.439 | 0.704 ± 0.537 | — | 9/10 | 0.065 |
+| Targets with R² > 0 (of 11) ↑ | 5.5 ± 1.7 | 4.3 ± 2.8 | 0.8 | 7/10 | 0.25 |
+| MMD ↓ | 0.262 | 0.321 | — | 7/10 | 0.13 |
+| Fingerprint between/within ↑ | 0.485 ± 0.071 | **0.530 ± 0.089** | 0.078 | 3/10 | 0.049 |
+| Subjects MMD-matched (of 7) ↑ | 0/7 | 0/7 | — | — | — |
+
+**The CVAE is a better model of movement, and not a better model of individuals.**
+
+- **Wins decisively on timing** (R² 0.88 vs 0.60, 0.94 vs 0.75) and on energy
+  distance (8× closer generated distributions). Non-linearity buys most where
+  timing relates non-linearly to shape — which PCA cannot represent.
+- **Wins on curvature for unseen subjects** (+0.38 vs −0.09, above the −0.53
+  floor), the metric proposal §4.3 asks for. Note the ±0.58: with 7 test
+  subjects this is a real effect on a badly underpowered estimate.
+- **Ties on overall behavioural probing.** 5.5 vs 4.3 targets above chance,
+  p = 0.25. But *both* beat the random floor of 0.8/11 (p = 0.004 and 0.006),
+  so both representations carry genuine behavioural signal — they just do not
+  differ from each other.
+- **Loses on fingerprint separation** (0.485 vs 0.530, p = 0.049). Both sit far
+  above random (0.078) yet **below 1**, meaning within-subject scatter still
+  exceeds between-subject differences. 292,920 parameters do not separate
+  individuals better than 174.
+- **Neither achieves generative fidelity**: 0/7 subjects MMD-indistinguishable
+  and ~9.5 of 11 KS features rejected, every seed, both representations.
+
+That the individual-signature failure is identical across two representations
+differing 1,700× in parameter count points at **the data**, not the
+architecture — 28 subjects with within-subject variability dominating. It
+matches Phase 1's near-chance ARI (0.098) independently.
+
+Probing targets are the three named in §4.3 (initiation time, movement time,
+curvature) plus peak speed, time-to-peak, path length and lateral deviation,
+and four **within-subject SD** targets — the only way to test whether the
+variance half of the §3.3 fingerprint carries information.
+
+Not covered: the §4.4 benchmark against Prof. Friedman's submovement
+decomposition pipeline, an external dependency not present in this repository.
+It is reported as missing rather than approximated.
+
+#### Conditioning
+
+The condition vector is concatenated into **both** the encoder input and the
+decoder input. That is what lets the latent model movement *style*: the decoder
+is told the task, so `z` does not need to spend capacity encoding it.
+
+`sp` indexes the starting position (120/140/160 mm) and the target speed range
+(255–300 / 298–350 / 340–400 mm/s) **jointly** — the experiment confounds them
+behind one filename index, so the one-hot over `sp` *is* the (start config,
+target speed) encoding. Separate columns would be exactly collinear with it. The
+randomised within-range speed is not recoverable from filenames and
+`data/stimuli/` is empty in this checkout, so the range index is the finest
+speed information available.
+
+#### KL annealing
+
+β ramps from 0 to `KL_WEIGHT` over `KL_ANNEAL_EPOCHS` (`linear`, the default;
+`cyclical` and `none` also available). Without it the cheapest way to cut the KL
+term early is to ignore `z` altogether, and a decoder that has learned to work
+without the latent gets no gradient pulling it back.
+
+Two consequences are handled explicitly in `train.py`:
+
+- **Model selection cannot use the annealed loss.** While β ramps, val loss
+  rises for reasons unrelated to model quality, so the "best" epoch would always
+  be epoch 1 at β=0. Selection and early stopping run on `val_objective` — the
+  loss recomputed at the *target* β — which is comparable across all epochs.
+- **Early stopping is suppressed until the ramp finishes**, so a run cannot end
+  before it has ever trained at the objective it is judged on.
+
+#### Loss reduction (β actually means β)
+
+`vae_loss` sums each term over its own dimensions and averages over the batch —
+the standard ELBO. Averaging the reconstruction over 300 trajectory dims while
+averaging the KL over `latent_dim` dims inflates the effective β by
+`input_dim / latent_dim` (**100× at z=3**), which crushes the latent regardless
+of training time. Fixing this took held-out reconstruction MSE from 1.81 to
+0.70 and was the single change that made the model competitive.
+
+`TIMING_WEIGHT` defaults to `300 / TIMING_DIM` so a timing channel and a
+trajectory channel carry equal per-dimension weight; unweighted, timing would be
+0.7% of the reconstruction signal.
+
+Gradient clipping (`GRAD_CLIP_NORM = 5.0`) is on by default: a 9.7 s
+segmentation artefact standardises to a z-score of ~25 and produced a 3×10⁵ loss
+spike before clipping.
+
 #### Timing quality control
 
 The task requires ballistic movements under one second, but `find_movement_window`
@@ -240,11 +396,21 @@ no longer be ignored, since a handful of 9 s outliers dominate the timing loss.
 Bounds live in `config.py` (`MIN/MAX_MOVEMENT_TIME_S`, `MAX_INITIATION_TIME_S`).
 
 ### Evaluation
-- Reconstruction MSE (vs spline baseline)
-- Timing reconstruction: MAE / RMSE / R² for movement and initiation time, in ms
-- Latent-kinematics Spearman correlations
-- Behavioral probing R² (Linear Regression + SVR)
-- Generative fidelity (KS test on path length **and** on movement time)
+Implements the proposal's §4 plan; run with `scripts/evaluate_report.py`.
+- **§4.1** Reconstruction MSE vs both spline references
+- **§4.1** Timing reconstruction: MAE / RMSE / R², in ms
+- **§4.2** Latent traversal (figures + per-dimension range, flagging collapse)
+- **§4.2** Latent–kinematics Spearman correlations
+- **§4.3** Behavioural probing R², **leave-one-subject-out** over 11 targets
+  (7 means + 4 within-subject SDs), Linear + SVR
+- **§4.4** Generative fidelity: KS **per feature**, plus MMD and energy distance
+  with permutation p-values
+- **§3.3** Per-subject fingerprints (latent mean *and* spread), with the
+  between/within separation ratio
+
+Probing is scored by LOSO because §4 asks for R² "for unseen subjects". Fitting
+and scoring on the same 7 subjects — the previous behaviour — reported R² ≈ 0.96
+for probes carrying no predictive content.
 
 ## Project Structure
 ```
@@ -252,7 +418,10 @@ Bounds live in `config.py` (`MIN/MAX_MOVEMENT_TIME_S`, `MAX_INITIATION_TIME_S`).
 ├── main.py                # Main pipeline entry point
 ├── requirements.txt       # Python dependencies
 ├── scripts/
-│   └── make_dataset.py    # Raw CSVs → dataset.npz + metadata.csv + splits.json
+│   ├── make_dataset.py            # Raw CSVs → dataset.npz + metadata.csv + splits.json
+│   ├── baseline_report.py         # CVAE vs spline reconstruction, paired across seeds
+│   ├── evaluate_report.py         # The proposal's §4 plan on a trained run
+│   └── compare_representations.py # §4 battery on CVAE vs spline vs random codes
 ├── tests/
 │   └── test_vae_smoke.py  # Model/loss/training-loop tests on dummy data
 ├── src/
