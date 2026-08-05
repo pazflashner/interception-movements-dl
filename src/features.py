@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import numpy as np
 import pandas as pd
+from scipy.signal import find_peaks
 
 import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
@@ -35,6 +36,7 @@ KINEMATIC_FEATURES = [
     "straight_line_dist",
     "curvature_index",
     "max_lateral_deviation",
+    "n_submovements",
     "end_x",
     "end_y",
     "end_z",
@@ -78,6 +80,16 @@ def features_from_arrays(
     else:
         max_lat_dev = 0.0
 
+    # Number of sub-movements = peaks in the speed profile. A single-peak reach
+    # is ballistic; multiple peaks are the "hold-go-hold-go" corrective strategy.
+    # Prominence is relative to the peak so it is scale-free after resampling.
+    smax = float(np.max(speed))
+    if smax > 0:
+        peaks, _ = find_peaks(speed, prominence=0.10 * smax)
+        n_submovements = float(max(len(peaks), 1))
+    else:
+        n_submovements = 1.0
+
     return {
         "initiation_time_s": float(initiation_time_s),
         "movement_time_s": float(movement_time_s),
@@ -87,6 +99,7 @@ def features_from_arrays(
         "straight_line_dist": straight_dist,
         "curvature_index": curvature_index,
         "max_lateral_deviation": max_lat_dev,
+        "n_submovements": n_submovements,
         "end_x": float(end[0]),
         "end_y": float(end[1]),
         "end_z": float(end[2]),

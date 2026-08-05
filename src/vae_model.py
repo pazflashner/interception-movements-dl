@@ -183,6 +183,96 @@ class ConditionalVAE(nn.Module):
         return recon, recon_timing, mu, logvar, z
 
 
+# ── Convolutional variant ────────────────────────────────────────────────────
+class ConvCVAE(nn.Module):
+    """
+    1-D convolutional Conditional VAE — a drop-in alternative to ``ConditionalVAE``
+    with the same ``encode`` / ``decode`` / ``forward`` interface.
+
+    Where the MLP treats the 300 trajectory numbers as an unordered bag, this
+    reads the trajectory as a 3-channel (x, y, z) signal of length 100 and slides
+    convolutions along time, so it respects frame order and shares weights across
+    the movement. Kept selectable (config.ARCHITECTURE) so the MLP stays the
+    default and both can be compared.
+    """
+
+    def __init__(
+        self,
+        input_dim: int = config.NORMALISED_LENGTH * 3,
+        condition_dim: int = CONDITION_DIM,
+        hidden_dim: int = config.HIDDEN_DIM,
+        latent_dim: int = config.DEFAULT_LATENT_DIM,
+        timing_dim: int = TIMING_DIM,
+        seq_len: int = config.NORMALISED_LENGTH,
+        channels: int = 3,
+    ):
+        super().__init__()
+        self.input_dim = input_dim
+        self.latent_dim = latent_dim
+        self.timing_dim = timing_dim
+        self.seq_len = seq_len
+        self.channels = channels
+        self.enc_len = 13  # 100 -> 50 -> 25 -> 13 under three stride-2 convs
+        flat = 128 * self.enc_len
+
+        self.enc_conv = nn.Sequential(
+            nn.Conv1d(channels, 32, 5, stride=2, padding=2), nn.ReLU(),
+            nn.Conv1d(32, 64, 5, stride=2, padding=2), nn.ReLU(),
+            nn.Conv1d(64, 128, 5, stride=2, padding=2), nn.ReLU(),
+        )
+        self.enc_fc = nn.Sequential(
+            nn.Linear(flat + timing_dim + condition_dim, hidden_dim), nn.ReLU()
+        )
+        self.fc_mu = nn.Linear(hidden_dim, latent_dim)
+        self.fc_logvar = nn.Linear(hidden_dim, latent_dim)
+
+        self.dec_fc = nn.Sequential(
+            nn.Linear(latent_dim + condition_dim, hidden_dim), nn.ReLU(),
+            nn.Linear(hidden_dim, flat), nn.ReLU(),
+        )
+        self.dec_conv = nn.Sequential(
+            nn.ConvTranspose1d(128, 64, 5, stride=2, padding=2, output_padding=0), nn.ReLU(),
+            nn.ConvTranspose1d(64, 32, 5, stride=2, padding=2, output_padding=1), nn.ReLU(),
+            nn.ConvTranspose1d(32, channels, 5, stride=2, padding=2, output_padding=1),
+        )
+        self.timing_head = (
+            nn.Sequential(nn.Linear(latent_dim + condition_dim, hidden_dim), nn.ReLU(),
+                          nn.Linear(hidden_dim, timing_dim))
+            if timing_dim else None
+        )
+
+    def encode(self, x, c, timing=None):
+        b = x.size(0)
+        xt = x.view(b, self.seq_len, self.channels).permute(0, 2, 1)  # (b, 3, 100)
+        h = self.enc_conv(xt).reshape(b, -1)
+        parts = [h]
+        if self.timing_dim:
+            if timing is None:
+                raise ValueError("ConvCVAE has timing_dim>0; encode() needs a timing tensor")
+            parts.append(timing)
+        parts.append(c)
+        h = self.enc_fc(torch.cat(parts, dim=-1))
+        return self.fc_mu(h), self.fc_logvar(h)
+
+    def reparameterize(self, mu, logvar):
+        std = torch.exp(0.5 * logvar)
+        return mu + torch.randn_like(std) * std
+
+    def decode(self, z, c):
+        b = z.size(0)
+        h = self.dec_fc(torch.cat([z, c], dim=-1)).view(b, 128, self.enc_len)
+        xt = self.dec_conv(h)                                   # (b, 3, 100)
+        traj = xt.permute(0, 2, 1).reshape(b, self.input_dim)   # (b, 300)
+        timing = self.timing_head(torch.cat([z, c], dim=-1)) if self.timing_head is not None else None
+        return traj, timing
+
+    def forward(self, x, c, timing=None):
+        mu, logvar = self.encode(x, c, timing)
+        z = self.reparameterize(mu, logvar)
+        recon, recon_timing = self.decode(z, c)
+        return recon, recon_timing, mu, logvar, z
+
+
 # ── KL annealing ──────────────────────────────────────────────────────────────
 def kl_weight_at(
     epoch: int,

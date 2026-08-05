@@ -289,6 +289,7 @@ BEHAVIOURAL_TARGETS_MEAN = [
     "time_to_peak_speed",
     "path_length",
     "max_lateral_deviation",
+    "n_submovements",
 ]
 
 #: Within-subject variability of the same quantities: motor control treats a
