@@ -13,6 +13,7 @@ from typing import Optional
 
 import numpy as np
 import pandas as pd
+import scipy.io as sio
 from tqdm import tqdm
 
 import sys, os
@@ -43,6 +44,62 @@ def load_trial_csv(path: Path) -> pd.DataFrame:
     """Load a single trial CSV (9 columns, no header)."""
     df = pd.read_csv(path, header=None, names=config.CSV_COLUMNS)
     return df
+
+
+# ── Trial metadata from the paired trialinfo_*.mat ────────────────────────────
+def _mat_scalar(obj, field: str) -> Optional[float]:
+    """First element of a struct field as float, or None if absent/empty."""
+    try:
+        v = np.array(getattr(obj, field)).flatten()
+        return float(v[0]) if v.size else None
+    except Exception:
+        return None
+
+
+def object_motion_onset_s(
+    dot_array: np.ndarray, stimulus_hz: float = config.STIMULUS_HZ
+) -> Optional[float]:
+    """
+    Seconds from object appearance to the object *starting to move* (the
+    go-signal), from the object trajectory (``dotArray``). The object holds still
+    for a randomised foreperiod, then moves; we return first-moving-frame / rate.
+    """
+    if dot_array is None or dot_array.ndim != 2 or len(dot_array) < 2:
+        return None
+    step = np.linalg.norm(np.diff(dot_array, axis=0), axis=1)
+    moving = np.where(step > 1e-6)[0]
+    return float(moving[0] / stimulus_hz) if moving.size else None
+
+
+def load_trial_metadata(mat_path: Path) -> dict:
+    """
+    Per-trial fields we need from ``trialinfo_*.mat`` (the CSV alone has none of
+    these). Missing / empty fields come back as None:
+
+        responseText / successful  – task outcome label
+        go_signal_s                – object appearance -> object starts moving
+        arrival_s                  – object appearance -> finger interception (pressedTime)
+        arrival_window_end_s       – when the object leaves the centre (success window closes)
+    """
+    try:
+        m = sio.loadmat(mat_path, squeeze_me=True, struct_as_record=False)["thistrial"]
+    except Exception:
+        return {}
+    resp = getattr(m, "responseText", "")
+    successful = _mat_scalar(m, "successful")
+    start_t = _mat_scalar(m, "starttime")
+    pressed_t = _mat_scalar(m, "pressedTime")
+    arrival_s = (pressed_t - start_t) if (pressed_t is not None and start_t is not None) else None
+    tr = getattr(m, "thisresponse", None)
+    afe = _mat_scalar(tr, "arrivalFeedbackEnd") if tr is not None else None
+    go_s = object_motion_onset_s(np.array(getattr(m, "dotArray", [])))
+    return {
+        "responseText": str(resp) if resp is not None else "",
+        "successful": int(successful) if successful is not None else None,
+        "go_signal_s": go_s,
+        "arrival_s": arrival_s,
+        "arrival_window_end_s": afe,
+    }
 
 
 # ── Dataset loader ────────────────────────────────────────────────────────────
@@ -88,11 +145,17 @@ def load_dataset(
             df = load_trial_csv(csv_path)
             # Drop rotation columns
             df = df.drop(columns=["rot1", "rot2", "rot3"])
-            # Attach metadata
+            # Attach filename metadata
             df["subject"] = subject_id
             for k, v in meta.items():
                 if k not in df.columns:
                     df[k] = v if not isinstance(v, tuple) else str(v)
+            # Join the paired .mat: outcome label + event timings (go-signal,
+            # arrival, success-window). "li_2_1_1_1" -> "trialinfo_2_1_1_1.mat".
+            mat_path = csv_path.parent / f"trialinfo_{csv_path.stem[len('li_'):]}.mat"
+            tmeta = load_trial_metadata(mat_path) if mat_path.exists() else {}
+            for k, v in tmeta.items():
+                df[k] = v if v is not None else np.nan
             df["trial_id"] = f"{subject_id}_{csv_path.stem}"
             records.append(df)
 

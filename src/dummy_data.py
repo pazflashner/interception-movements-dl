@@ -59,7 +59,10 @@ def make_dummy_trial(
     # Frame indices consistent with the requested timing, so encode_timing and
     # compute_trial_features recover the values used to build the trial.
     stim_onset = 100
-    move_start = stim_onset + int(round(initiation_time_s * fs))
+    # Go-signal == stimulus onset for synthetic trials (no foreperiod modelled),
+    # so initiation_time_s is recovered as (move_start - go_signal) unchanged.
+    go_signal = stim_onset
+    move_start = go_signal + int(round(initiation_time_s * fs))
     move_end = move_start + int(round(movement_time_s * fs))
     sp = 1 + trial_index % 3
     side = 1 + trial_index % 2
@@ -71,6 +74,7 @@ def make_dummy_trial(
         "vel_norm": vel,
         "speed_norm": speed,
         "stim_onset_idx": stim_onset,
+        "go_signal_idx": go_signal,
         "move_start_idx": move_start,
         "move_end_idx": move_end,
         "metadata": {

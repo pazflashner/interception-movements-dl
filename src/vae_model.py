@@ -89,11 +89,17 @@ def encode_timing(trial: dict, fs: float = config.RECORDING_HZ) -> np.ndarray:
     Derived from the raw-frame indices rather than stored separately, so trial
     dicts cached before the timing head existed still work.
 
-        movement_time_s   : duration of the movement window
-        initiation_time_s : stimulus onset → movement start (reaction time)
+        movement_time_s   : movement onset → finger arrival (movement duration)
+        initiation_time_s : go-signal → movement onset (reaction / wait time)
+
+    Reaction time is measured from the **go-signal** (``go_signal_idx``, the
+    moment the object starts moving), not from object appearance, so the
+    randomised foreperiod does not contaminate it. Falls back to the stimulus
+    marker for trial dicts built before the go-signal was tracked.
     """
+    ref = trial.get("go_signal_idx", trial["stim_onset_idx"])
     move_time = (trial["move_end_idx"] - trial["move_start_idx"]) / fs
-    init_time = (trial["move_start_idx"] - trial["stim_onset_idx"]) / fs
+    init_time = (trial["move_start_idx"] - ref) / fs
     return np.array([move_time, init_time], dtype=np.float32)
 
 

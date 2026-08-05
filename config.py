@@ -39,7 +39,39 @@ SPEED_RANGES = {
 CONDITION_FREE_EYE = 2  # Only analyse condition 2 (free eye movements)
 
 # ── Marker value ──────────────────────────────────────────────────────────────
-STIMULUS_ONSET_MARKER = 5
+STIMULUS_ONSET_MARKER = 5   # marks the frame the object *appears* (always frame 1)
+
+# ── Trial segmentation (event-based, from the .mat metadata) ──────────────────
+# The object appears (marker=5), holds still for a randomised foreperiod
+# (0.18-0.48 s), then starts moving — the "go-signal". The participant may only
+# move once the object moves. We take the go-signal as the behavioural zero-time
+# (reaction/wait time is measured from it), which removes the randomised
+# foreperiod from the trajectories. The recording ends at finger arrival
+# (pressedTime), i.e. at interception. Confirming with Prof. Friedman — see
+# jason_clarifications.md, Q2.
+#
+# Movement ONSET is the first frame after the go-signal whose finger speed
+# exceeds this threshold (position units per second). The movement END is the
+# recorded arrival, NOT a speed threshold, so late sensor jitter can no longer
+# extend the window (the old find_movement_window bug).
+ONSET_SPEED_THRESHOLD = 5.0
+
+# ── Trial filtering (outcome-based, from the .mat responseText/timing) ────────
+# Arrival more than this many seconds past the object's in-centre window is read
+# as disengagement ("gave up / skip to next"), not a real interception attempt,
+# and the trial is dropped. There is no clean gap in the lateness distribution;
+# this is a judgement call being confirmed with Prof. Friedman (Q3). Single knob.
+LATE_ARRIVAL_CUTOFF_S = 1.0
+# A completed trial ends at arrival (< ~2 s). A recording near the 10 s cap means
+# the finger never intercepted (pressedTime empty) — a timeout — and is dropped.
+MAX_TRIAL_DURATION_S = 3.0
+# "Too early" = finger left the start box before the go-signal. Invalid by the
+# task definition (and breaks the "starts at rest at the go-signal" assumption).
+DROP_TOO_EARLY = True
+# The "Not fixating on the dot enough!!!" flag is RETAINED: the hand movement is
+# normal and the flag is suspected spurious in condition 2 (Q1). Set False to
+# drop those trials if Prof. Friedman says the flag is real.
+KEEP_NOT_FIXATING = True
 
 # ── Timing plausibility (quality control) ─────────────────────────────────────
 # The task requires fast ballistic movements under one second, so a segmented

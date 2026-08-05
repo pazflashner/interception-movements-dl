@@ -48,35 +48,30 @@ def find_stimulus_onset(markers: np.ndarray) -> Optional[int]:
     return int(idxs[0]) if len(idxs) > 0 else None
 
 
-def find_movement_window(
+def find_movement_onset(
     pos: np.ndarray,
-    stim_onset_idx: int,
-    vel_threshold: float = 5.0,
+    search_start_idx: int,
+    arrival_idx: int,
+    vel_threshold: float = config.ONSET_SPEED_THRESHOLD,
     fs: float = config.RECORDING_HZ,
-) -> tuple[int, int]:
+) -> int:
     """
-    Determine movement start and end indices based on velocity threshold.
+    First frame at/after the go-signal where finger speed exceeds *vel_threshold*.
 
-    Movement start: first frame after stimulus onset where speed exceeds
-    *vel_threshold* mm/s.
-    Movement end: last frame (after start) where speed exceeds threshold,
-    plus a small buffer.
+    Only the movement ONSET is detected from speed. The movement END is the
+    recorded arrival (``arrival_idx``, passed in from ``pressedTime``/CSV end) —
+    never the last frame above threshold — so an isolated sensor-jitter blip late
+    in a long recording can no longer stretch the window (the old bug that turned
+    a 0.6 s reach into a 9.7 s "movement"). Falls back to the go-signal if the
+    finger never crosses the threshold.
     """
     dt = 1.0 / fs
     vel = np.gradient(pos, dt, axis=0)
     speed = np.linalg.norm(vel, axis=1)
 
-    search_region = speed[stim_onset_idx:]
-    above = np.where(search_region > vel_threshold)[0]
-
-    if len(above) == 0:
-        # Fallback: use entire post-stimulus region
-        return stim_onset_idx, len(speed) - 1
-
-    start = stim_onset_idx + above[0]
-    end = stim_onset_idx + above[-1] + 1
-    end = min(end + int(0.05 * fs), len(speed) - 1)  # 50 ms buffer
-    return int(start), int(end)
+    region = speed[search_start_idx : arrival_idx + 1]
+    above = np.where(region > vel_threshold)[0]
+    return int(search_start_idx + above[0]) if above.size else int(search_start_idx)
 
 
 # ── Temporal normalisation ────────────────────────────────────────────────────
@@ -120,6 +115,11 @@ def compute_speed(vel: np.ndarray) -> np.ndarray:
 
 
 # ── Full single-trial pipeline ───────────────────────────────────────────────
+def _nan(v) -> bool:
+    """True if *v* is None or a NaN float (missing .mat metadata)."""
+    return v is None or (isinstance(v, float) and np.isnan(v))
+
+
 def preprocess_trial(
     df_trial: pd.DataFrame,
     filter_cutoff: float = config.LOWPASS_CUTOFF_HZ,
@@ -127,65 +127,99 @@ def preprocess_trial(
     """
     Run the complete preprocessing pipeline on one trial DataFrame.
 
-    Returns a dict with:
-        - pos_raw: (N, 3) raw positions
-        - pos_filtered: (N, 3) low-pass filtered positions
-        - pos_norm: (T, 3) temporally + spatially normalised trajectory
-        - vel_norm: (T, 3) velocity on normalised trajectory
-        - speed_norm: (T,) speed profile
-        - stim_onset_idx: index of stimulus onset
-        - move_start_idx, move_end_idx: movement window in raw data
-        - metadata: dict of trial-level metadata
+    Segmentation is event-based (see config): the go-signal (object starts
+    moving) is the behavioural zero-time, and the window END is the recorded
+    finger arrival. Invalid trials are dropped and reported by returning a small
+    ``{"valid": False, "drop_reason": ...}`` dict instead of the processed one.
+
+    A kept trial's dict has:
+        - pos_raw / pos_filtered: (N, 3) raw and low-pass-filtered positions
+        - pos_norm: (T, 3) movement (onset->arrival) resampled + origin-aligned
+        - vel_norm / speed_norm: derivatives of pos_norm
+        - stim_onset_idx: object appears (marker == 5)
+        - go_signal_idx:  object starts moving (reaction/wait time is measured
+                          from here, so the randomised foreperiod is removed)
+        - move_start_idx: finger movement onset
+        - move_end_idx:   finger arrival (interception)
+        - metadata: trial-level metadata incl. responseText / successful
     """
+    row0 = df_trial.iloc[0]
+    resp = str(row0.get("responseText", "") or "")
+    go_s = row0.get("go_signal_s", np.nan)
+    arrival_s = row0.get("arrival_s", np.nan)
+    afe = row0.get("arrival_window_end_s", np.nan)
+
+    def drop(reason: str) -> dict:
+        return {"valid": False, "drop_reason": reason,
+                "trial_id": row0.get("trial_id", "")}
+
+    # ── Outcome / timing filters (see config + jason_clarifications.md) ──
+    if config.DROP_TOO_EARLY and resp == "Too early":
+        return drop("too_early")                       # moved before the go-signal
+    if _nan(arrival_s):
+        return drop("timeout_no_arrival")              # finger never intercepted
+    if (not _nan(afe)) and (arrival_s - afe) > config.LATE_ARRIVAL_CUTOFF_S:
+        return drop("too_late")                        # disengaged / skip-to-next
+    if arrival_s > config.MAX_TRIAL_DURATION_S:
+        return drop("timeout_long")                    # backstop when afe missing
+    if (not config.KEEP_NOT_FIXATING) and resp.startswith("Not fixating"):
+        return drop("not_fixating")
+
     pos_raw = df_trial[["x", "y", "z"]].values.astype(float)
     markers = df_trial["marker"].values
 
-    # 1. Stimulus onset
-    stim_idx = find_stimulus_onset(markers)
+    stim_idx = find_stimulus_onset(markers)            # object appears (marker==5)
     if stim_idx is None:
-        return None  # skip trials without stimulus marker
+        return drop("no_stimulus_marker")
 
-    # 2. Low-pass filter
     pos_filtered = lowpass_filter(pos_raw, cutoff=filter_cutoff)
+    n = len(pos_filtered)
 
-    # 3. Movement window
-    move_start, move_end = find_movement_window(pos_filtered, stim_idx)
-    movement = pos_filtered[move_start : move_end + 1]
+    # Go-signal (object starts moving) in finger frames, synced to marker==5.
+    go_idx = stim_idx if _nan(go_s) else stim_idx + int(round(go_s * config.RECORDING_HZ))
+    go_idx = int(min(max(go_idx, 0), n - 1))
 
+    # END = arrival: the recording already stops at interception, so the last
+    # frame is the arrival (timeouts, which run to the 10 s cap, were dropped).
+    arrival_idx = n - 1
+    if arrival_idx - go_idx < 4:
+        return drop("window_too_short")
+
+    move_start = find_movement_onset(pos_filtered, go_idx, arrival_idx)
+    movement = pos_filtered[move_start : arrival_idx + 1]
     if len(movement) < 4:
-        return None  # too short
+        return drop("movement_too_short")
 
-    # 4. Temporal normalisation
+    # Temporal + spatial normalisation of the movement (onset -> arrival).
     pos_norm = normalise_temporal(movement)
-
-    # 5. Spatial normalisation
     pos_norm = normalise_spatial(pos_norm)
 
-    # 6. Velocity on normalised trajectory.
-    # After normalisation the "sampling rate" is T points over the movement, so
-    # this is mm per *normalised frame*, not mm/s — its physical scale depends on
-    # the movement duration, which resampling has removed. move_start_idx /
-    # move_end_idx below are what restore it; see features.compute_trial_features
-    # and vae_model.encode_timing, which are the single source of truth for the
-    # timing channels.
+    # Velocity on the normalised trajectory: mm per *normalised frame*, not mm/s —
+    # its physical scale depends on the movement duration, which resampling
+    # removed. move_start_idx / move_end_idx / go_signal_idx restore it; see
+    # features.compute_trial_features and vae_model.encode_timing, the single
+    # source of truth for the timing channels.
     vel_norm = np.gradient(pos_norm, axis=0)
     speed_norm = np.linalg.norm(vel_norm, axis=1)
 
     meta_cols = [
         "subject", "condition", "sp", "side", "rep",
         "starting_position_mm", "starting_side", "trial_id",
+        "responseText", "successful",
     ]
     metadata = {c: df_trial.iloc[0][c] for c in meta_cols if c in df_trial.columns}
 
     return {
+        "valid": True,
         "pos_raw": pos_raw,
         "pos_filtered": pos_filtered,
         "pos_norm": pos_norm,
         "vel_norm": vel_norm,
         "speed_norm": speed_norm,
         "stim_onset_idx": stim_idx,
+        "go_signal_idx": go_idx,
         "move_start_idx": move_start,
-        "move_end_idx": move_end,
+        "move_end_idx": arrival_idx,
         "metadata": metadata,
     }
 
@@ -193,19 +227,28 @@ def preprocess_trial(
 # ── Batch preprocessing ──────────────────────────────────────────────────────
 def preprocess_dataset(dataset: pd.DataFrame) -> list[dict]:
     """
-    Apply *preprocess_trial* to every trial in the dataset.
-    Returns a list of result dicts (trials that fail preprocessing are skipped).
+    Apply *preprocess_trial* to every trial and return the kept trials, printing
+    a breakdown of why the rest were dropped (too_early / too_late / timeout / …).
     """
+    from collections import Counter
+
     from tqdm import tqdm
 
     results = []
+    reasons: Counter = Counter()
     trial_ids = dataset["trial_id"].unique()
 
     for tid in tqdm(trial_ids, desc="Preprocessing trials"):
         df_trial = dataset[dataset["trial_id"] == tid].sort_values("frame")
         out = preprocess_trial(df_trial)
-        if out is not None:
-            results.append(out)
+        if out is None or not out.get("valid", False):
+            reasons[out["drop_reason"] if out else "none"] += 1
+            continue
+        results.append(out)
 
-    print(f"Successfully preprocessed {len(results)} / {len(trial_ids)} trials.")
+    print(f"Kept {len(results)} / {len(trial_ids)} trials.")
+    if reasons:
+        print("Dropped:")
+        for r, c in reasons.most_common():
+            print(f"  {c:5d}  {r}")
     return results

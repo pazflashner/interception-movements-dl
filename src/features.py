@@ -103,8 +103,11 @@ def compute_trial_features(trial: dict, fs: float = config.RECORDING_HZ) -> dict
     pos = trial["pos_norm"]             # (T, 3)
     meta = trial["metadata"]
 
-    # Timing, in seconds
-    init_time = (trial["move_start_idx"] - trial["stim_onset_idx"]) / fs
+    # Timing, in seconds. Reaction time is measured from the go-signal
+    # (object starts moving), not object appearance, so the randomised
+    # foreperiod is excluded; falls back to the stimulus marker if absent.
+    ref = trial.get("go_signal_idx", trial["stim_onset_idx"])
+    init_time = (trial["move_start_idx"] - ref) / fs
     move_time = (trial["move_end_idx"] - trial["move_start_idx"]) / fs
 
     kin = features_from_arrays(pos, move_time, init_time)
