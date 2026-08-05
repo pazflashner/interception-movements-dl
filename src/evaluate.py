@@ -653,14 +653,18 @@ def run_full_evaluation(
 
     # 7. Generative fidelity
     ks = generative_fidelity_ks(model, test_trials, norm, device=device)
-    print("\nGenerative fidelity (KS test):")
+    print("\nGenerative fidelity (KS test + multivariate distance):")
     for subj, r in ks.items():
-        line = f"  {subj}: path_length KS={r['ks_stat']:.4f}, p={r['ks_pvalue']:.4f}"
-        if "ks_stat_movement_time" in r:
-            line += (
-                f" | movement_time KS={r['ks_stat_movement_time']:.4f}, "
-                f"p={r['ks_pvalue_movement_time']:.4f}"
-            )
+        nan = float("nan")
+        line = f"  {subj}: "
+        if "ks_path_length" in r:
+            line += f"path_length KS={r['ks_path_length']:.3f} (p={r.get('ks_p_path_length', nan):.3f})"
+        if "ks_movement_time_s" in r:
+            line += (f" | movement_time KS={r['ks_movement_time_s']:.3f} "
+                     f"(p={r.get('ks_p_movement_time_s', nan):.3f})")
+        line += (f" | features rejected {r.get('n_features_rejected', 0)}/{r.get('n_features', 0)}"
+                 f" | energy_dist={r.get('energy_distance', nan):.2f}"
+                 f" (p={r.get('energy_pvalue', nan):.3f})")
         print(line)
 
     return {
