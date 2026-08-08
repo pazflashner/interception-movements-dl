@@ -42,6 +42,15 @@ the baseline (all latent sizes, 10 seeds):
 - **Sub-movement count** (hesitation strategy): **no variant's fingerprint
   predicts it** for unseen subjects.
 
+**Loss-function test (Paz's suggestion).** We also checked whether a different
+training loss yields better-separated fingerprints — a β-VAE and a discriminative
+(subject-separating) term. Neither helped on held-out subjects: the discriminative
+loss raised separation on the *training* subjects but did not transfer (held-out
+identification actually dropped) and badly degraded reconstruction and timing. One
+useful by-product: by nearest-fingerprint matching, the **baseline already
+identifies unseen subjects at ~64 % (vs 14 % chance)** — a stronger reading of the
+fingerprint than the regression probing gave.
+
 **The main limitation.** The model is a strong *kinematic / timing* model but does
 **not** produce a sharply separable individual "fingerprint." This holds across
 every latent size *and* every architecture/feature above, and a much larger model
