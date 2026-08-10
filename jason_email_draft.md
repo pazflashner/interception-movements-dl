@@ -23,20 +23,21 @@ arrival**. This also fixed an artefact where late sensor jitter was stretching a
 
 **Key findings** (7 held-out subjects, 10 seeds):
 
-- Predicting movement and reaction time for unseen subjects reaches
-  **R² ≈ 0.99** (saturating around latent size n = 8).
-- Reconstruction improves steadily with n; the latent space is interpretable
-  (its axes track reaction time, movement time, peak speed).
-- We take **n = 3** as the headline fingerprint (visualizable, timing R² ≈ 0.9),
-  with **n = 8** as the accuracy sweet spot.
+- The model **reconstructs** movement and reaction time at **R² ≈ 0.99**
+  (saturating around n = 8). Note: the encoder is *given* the timing, so this is
+  efficient compression, not prediction of timing from trajectory shape.
+- Trajectory reconstruction improves steadily with n; the latent is interpretable
+  (its axes track timing/speed, though partly because timing is fed in).
+- We take **n = 3** as the headline fingerprint (visualizable), **n = 8** as the
+  accuracy sweet spot.
 
 **Model / feature comparison.** We tested the three natural extensions against
 the baseline (all latent sizes, 10 seeds):
 
 - A **1-D convolutional** network (respects the trajectory's time-order):
-  **improves timing prediction** (movement-time R² up 0.03–0.08; reaches ~0.99 by
-  n = 4–8), but does **not** reconstruct better or improve the fingerprint. We
-  adopt it as an optional architecture for the kinematic side.
+  **improves timing reconstruction** (movement-time R² up 0.03–0.08; reaches ~0.99
+  by n = 4–8), but does **not** reconstruct trajectories better or improve the
+  fingerprint. We adopt it as an optional architecture for the kinematic side.
 - **Exact target speed** as a condition: **no measurable effect** (it duplicates
   the speed range already encoded).
 - **Sub-movement count** (hesitation strategy): **no variant's fingerprint
@@ -52,12 +53,13 @@ identifies unseen subjects at ~64 % (vs 14 % chance)** — a stronger reading of
 fingerprint than the regression probing gave.
 
 **The main limitation.** The model is a strong *kinematic / timing* model but does
-**not** produce a sharply separable individual "fingerprint." This holds across
-every latent size *and* every architecture/feature above, and a much larger model
-and a small PCA model plateau at the same separation — so it appears **structural
-to the data** (28 subjects, with within-subject variability larger than the
-between-subject differences), not a modelling failure. More subjects is the one
-lever likely to help. We plan to present it this way.
+**not** yet produce a sharply separable individual "fingerprint." No approach we
+tried — latent size, architecture (MLP/CNN), conditioning, or loss — lifted it. We
+are careful **not** to claim this is proven to be a pure data limitation: the
+per-trial objective with post-hoc averaging, timing dominating the latent,
+unmodelled trial-order effects, and an **untested hierarchical (subject-level) VAE**
+are all candidate causes alongside the 28-subject count. A hierarchical VAE — the
+design that directly targets your goal — is the next step we'd propose.
 
 **A few clarifications we'd value your input on:**
 

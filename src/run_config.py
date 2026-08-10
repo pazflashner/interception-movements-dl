@@ -109,6 +109,7 @@ class RunConfig:
     # Model
     latent_dim: int = config.DEFAULT_LATENT_DIM
     hidden_dim: int = config.HIDDEN_DIM
+    architecture: str = config.ARCHITECTURE   # "mlp" (default) or "cnn"
     # Reconstruct movement/initiation time alongside the trajectory, so the
     # latent keeps the temporal axis that resampling removes.
     predict_timing: bool = config.PREDICT_TIMING

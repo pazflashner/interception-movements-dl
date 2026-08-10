@@ -29,7 +29,7 @@ import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import config
 from src.run_config import RunConfig, make_run_dir, seed_worker, set_seed
-from src.vae_model import ConditionalVAE, TrajectoryDataset, kl_weight_at, vae_loss
+from src.vae_model import ConditionalVAE, ConvCVAE, TrajectoryDataset, kl_weight_at, vae_loss
 
 
 # ── Data splitting ────────────────────────────────────────────────────────────
@@ -166,7 +166,8 @@ def train_vae(
     timing_std = torch.from_numpy(train_ds.timings.std(axis=0) + 1e-8).to(device)
 
     # Model
-    model = ConditionalVAE(
+    ModelClass = ConvCVAE if getattr(cfg, "architecture", "mlp") == "cnn" else ConditionalVAE
+    model = ModelClass(
         latent_dim=cfg.latent_dim,
         hidden_dim=cfg.hidden_dim,
         timing_dim=cfg.timing_dim,

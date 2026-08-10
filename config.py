@@ -94,6 +94,8 @@ N_TEST = 7   # 17 + 4 + 7 = 28 subjects
 LATENT_DIMS_SWEEP = [2, 3, 4, 8, 16]
 DEFAULT_LATENT_DIM = 3
 HIDDEN_DIM = 256
+# Encoder/decoder architecture: "mlp" (default) or "cnn" (1-D convolutional ConvCVAE).
+ARCHITECTURE = "mlp"
 BATCH_SIZE = 64
 LEARNING_RATE = 1e-3
 NUM_EPOCHS = 200
