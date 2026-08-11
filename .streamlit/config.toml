@@ -5,11 +5,5 @@ secondaryBackgroundColor = "#F2F5F7"
 textColor = "#172B3A"
 font = "sans serif"
 
-[theme.sidebar]
-primaryColor = "#167C80"
-backgroundColor = "#F2F5F7"
-secondaryBackgroundColor = "#FFFFFF"
-textColor = "#172B3A"
-
 [browser]
 gatherUsageStats = false

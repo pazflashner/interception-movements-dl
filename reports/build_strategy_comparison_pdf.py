@@ -287,11 +287,23 @@ def build(data: dict, figures: dict[str, Path]) -> None:
     valid = data["sub"][data["sub"].mj_fit_success == True]  # noqa: E712
     counts = valid.mj_n_components.value_counts(normalize=True)
     associations = data["associations"]
-    significant = int(associations.fdr_reject_0_05.sum()) if len(associations) else 0
+    go_n3_associations = associations[
+        (associations.window_mode == "go_to_arrival")
+        & (associations.latent_dim == 3)
+        & (associations.seed == 42)
+    ] if len(associations) else pd.DataFrame()
+    trial_assoc = go_n3_associations[
+        go_n3_associations.level == "trial_within_subject_partial"
+    ] if len(go_n3_associations) else pd.DataFrame()
+    subject_assoc = go_n3_associations[
+        go_n3_associations.level == "subject_context_to_query"
+    ] if len(go_n3_associations) else pd.DataFrame()
 
     go3 = grouped.loc[("go_to_arrival", 3)]
     go8 = grouped.loc[("go_to_arrival", 8)]
     movement8 = grouped.loc[("movement_only", 8)]
+    movement_generation = data["generation"]["movement_only"].set_index("run")
+    strategy_generation = data["generation"]["go_to_arrival"].set_index("run")
     story += [
         Spacer(1, 15 * mm),
         P("Learning Interception-Movement Fingerprints", "title"),
@@ -426,7 +438,11 @@ def build(data: dict, figures: dict[str, Path]) -> None:
     if subject_heatmap.exists():
         story.append(Image(str(subject_heatmap), width=158 * mm, height=90 * mm))
     story += [
-        P(f"Across all models, seeds, levels, and tested targets, {significant} associations survive the specified within-model FDR correction. These are associations, not causal effects. A slider changes a decoder coordinate, but a correlation does not prove that the coordinate is a universal human trait."),
+        P(
+            f"For the pre-specified seed-42 n=3 strategy model, {int(trial_assoc.fdr_reject_0_05.sum())}/24 trial-level and "
+            f"{int(subject_assoc.fdr_reject_0_05.sum())}/24 subject-level coordinate-target associations survive within-model FDR correction. "
+            "The largest trial-level relationships involve initiation and movement time. These are associations, not causal effects; a slider changes a decoder coordinate, but a correlation does not prove that the coordinate is a universal human trait."
+        ),
         PageBreak(),
     ]
 
@@ -438,6 +454,14 @@ def build(data: dict, figures: dict[str, Path]) -> None:
             *[[f"{WINDOW_LABEL[mode]}, n={n}", f"{grouped.loc[(mode, n)].mean_ks:.3f}"] for mode in config.WINDOW_MODES for n in [3, 8]],
         ], [105 * mm, 65 * mm]),
         P("Lower KS indicates closer empirical and generated distributions. These values show partial reproduction rather than equality. The n=3 strategy model is the low-dimensional candidate; n=8 establishes how much fidelity can improve when the bottleneck is relaxed."),
+        report_table([
+            ["Representative seed-42 generation", "Initiation KS", "Component-count JSD"],
+            ["Movement-only, n=3", f"{movement_generation.loc['cvae_movement_only_z3_seed42'].mean_ks_initiation_time_s:.3f}", f"{movement_generation.loc['cvae_movement_only_z3_seed42'].mean_count_jsd:.3f}"],
+            ["Movement-only, n=8", f"{movement_generation.loc['cvae_movement_only_z8_seed42'].mean_ks_initiation_time_s:.3f}", f"{movement_generation.loc['cvae_movement_only_z8_seed42'].mean_count_jsd:.3f}"],
+            ["Strategy window, n=3", f"{strategy_generation.loc['cvae_go_to_arrival_z3_seed42'].mean_ks_initiation_time_s:.3f}", f"{strategy_generation.loc['cvae_go_to_arrival_z3_seed42'].mean_count_jsd:.3f}"],
+            ["Strategy window, n=8", f"{strategy_generation.loc['cvae_go_to_arrival_z8_seed42'].mean_ks_initiation_time_s:.3f}", f"{strategy_generation.loc['cvae_go_to_arrival_z8_seed42'].mean_count_jsd:.3f}"],
+        ], [78 * mm, 46 * mm, 46 * mm]),
+        P("The strategy window is better for initiation-time distributions, while movement-only is better for component-count distributions. This is the expected tradeoff between preserving waiting strategy and focusing model capacity on physical execution."),
         PageBreak(),
     ]
 

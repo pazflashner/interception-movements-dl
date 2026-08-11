@@ -1,16 +1,25 @@
 """Create a self-contained, raw-data-free dashboard bundle for sharing."""
 from __future__ import annotations
 
+from datetime import datetime
 from pathlib import Path
 import shutil
+import sys
 import zipfile
+
+import pandas as pd
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
 
 import config
 
 
-ROOT = Path(__file__).resolve().parents[1]
 SHARE = config.STUDY_ROOT / "output" / "share"
-BUNDLE = SHARE / "Interception_Strategy_Dashboard"
+BUNDLE = SHARE / (
+    "Interception_Strategy_Dashboard_"
+    + datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+)
 
 
 def copy(source: Path, destination: Path) -> None:
@@ -63,14 +72,73 @@ No raw Dropbox trajectories or participant-identifying information are included.
     )
 
 
+def write_compact_results() -> None:
+    out = BUNDLE / "relevant_results"
+    out.mkdir(parents=True, exist_ok=True)
+    copy(
+        config.RESULTS_DIR / "summary" / "model_comparison_by_seed.csv",
+        out / "model_comparison_by_seed.csv",
+    )
+    copy(
+        config.RESULTS_DIR / "latent_associations" / "latent_submovement_associations.csv",
+        out / "latent_submovement_associations.csv",
+    )
+    for window_mode in config.WINDOW_MODES:
+        copy(
+            config.RESULTS_DIR / window_mode / "baselines" / "kmeans_selection_corrected.csv",
+            out / f"{window_mode}_kmeans.csv",
+        )
+        copy(
+            config.RESULTS_DIR / window_mode / "generation" / "generation_summary.csv",
+            out / f"{window_mode}_representative_generation.csv",
+        )
+
+    sub = pd.read_csv(config.RESULTS_DIR / "submovements_real.csv")
+    counts = sub.mj_n_components.value_counts().sort_index().rename_axis(
+        "component_count"
+    ).reset_index(name="n_trials")
+    counts["fraction"] = counts.n_trials / counts.n_trials.sum()
+    counts.to_csv(out / "recorded_submovement_count_summary.csv", index=False)
+    outcomes = sub.groupby(["responseText", "mj_n_components"]).size().rename(
+        "n_trials"
+    ).reset_index()
+    outcomes["within_outcome_fraction"] = outcomes.n_trials / outcomes.groupby(
+        "responseText"
+    ).n_trials.transform("sum")
+    outcomes.to_csv(out / "recorded_submovements_by_outcome.csv", index=False)
+
+
+def write_email_draft() -> None:
+    (SHARE / "EMAIL_DRAFT.txt").write_text(
+        """Subject: Interception movement fingerprints - updated results and dashboard
+
+Hi Jason and Moni,
+
+We are attaching our updated preliminary report and an interactive dashboard for the interception-movement project.
+
+Following Jason's concern about temporal resampling, we tested two matched trajectory definitions on the same condition-2 cohort: finger movement onset to arrival, and target motion onset to arrival. The second definition preserves the participant's waiting interval. In both cases, movement time and initiation time are withheld from the CVAE encoder and predicted separately by the decoder.
+
+The dashboard lets you switch between both temporal definitions, latent widths n=2, 3, 4, and 8, and three training seeds; change the task condition and latent controls; inspect generated trajectory, timing, velocity, and minimum-jerk components; and review held-out distribution and participant-enrollment results.
+
+The main result is a tradeoff rather than one universally best representation. The target-motion window gives substantially better initiation-time prediction and timing-distribution fidelity. The movement-only window better preserves physical execution and submovement-count distributions. n=3 is the smallest stable strategy-inclusive model, while n=8 is the stronger capacity comparison.
+
+The report ends with the assumptions we would especially like Jason to confirm, including the one-second late-arrival threshold and the minimum-jerk component constraints/order rule. All decisions are configurable and rerunnable.
+
+The ZIP contains no raw Dropbox trajectories or MAT files. On Windows, extract it and run setup_and_launch.bat once.
+
+Best,
+Seman and Paz
+""",
+        encoding="utf-8",
+    )
+
+
 def build() -> Path:
     SHARE.mkdir(parents=True, exist_ok=True)
     resolved_share = SHARE.resolve()
     resolved_bundle = BUNDLE.resolve()
     if resolved_share not in resolved_bundle.parents:
         raise RuntimeError("Refusing to rebuild a bundle outside the study share directory")
-    if BUNDLE.exists():
-        shutil.rmtree(BUNDLE)
     BUNDLE.mkdir(parents=True)
 
     copy(ROOT / "config.py", BUNDLE / "config.py")
@@ -108,6 +176,8 @@ def build() -> Path:
     copy(report, study / "output" / "pdf" / report.name)
     copy(report, SHARE / report.name)
     write_text_files()
+    write_compact_results()
+    write_email_draft()
 
     zip_path = SHARE / "Interception_Strategy_Dashboard.zip"
     if zip_path.exists():
