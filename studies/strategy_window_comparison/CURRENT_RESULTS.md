@@ -4,7 +4,7 @@
 
 - Advisor brief: `output/advisor_brief/Interception_Movement_Advisor_Brief.pdf`
 - Sendable review ZIP: `output/advisor_release/Interception_Advisor_Review_Package.zip`
-- Email-sized dashboard: `output/advisor_release/Interception_Strategy_Dashboard_Email.zip`
+- Email-safe dashboard: `output/advisor_release/Interception_Strategy_Dashboard_EmailSafe.zip`
 - Full three-seed dashboard: `output/advisor_release/Interception_Strategy_Dashboard_Full.zip`
 - Email draft: `output/advisor_release/EMAIL_DRAFT.txt`
 - Aggregate model table: `results/summary/model_comparison_by_seed.csv`

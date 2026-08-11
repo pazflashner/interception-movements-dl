@@ -23,6 +23,16 @@ BRIEF = (
     / "advisor_brief"
     / "Interception_Movement_Advisor_Brief.pdf"
 )
+GMAIL_BLOCKED_EXTENSIONS = {
+    ".ade", ".adp", ".apk", ".appx", ".appxbundle", ".bat", ".cab",
+    ".chm", ".cmd", ".com", ".cpl", ".diagcab", ".diagcfg", ".diagpkg",
+    ".dll", ".dmg", ".ex", ".ex_", ".exe", ".hta", ".img", ".ins",
+    ".iso", ".isp", ".jar", ".jnlp", ".js", ".jse", ".lib", ".lnk",
+    ".mde", ".mjs", ".msc", ".msi", ".msix", ".msixbundle", ".msp",
+    ".mst", ".nsh", ".pif", ".ps1", ".scr", ".sct", ".shb", ".sys",
+    ".vb", ".vbe", ".vbs", ".vhd", ".vxd", ".wsc", ".wsf", ".wsh",
+    ".xll",
+}
 
 
 def require(condition: bool, message: str) -> None:
@@ -37,7 +47,9 @@ def only_name(names: list[str], suffix: str) -> str:
     return matches[0]
 
 
-def validate_dashboard(path: Path, expected_seeds: list[int]) -> None:
+def validate_dashboard(
+    path: Path, expected_seeds: list[int], expect_launchers: bool
+) -> None:
     require(path.exists() and path.stat().st_size > 1_000_000, f"{path.name} exists")
     with zipfile.ZipFile(path) as archive:
         names = archive.namelist()
@@ -60,7 +72,20 @@ def validate_dashboard(path: Path, expected_seeds: list[int]) -> None:
         require(len(results) == 24, f"{path.name} retains all repeated-seed metrics")
         only_name(names, "/output/advisor_brief/Interception_Movement_Advisor_Brief.pdf")
         only_name(names, "/src/strategy_dashboard.py")
-        only_name(names, "/setup_and_launch.bat")
+        launchers = [name for name in names if name.endswith("/setup_and_launch.bat")]
+        require(
+            bool(launchers) == expect_launchers,
+            f"{path.name} launcher policy matches its delivery channel",
+        )
+        if not expect_launchers:
+            blocked = [
+                name for name in names
+                if Path(name).suffix.lower() in GMAIL_BLOCKED_EXTENSIONS
+            ]
+            require(
+                not blocked,
+                f"{path.name} contains no Gmail-blocked script types",
+            )
 
 
 def validate_outer_package(path: Path) -> None:
@@ -68,13 +93,20 @@ def validate_outer_package(path: Path) -> None:
     with zipfile.ZipFile(path) as archive:
         names = archive.namelist()
         only_name(names, "/Interception_Movement_Advisor_Brief.pdf")
-        dashboard_name = only_name(names, "/Interception_Strategy_Dashboard_Email.zip")
+        dashboard_name = only_name(
+            names, "/Interception_Strategy_Dashboard_EmailSafe.zip"
+        )
         only_name(names, "/EMAIL_DRAFT.txt")
         only_name(names, "/README_FIRST.txt")
         selected = [name for name in names if "/selected_results/" in name and not name.endswith("/")]
         require(len(selected) == 7, "advisor package contains the seven selected result files")
         with zipfile.ZipFile(io.BytesIO(archive.read(dashboard_name))) as dashboard:
             dashboard_names = dashboard.namelist()
+            blocked = [
+                name for name in dashboard_names
+                if Path(name).suffix.lower() in GMAIL_BLOCKED_EXTENSIONS
+            ]
+            require(not blocked, "nested email dashboard contains no Gmail-blocked file types")
             manifest_name = only_name(dashboard_names, "/results/dashboard/manifest.json")
             manifest = json.loads(dashboard.read(manifest_name).decode("utf-8"))
             require(manifest["model_seeds"] == [42], "nested email dashboard is the compact build")
@@ -97,8 +129,16 @@ def main() -> None:
     ):
         require(heading in full_text, f"advisor brief includes {heading}")
 
-    validate_dashboard(RELEASE / "Interception_Strategy_Dashboard_Email.zip", [42])
-    validate_dashboard(RELEASE / "Interception_Strategy_Dashboard_Full.zip", [42, 43, 44])
+    validate_dashboard(
+        RELEASE / "Interception_Strategy_Dashboard_EmailSafe.zip",
+        [42],
+        expect_launchers=False,
+    )
+    validate_dashboard(
+        RELEASE / "Interception_Strategy_Dashboard_Full.zip",
+        [42, 43, 44],
+        expect_launchers=True,
+    )
     validate_outer_package(RELEASE / "Interception_Advisor_Review_Package.zip")
     print("Advisor release validation completed successfully.")
 

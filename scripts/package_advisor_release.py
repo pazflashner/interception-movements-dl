@@ -22,7 +22,7 @@ BRIEF = (
     / "advisor_brief"
     / "Interception_Movement_Advisor_Brief.pdf"
 )
-EMAIL_DASHBOARD_ZIP = SHARE / "Interception_Strategy_Dashboard_Email.zip"
+EMAIL_DASHBOARD_ZIP = SHARE / "Interception_Strategy_Dashboard_EmailSafe.zip"
 FULL_DASHBOARD_ZIP = SHARE / "Interception_Strategy_Dashboard_Full.zip"
 ADVISOR_PACKAGE_ZIP = SHARE / "Interception_Advisor_Review_Package.zip"
 
@@ -43,7 +43,9 @@ def zip_directory(source: Path, destination: Path, base: Path) -> None:
                 archive.write(path, path.relative_to(base))
 
 
-def dashboard_readme(seeds: list[int], compact: bool) -> str:
+def dashboard_readme(
+    seeds: list[int], compact: bool, include_launchers: bool
+) -> str:
     seed_text = ", ".join(map(str, seeds))
     package_note = (
         "This email-sized build uses seed 42 for live generation. The Model "
@@ -51,12 +53,24 @@ def dashboard_readme(seeds: list[int], compact: bool) -> str:
         if compact
         else "This full build contains live checkpoints for seeds 42, 43, and 44."
     )
-    return f"""INTERCEPTION MOVEMENT STRATEGY DASHBOARD
-
-QUICK START (WINDOWS)
+    quick_start = (
+        """QUICK START (WINDOWS)
 1. Extract this ZIP.
 2. Double-click setup_and_launch.bat on the first run.
-3. Later, double-click launch_dashboard.bat.
+3. Later, double-click launch_dashboard.bat."""
+        if include_launchers
+        else """QUICK START (EMAIL-SAFE PACKAGE)
+1. Extract this ZIP.
+2. Open PowerShell or Command Prompt in the extracted folder.
+3. Run: python -m pip install -r requirements_dashboard.txt
+4. Run: python -m streamlit run src\\strategy_dashboard.py
+
+Windows launch scripts are deliberately omitted because Gmail blocks .bat,
+.cmd, and .ps1 files even when they are inside ZIP archives."""
+    )
+    return f"""INTERCEPTION MOVEMENT STRATEGY DASHBOARD
+
+{quick_start}
 
 WHAT IS INCLUDED
 - One dashboard for both temporal protocols.
@@ -103,7 +117,9 @@ def write_launchers(bundle: Path) -> None:
     )
 
 
-def build_dashboard_bundle(seeds: list[int], zip_path: Path, label: str) -> Path:
+def build_dashboard_bundle(
+    seeds: list[int], zip_path: Path, label: str, include_launchers: bool
+) -> Path:
     stamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
     bundle = STAGING / f"{label}_{stamp}"
     bundle.mkdir(parents=True)
@@ -184,9 +200,15 @@ def build_dashboard_bundle(seeds: list[int], zip_path: Path, label: str) -> Path
         / "advisor_brief"
         / "Interception_Movement_Advisor_Brief.pdf",
     )
-    write_launchers(bundle)
+    if include_launchers:
+        write_launchers(bundle)
     (bundle / "README.txt").write_text(
-        dashboard_readme(seeds, compact=len(seeds) == 1), encoding="utf-8"
+        dashboard_readme(
+            seeds,
+            compact=len(seeds) == 1,
+            include_launchers=include_launchers,
+        ),
+        encoding="utf-8",
     )
 
     zip_directory(bundle, zip_path, STAGING)
@@ -205,11 +227,13 @@ After testing several alternatives, we focused on a conditional VAE and compared
 1. Target motion onset to finger arrival. This preserves the participant's waiting period and therefore includes information about movement-initiation strategy.
 2. Finger movement onset to arrival. This removes the waiting period and dedicates the normalized trajectory to movement execution and correction.
 
-Because the trajectories are resampled to a fixed number of points, physical initiation and movement time are withheld from the encoder and predicted separately by the decoder. The two definitions provide complementary information, so the report presents the strategy-inclusive model as the primary analysis and the movement-only model as an execution-focused comparison.
+Because the trajectories are resampled to a fixed number of points, initiation and movement time are withheld from the encoder and predicted separately by the decoder. The two definitions provide complementary information, so the report presents the strategy-inclusive model as the primary analysis and the movement-only model as an execution-focused comparison.
 
-The attached PDF briefly explains the methods, held-out results, latent-variable heatmaps, minimum-jerk submovement analysis, and the assumptions we made while preparing the study.
+The attached PDF summarizes the methods, held-out results, latent-variable heatmaps, minimum-jerk submovement analysis, and the assumptions we made while preparing the study. The appendix includes representative held-out trajectory reconstructions, fingerprint-conditioned generated trajectories, and recorded-versus-generated submovement examples.
 
-One assumption particularly needs Jason's input. Some condition-2 trials contain the MAT response "Not fixating on the dot enough!!!", even though condition 2 allows free eye movements. We retained these trials provisionally. Could you please confirm whether this message is a technical or irrelevant flag in condition 2, or whether those trials should be excluded?
+An important limitation of the current results is that all models use one fixed 17/4/7 participant split. Seeds 42, 43, and 44 vary network initialization and training randomness only. Therefore, the reported variation reflects optimization stability rather than uncertainty across alternative participant cohorts. With seven held-out participants, cross-cohort generalization uncertainty is not estimated by the current analysis. Once the methodological assumptions and model scope are confirmed, we plan to repeat the evaluation across participant-level splits.
+
+One assumption particularly needs Jason's input. Some condition-2 trials contain the MAT response "Not fixating on the dot enough!!!", even though condition 2 allows free eye movements. We retained these trials provisionally. Could you please confirm whether this message is a technical or irrelevant flag in condition 2, or whether those trials should be excluded? The final section of the PDF lists several additional task-specific assumptions on which your input would also be helpful.
 
 We also attached one interactive dashboard covering both temporal definitions and latent dimensions n=2, 3, 4, and 8. It allows the task conditions and latent values to be changed and shows the resulting trajectory, timing, speed, submovement decomposition, held-out validation, and latent associations. The attached compact version uses seed 42 for live generation, while its comparison tab reports the repeated-seed results. Instructions are included in the ZIP.
 
@@ -228,7 +252,7 @@ def release_readme() -> str:
 RECOMMENDED EMAIL ATTACHMENTS
 1. Interception_Movement_Advisor_Brief.pdf: attach directly so it
    can be previewed without extracting an archive.
-2. Interception_Strategy_Dashboard_Email.zip: compact interactive
+2. Interception_Strategy_Dashboard_EmailSafe.zip: compact interactive
    dashboard with both protocols and n=2/3/4/8.
 
 SINGLE-ARCHIVE ALTERNATIVE
@@ -240,7 +264,7 @@ OPTIONAL FULL DASHBOARD
   n=2/3/4/8, and live checkpoints for seeds 42/43/44.
 
 STANDALONE COMPACT DASHBOARD
-- Interception_Strategy_Dashboard_Email.zip (11.1 MB): both temporal protocols
+- Interception_Strategy_Dashboard_EmailSafe.zip: both temporal protocols
   and n=2/3/4/8, with seed 42 for live generation and all-seed comparison tables.
 
 There is one dashboard interface, not one dashboard per temporal protocol.
@@ -290,7 +314,7 @@ def build_outer_package() -> Path:
 1. Interception_Movement_Advisor_Brief.pdf
    Eight-page main story followed by a complete technical appendix.
 
-2. Interception_Strategy_Dashboard_Email.zip
+2. Interception_Strategy_Dashboard_EmailSafe.zip
    One dashboard for both temporal protocols and n=2/3/4/8. The compact build
    uses seed 42 for live generation and retains all-seed aggregate comparisons.
 
@@ -319,10 +343,16 @@ def main() -> None:
             f"Build the advisor brief before packaging: {BRIEF}"
         )
     build_dashboard_bundle(
-        [42], EMAIL_DASHBOARD_ZIP, "Interception_Strategy_Dashboard_Email"
+        [42],
+        EMAIL_DASHBOARD_ZIP,
+        "Interception_Strategy_Dashboard_EmailSafe",
+        include_launchers=False,
     )
     build_dashboard_bundle(
-        [42, 43, 44], FULL_DASHBOARD_ZIP, "Interception_Strategy_Dashboard_Full"
+        [42, 43, 44],
+        FULL_DASHBOARD_ZIP,
+        "Interception_Strategy_Dashboard_Full",
+        include_launchers=True,
     )
     package = build_outer_package()
     copy(BRIEF, SHARE / BRIEF.name)
