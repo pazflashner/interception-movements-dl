@@ -18,6 +18,20 @@ output/pdf/rendered/
 .tmp/
 external/jason-submovements/
 
+# Local snapshot of the superseded movement-onset study. The snapshot remains
+# on disk for context and is recoverable from Git commit b2cfcd6, but current
+# code and reports must never consume it.
+archive/movement_only_2026-08-10/*
+!archive/movement_only_2026-08-10/README.md
+
+# Current study artifacts are reproducible and can be large. Protocols,
+# summaries, and source code remain tracked; caches/checkpoints/exports do not.
+studies/*/data/*.pkl
+studies/*/data/**/*.pkl
+studies/*/results/
+studies/*/output/
+studies/*/data_audit/*.csv
+
 # Office lock files (created while a .docx/.xlsx is open)
 ~$*
 
