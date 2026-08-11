@@ -260,8 +260,24 @@ def styles() -> dict[str, ParagraphStyle]:
 
 
 def report_table(rows: list[list[object]], widths: list[float], font: float = 8) -> Table:
-    cell_style = ParagraphStyle("cell", fontName="Helvetica", fontSize=font, leading=font + 2)
-    wrapped = [[cell if isinstance(cell, Paragraph) else Paragraph(str(cell), cell_style) for cell in row] for row in rows]
+    cell_style = ParagraphStyle(
+        "cell", fontName="Helvetica", fontSize=font, leading=font + 2, textColor=TEXT
+    )
+    header_style = ParagraphStyle(
+        "cell_header",
+        parent=cell_style,
+        fontName="Helvetica-Bold",
+        textColor=colors.white,
+    )
+    wrapped = [
+        [
+            cell
+            if isinstance(cell, Paragraph)
+            else Paragraph(str(cell), header_style if row_index == 0 else cell_style)
+            for cell in row
+        ]
+        for row_index, row in enumerate(rows)
+    ]
     table = Table(wrapped, colWidths=widths, repeatRows=1)
     table.setStyle(TableStyle([
         ("BACKGROUND", (0, 0), (-1, 0), NAVY),

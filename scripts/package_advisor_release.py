@@ -194,30 +194,45 @@ def build_dashboard_bundle(seeds: list[int], zip_path: Path, label: str) -> Path
 
 
 def email_text() -> str:
-    return """Subject: Interception-movement CVAE - updated analysis and dashboard
+    return """Subject: Interception-movement project - progress update and dashboard
 
-Hi Jason and Moni,
+Dear Jason and Moni,
 
-Following the project proposal, we implemented and compared two matched CVAE analyses on the same condition-2 trials: movement onset to arrival, and target motion onset to arrival. The second representation preserves the participant's waiting interval. In both analyses, physical initiation and movement time are withheld from the encoder and predicted separately by the decoder.
+We apologize for the two-month delay. We had to focus on obligations in other courses, but during the past two weeks Paz and I have returned to the project and made substantial progress. We are happy to share our current analysis and dashboard with you.
 
-The attached brief summarizes what we did, the held-out results, latent/submovement associations, and the assumptions we made while preparing the analysis. The main current recommendation is the target-motion-onset to arrival model with n=3 as the low-dimensional strategy representation, with n=8 as a capacity comparison. The movement-only model remains an execution-focused control.
+After testing several alternatives, we focused on a conditional VAE and compared two matched temporal definitions on the same condition-2 trials:
 
-We also included one interactive dashboard that contains both temporal protocols and n=2, 3, 4, and 8. The email-sized version uses seed 42 for live generation, while its comparison tab reports all three repeated seeds. The full three-seed dashboard is available separately if useful.
+1. Target motion onset to finger arrival. This preserves the participant's waiting period and therefore includes information about movement-initiation strategy.
+2. Finger movement onset to arrival. This removes the waiting period and dedicates the normalized trajectory to movement execution and correction.
 
-At this stage, we would especially appreciate your comments on our overall approach, evaluation design, interpretation, and the assumptions listed at the end of the brief. Jason's input on the task events and submovement settings would help us determine whether any preprocessing stage should be adjusted and rerun.
+Because the trajectories are resampled to a fixed number of points, physical initiation and movement time are withheld from the encoder and predicted separately by the decoder. The two definitions provide complementary information, so the report presents the strategy-inclusive model as the primary analysis and the movement-only model as an execution-focused comparison.
 
-To use the dashboard on Windows: extract the dashboard ZIP and run setup_and_launch.bat once. The package contains no raw trajectory or MAT files.
+The attached PDF briefly explains the methods, held-out results, latent-variable heatmaps, minimum-jerk submovement analysis, and the assumptions we made while preparing the study.
+
+One assumption particularly needs Jason's input. Some condition-2 trials contain the MAT response "Not fixating on the dot enough!!!", even though condition 2 allows free eye movements. We retained these trials provisionally. Could you please confirm whether this message is a technical or irrelevant flag in condition 2, or whether those trials should be excluded?
+
+We also attached one interactive dashboard covering both temporal definitions and latent dimensions n=2, 3, 4, and 8. It allows the task conditions and latent values to be changed and shows the resulting trajectory, timing, speed, submovement decomposition, held-out validation, and latent associations. The attached compact version uses seed 42 for live generation, while its comparison tab reports the repeated-seed results. Instructions are included in the ZIP.
+
+We would appreciate any comments on the approach, evaluation design, interpretations, and assumptions listed at the end of the PDF. After your review, we can make the necessary adjustments and rerun the affected stages. The code is modular, so most technical or preprocessing changes can be reproduced without rebuilding the project manually.
+
+Thank you for your time and guidance. We look forward to your feedback.
 
 Best,
-Seman and Paz
+Simaan and Paz
 """
 
 
 def release_readme() -> str:
     return """ADVISOR RELEASE FILES
 
-SEND THIS
-- Interception_Advisor_Review_Package.zip (13.9 MB): advisor brief, compact
+RECOMMENDED EMAIL ATTACHMENTS
+1. Interception_Movement_Advisor_Brief.pdf (about 3 MB): attach directly so it
+   can be previewed without extracting an archive.
+2. Interception_Strategy_Dashboard_Email.zip (about 11 MB): compact interactive
+   dashboard with both protocols and n=2/3/4/8.
+
+SINGLE-ARCHIVE ALTERNATIVE
+- Interception_Advisor_Review_Package.zip (about 14 MB): advisor brief, compact
   dashboard, email draft, and selected machine-readable result tables.
 
 OPTIONAL FULL DASHBOARD
@@ -310,6 +325,7 @@ def main() -> None:
         [42, 43, 44], FULL_DASHBOARD_ZIP, "Interception_Strategy_Dashboard_Full"
     )
     package = build_outer_package()
+    copy(BRIEF, SHARE / BRIEF.name)
     (SHARE / "EMAIL_DRAFT.txt").write_text(email_text(), encoding="utf-8")
     (SHARE / "README.txt").write_text(release_readme(), encoding="utf-8")
     print(f"Advisor package: {package}")
