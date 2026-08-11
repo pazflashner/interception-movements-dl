@@ -2,11 +2,18 @@
 
 ## Release artifacts
 
-- PDF: `output/pdf/Interception_Strategy_Window_Comparison.pdf`
-- Interactive dashboard bundle: `output/share/Interception_Strategy_Dashboard.zip`
-- Email draft: `output/share/EMAIL_DRAFT.txt`
+- Advisor brief: `output/advisor_brief/Interception_Movement_Advisor_Brief.pdf`
+- Sendable review ZIP: `output/advisor_release/Interception_Advisor_Review_Package.zip`
+- Email-sized dashboard: `output/advisor_release/Interception_Strategy_Dashboard_Email.zip`
+- Full three-seed dashboard: `output/advisor_release/Interception_Strategy_Dashboard_Full.zip`
+- Email draft: `output/advisor_release/EMAIL_DRAFT.txt`
 - Aggregate model table: `results/summary/model_comparison_by_seed.csv`
 - Latent association table: `results/latent_associations/latent_submovement_associations.csv`
+
+There is one dashboard interface for both temporal protocols. It exposes
+`n=2/3/4/8`; the email build uses seed 42 for live generation while retaining
+all-seed comparison tables, and the full build contains live checkpoints for
+seeds 42/43/44.
 
 Generated outputs are ignored by Git because they are reproducible from the
 tracked code and the local data. The study logic and report/dashboard builders

@@ -16,6 +16,7 @@ results/
 output/pdf/figures/
 output/pdf/rendered/
 .tmp/
+tmp/
 external/jason-submovements/
 
 # Local snapshot of the superseded movement-onset study. The snapshot remains

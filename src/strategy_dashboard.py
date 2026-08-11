@@ -24,7 +24,7 @@ from src.vae_model import ConditionalVAE, NormStats, encode_trial_condition
 
 RESULTS = config.RESULTS_DIR
 ASSETS = RESULTS / "dashboard"
-REPORT = config.STUDY_ROOT / "output" / "pdf" / "Interception_Strategy_Window_Comparison.pdf"
+REPORT = config.STUDY_ROOT / "output" / "advisor_brief" / "Interception_Movement_Advisor_Brief.pdf"
 COLORS = {"movement_only": "#2563EB", "go_to_arrival": "#DC2626"}
 OUTPUTS = {
     "Movement time": "movement_time_s",
@@ -421,8 +421,11 @@ def main() -> None:
         list(config.WINDOW_MODES),
         format_func=lambda value: "Movement onset -> arrival" if value == config.WINDOW_MOVEMENT_ONLY else "Target motion onset -> arrival",
     )
-    latent_dim = int(st.sidebar.segmented_control("Latent dimensions", [2, 3, 4, 8], default=3) or 3)
-    seed = int(st.sidebar.selectbox("Training seed", [42, 43, 44]))
+    latent_dimensions = [int(value) for value in manifest["latent_dimensions"]]
+    model_seeds = [int(value) for value in manifest["model_seeds"]]
+    default_dim = 3 if 3 in latent_dimensions else latent_dimensions[0]
+    latent_dim = int(st.sidebar.segmented_control("Latent dimensions", latent_dimensions, default=default_dim) or default_dim)
+    seed = int(st.sidebar.selectbox("Training seed", model_seeds))
     name = run_name(window_mode, latent_dim, seed)
     model, norm = load_model(window_mode, name)
 
