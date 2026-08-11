@@ -28,6 +28,10 @@ archive/movement_only_2026-08-10/*
 # summaries, and source code remain tracked; caches/checkpoints/exports do not.
 studies/*/data/*.pkl
 studies/*/data/**/*.pkl
+studies/*/data/*.csv
+studies/*/data/**/*.csv
+studies/*/data/*.json
+studies/*/data/**/*.json
 studies/*/results/
 studies/*/output/
 studies/*/data_audit/*.csv

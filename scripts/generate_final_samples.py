@@ -149,6 +149,14 @@ def main():
     parser.add_argument("--window-mode", choices=config.WINDOW_MODES, required=True)
     parser.add_argument("--samples-per-subject", type=int, default=60)
     parser.add_argument("--jobs", type=int, default=min(8, os.cpu_count() or 1))
+    parser.add_argument(
+        "--dims", type=int, nargs="+", default=None,
+        help="Optional latent dimensions to include (for example: --dims 3 8).",
+    )
+    parser.add_argument(
+        "--seeds", type=int, nargs="+", default=None,
+        help="Optional training seeds to include (for example: --seeds 42).",
+    )
     parser.add_argument("--recompute-fidelity", action="store_true")
     args = parser.parse_args()
 
@@ -173,6 +181,12 @@ def main():
     for run in sorted(Path(args.models).glob("cvae_*_z*_seed*")):
         if not (run / "checkpoint.pt").exists():
             continue
+        run_dim = int(run.name.split("_z", 1)[1].split("_seed", 1)[0])
+        run_seed = int(run.name.rsplit("seed", 1)[1])
+        if args.dims is not None and run_dim not in args.dims:
+            continue
+        if args.seeds is not None and run_seed not in args.seeds:
+            continue
         generated_path = out / f"{run.name}_generated.csv"
         fidelity_path = out / f"{run.name}_fidelity.csv"
         if generated_path.exists():
@@ -182,7 +196,7 @@ def main():
             shared_covariance = training_latent_noise_covariance(model, train_trials, norm, device)
             items = generate_run(
                 model, norm, test_trials, args.samples_per_subject, device,
-                int(run.name.rsplit("seed", 1)[1]), run.name, shared_covariance,
+                run_seed, run.name, shared_covariance,
             )
             with ProcessPoolExecutor(max_workers=args.jobs) as pool:
                 rows = list(pool.map(fit_generated, items, repeat(cfg)))
@@ -213,6 +227,8 @@ def main():
         "count_metrics": ["total variation", "Jensen-Shannon divergence"],
         "submovement_restarts_generated": cfg.restarts,
         "window_mode": args.window_mode,
+        "latent_dimensions": args.dims,
+        "training_seeds": args.seeds,
     }
     (out / "protocol.json").write_text(json.dumps(protocol, indent=2), encoding="utf-8")
 
