@@ -83,9 +83,19 @@ def validate_outer_package(path: Path) -> None:
 def main() -> None:
     require(BRIEF.exists() and BRIEF.stat().st_size > 100_000, "advisor brief exists and is nontrivial")
     reader = PdfReader(BRIEF)
-    require(len(reader.pages) == 18, "advisor brief has eight main pages and ten appendix pages")
+    require(
+        len(reader.pages) == 21,
+        "advisor brief has eight main pages, an appendix cover, and twelve appendix pages",
+    )
     first_text = reader.pages[0].extract_text() or ""
     require("Interception-Movement Fingerprints" in first_text, "advisor brief title is readable")
+    full_text = "\n".join((page.extract_text() or "") for page in reader.pages)
+    for heading in (
+        "A4. Held-out posterior trajectory reconstruction",
+        "A5. Fingerprint-conditioned held-out generation",
+        "A6. Minimum-jerk analysis after generation",
+    ):
+        require(heading in full_text, f"advisor brief includes {heading}")
 
     validate_dashboard(RELEASE / "Interception_Strategy_Dashboard_Email.zip", [42])
     validate_dashboard(RELEASE / "Interception_Strategy_Dashboard_Full.zip", [42, 43, 44])

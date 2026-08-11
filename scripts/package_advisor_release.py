@@ -226,17 +226,17 @@ def release_readme() -> str:
     return """ADVISOR RELEASE FILES
 
 RECOMMENDED EMAIL ATTACHMENTS
-1. Interception_Movement_Advisor_Brief.pdf (about 3 MB): attach directly so it
+1. Interception_Movement_Advisor_Brief.pdf: attach directly so it
    can be previewed without extracting an archive.
-2. Interception_Strategy_Dashboard_Email.zip (about 11 MB): compact interactive
+2. Interception_Strategy_Dashboard_Email.zip: compact interactive
    dashboard with both protocols and n=2/3/4/8.
 
 SINGLE-ARCHIVE ALTERNATIVE
-- Interception_Advisor_Review_Package.zip (about 14 MB): advisor brief, compact
+- Interception_Advisor_Review_Package.zip: advisor brief, compact
   dashboard, email draft, and selected machine-readable result tables.
 
 OPTIONAL FULL DASHBOARD
-- Interception_Strategy_Dashboard_Full.zip (24.8 MB): both temporal protocols,
+- Interception_Strategy_Dashboard_Full.zip: both temporal protocols,
   n=2/3/4/8, and live checkpoints for seeds 42/43/44.
 
 STANDALONE COMPACT DASHBOARD
