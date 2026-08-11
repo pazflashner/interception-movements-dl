@@ -22,10 +22,14 @@ sys.path.insert(0, str(ROOT))
 from scripts.run_corrected_study import load_per_trial_checkpoint, training_latent_noise_covariance
 from src.context_query import benjamini_hochberg, moment_matched_posterior, split_context_query
 from src.evaluate import encode_trials
-from src.features import compute_trial_features, features_from_arrays
+from src.features import (
+    compute_trial_features,
+    features_from_generated_window,
+    movement_from_generated_window,
+)
 from src.submovements import SubmovementConfig, decompose_normalized_trajectory
 from src.train import split_subjects
-from src.trajectory_view import project_trials_to_table_plane
+from src.trajectory_view import project_trials_to_table_plane, select_trials_window
 from src.vae_model import encode_trial_condition
 import config
 
@@ -41,8 +45,14 @@ CONTINUOUS_FEATURES = [
 def fit_generated(item, cfg):
     row, trajectory = item
     try:
+        movement = movement_from_generated_window(
+            trajectory,
+            row["movement_time_s"],
+            row["initiation_time_s"],
+            row["window_mode"],
+        )
         result = decompose_normalized_trajectory(
-            trajectory, row["movement_time_s"], cfg,
+            movement, row["movement_time_s"], cfg,
             f"{row['run']}-{row['subject']}-{row['sample_id']}",
         )
         row.update(result.summary())
@@ -77,13 +87,17 @@ def generate_run(model, norm, test_trials, n_per_subject, device, seed, run_name
         for i in range(n_per_subject):
             move_time = max(float(timing[i, 0]), 1e-3)
             init_time = max(float(timing[i, 1]), 0.0)
-            basic = features_from_arrays(trajectories[i], move_time, init_time)
+            window_mode = query[chosen[i]].get("window_mode", config.WINDOW_MOVEMENT_ONLY)
+            basic = features_from_generated_window(
+                trajectories[i], move_time, init_time, window_mode
+            )
             row = {
                 "run": run_name,
                 "subject": split.subject,
                 "sample_id": i,
                 "sp": int(query[chosen[i]]["metadata"]["sp"]),
                 "side": int(query[chosen[i]]["metadata"]["side"]),
+                "window_mode": window_mode,
                 **basic,
             }
             items.append((row, trajectories[i]))
@@ -128,10 +142,11 @@ def evaluate_run(generated, empirical, test_trials):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--trials", default=str(ROOT / "data" / "final_study" / "trials.pkl"))
-    parser.add_argument("--submovements", default=str(ROOT / "results" / "final_study" / "submovements_real.csv"))
-    parser.add_argument("--models", default=str(ROOT / "results" / "final_study" / "core_models"))
-    parser.add_argument("--out", default=str(ROOT / "results" / "final_study" / "generation"))
+    parser.add_argument("--trials", default=str(config.DATA_PROCESSED_DIR / "canonical_trials.pkl"))
+    parser.add_argument("--submovements", default=str(config.RESULTS_DIR / "submovements_real.csv"))
+    parser.add_argument("--models", required=True)
+    parser.add_argument("--out", required=True)
+    parser.add_argument("--window-mode", choices=config.WINDOW_MODES, required=True)
     parser.add_argument("--samples-per-subject", type=int, default=60)
     parser.add_argument("--jobs", type=int, default=min(8, os.cpu_count() or 1))
     parser.add_argument("--recompute-fidelity", action="store_true")
@@ -140,7 +155,7 @@ def main():
     out = Path(args.out); out.mkdir(parents=True, exist_ok=True)
     with open(args.trials, "rb") as handle:
         trials = pickle.load(handle)
-    trials = project_trials_to_table_plane(trials)
+    trials = project_trials_to_table_plane(select_trials_window(trials, args.window_mode))
     train_trials, _, test_trials = split_subjects(trials, 17, 4, 7, 42)
     empirical = pd.read_csv(args.submovements)
     empirical = empirical[empirical.mj_fit_success == True].copy()
@@ -155,7 +170,7 @@ def main():
     cfg = SubmovementConfig(restarts=1, max_nfev=300)
     summaries = []
 
-    for run in sorted(Path(args.models).glob("trajectory_only_z*_seed*")):
+    for run in sorted(Path(args.models).glob("cvae_*_z*_seed*")):
         if not (run / "checkpoint.pt").exists():
             continue
         generated_path = out / f"{run.name}_generated.csv"
@@ -197,6 +212,7 @@ def main():
         "continuous_metrics": ["KS statistic", "Wasserstein distance"],
         "count_metrics": ["total variation", "Jensen-Shannon divergence"],
         "submovement_restarts_generated": cfg.restarts,
+        "window_mode": args.window_mode,
     }
     (out / "protocol.json").write_text(json.dumps(protocol, indent=2), encoding="utf-8")
 

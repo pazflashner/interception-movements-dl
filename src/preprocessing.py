@@ -161,7 +161,7 @@ def compute_speed(vel: np.ndarray) -> np.ndarray:
 # ── Full single-trial pipeline ───────────────────────────────────────────────
 def _nan(v) -> bool:
     """True if *v* is None or a NaN float (missing .mat metadata)."""
-    return v is None or (isinstance(v, float) and np.isnan(v))
+    return v is None or bool(pd.isna(v))
 
 
 def preprocess_trial(
@@ -199,7 +199,7 @@ def preprocess_trial(
 
     # ── Outcome / timing filters (see config + jason_clarifications.md) ──
     if config.DROP_TOO_EARLY and resp == "Too early":
-        return drop("too_early")                       # moved before the go-signal
+        return drop("too_early_label")
     if _nan(arrival_s):
         return drop("timeout_no_arrival")              # finger never intercepted
     if (not _nan(afe)) and (arrival_s - afe) > config.LATE_ARRIVAL_CUTOFF_S:
@@ -233,12 +233,16 @@ def preprocess_trial(
 
     move_start = find_movement_onset(pos_filtered, go_idx, arrival_idx)
     movement = pos_filtered[move_start : arrival_idx + 1]
+    go_to_arrival = pos_filtered[go_idx : arrival_idx + 1]
     if len(movement) < 4:
         return drop("movement_too_short")
 
-    # Temporal + spatial normalisation of the movement (onset -> arrival).
-    pos_norm = normalise_temporal(movement)
-    pos_norm = normalise_spatial(pos_norm)
+    # Store both pre-specified representations in one canonical trial cache.
+    # ``pos_norm`` remains the movement-only view for backward compatibility;
+    # callers select the comparison view explicitly via trajectory_view.py.
+    pos_movement_norm = normalise_spatial(normalise_temporal(movement))
+    pos_go_to_arrival_norm = normalise_spatial(normalise_temporal(go_to_arrival))
+    pos_norm = pos_movement_norm
 
     # Velocity on the normalised trajectory: mm per *normalised frame*, not mm/s —
     # its physical scale depends on the movement duration, which resampling
@@ -251,7 +255,9 @@ def preprocess_trial(
     meta_cols = [
         "subject", "condition", "sp", "side", "rep",
         "starting_position_mm", "starting_side", "trial_id",
-        "responseText", "successful",
+        "responseText", "successful", "go_signal_s", "arrival_s",
+        "arrival_window_end_s", "target_speed_screen_s",
+        "target_motion_onset_s", "stimulus_name",
     ]
     metadata = {c: df_trial.iloc[0][c] for c in meta_cols if c in df_trial.columns}
 
@@ -260,12 +266,16 @@ def preprocess_trial(
         "pos_raw": pos_raw,
         "pos_filtered": pos_filtered,
         "pos_norm": pos_norm,
+        "pos_movement_norm": pos_movement_norm,
+        "pos_go_to_arrival_norm": pos_go_to_arrival_norm,
         "vel_norm": vel_norm,
         "speed_norm": speed_norm,
         "stim_onset_idx": stim_idx,
         "go_signal_idx": go_idx,
         "move_start_idx": move_start,
         "move_end_idx": arrival_idx,
+        "segment_start_idx": move_start,
+        "window_mode": config.WINDOW_MOVEMENT_ONLY,
         "frame_values": frame_values,
         "frame_quality": frame_quality,
         "position_unit": config.POSITION_UNIT,
@@ -274,7 +284,7 @@ def preprocess_trial(
 
 
 # ── Batch preprocessing ──────────────────────────────────────────────────────
-def preprocess_dataset(dataset: pd.DataFrame) -> list[dict]:
+def preprocess_dataset(dataset: pd.DataFrame, return_audit: bool = False):
     """
     Apply *preprocess_trial* to every trial and return the kept trials, printing
     a breakdown of why the rest were dropped (too_early / too_late / timeout / …).
@@ -300,4 +310,6 @@ def preprocess_dataset(dataset: pd.DataFrame) -> list[dict]:
         print("Dropped:")
         for r, c in reasons.most_common():
             print(f"  {c:5d}  {r}")
+    if return_audit:
+        return results, dict(reasons)
     return results

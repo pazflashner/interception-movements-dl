@@ -34,7 +34,13 @@ from src.context_query import (
     tune_and_test_ridge,
 )
 from src.evaluate import encode_trials, reconstruct
-from src.features import KINEMATIC_FEATURES, compute_trial_features, features_from_arrays
+from src.features import (
+    KINEMATIC_FEATURES,
+    compute_trial_features,
+    features_from_arrays,
+    features_from_generated_window,
+    movement_from_generated_window,
+)
 from src.hierarchical_vae import HierarchicalCVAE, HierarchicalNorm, train_hierarchical
 from src.run_config import RunConfig, set_seed
 from src.train import split_subjects, train_vae
@@ -113,7 +119,29 @@ def fingerprint_tables(model, split_trials, norm, device, cq_seed, include_std=F
 
 def evaluate_timing_and_reconstruction(model, trials, norm, device):
     recon, truth, predicted_timing, true_timing = reconstruct(model, trials, norm, device)
-    row = {"reconstruction_mse_tracker_units2": float(np.mean((recon - truth) ** 2))}
+    window_mse = float(np.mean((recon - truth) ** 2))
+    window_mode = trials[0].get("window_mode", config.WINDOW_MOVEMENT_ONLY)
+    channels = recon.shape[1] // config.NORMALISED_LENGTH
+    recon_windows = recon.reshape(len(recon), config.NORMALISED_LENGTH, channels)
+    if window_mode == config.WINDOW_MOVEMENT_ONLY:
+        movement_mse = window_mse
+    else:
+        movement_errors = []
+        for index, trajectory in enumerate(recon_windows):
+            recovered = movement_from_generated_window(
+                trajectory,
+                true_timing[index, 0],
+                true_timing[index, 1],
+                window_mode,
+            )
+            target = np.asarray(trials[index]["pos_movement_norm"], dtype=float)
+            movement_errors.append(np.mean((recovered - target) ** 2))
+        movement_mse = float(np.mean(movement_errors))
+    row = {
+        "reconstruction_mse_tracker_units2": window_mse,
+        "window_reconstruction_mse_tracker_units2": window_mse,
+        "movement_reconstruction_mse_tracker_units2": movement_mse,
+    }
     for i, name in enumerate(config.TIMING_FEATURES):
         row[f"{name}_r2"] = float(r2_score(true_timing[:, i], predicted_timing[:, i]))
         row[f"{name}_mae_ms"] = float(np.mean(np.abs(true_timing[:, i] - predicted_timing[:, i])) * 1000)
@@ -138,8 +166,14 @@ def generate_per_trial_model(model, trials, norm, n_samples, device, seed, share
             channels = model.input_dim // config.NORMALISED_LENGTH
             trajectories = ((rz * ts + tm).cpu().numpy()).reshape(n_samples, config.NORMALISED_LENGTH, channels)
             timing = norm.denormalise_timing(rtz.cpu().numpy())
+        window_mode = trials[0].get("window_mode", config.WINDOW_MOVEMENT_ONLY)
         generated = pd.DataFrame([
-            features_from_arrays(trajectories[i], max(float(timing[i, 0]), 1e-3), float(timing[i, 1]))
+            features_from_generated_window(
+                trajectories[i],
+                max(float(timing[i, 0]), 1e-3),
+                max(float(timing[i, 1]), 0.0),
+                window_mode,
+            )
             for i in range(n_samples)
         ])
         empirical = pd.DataFrame([compute_trial_features(t) for t in query_trials])

@@ -16,13 +16,17 @@ from scripts.run_corrected_study import kmeans_with_selection_null
 from src.baseline_spline import evaluate_spline_baseline, evaluate_spline_pca_baseline
 from src.features import compute_trial_features
 from src.train import split_subjects
-from src.trajectory_view import MODEL_AXES, MODEL_AXIS_NAMES, project_trials_to_table_plane
+from src.trajectory_view import (
+    MODEL_AXES, MODEL_AXIS_NAMES, project_trials_to_table_plane, select_trials_window,
+)
+import config
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--trials", default=str(ROOT / "data" / "final_study" / "trials.pkl"))
-    parser.add_argument("--out", default=str(ROOT / "results" / "final_study" / "baselines"))
+    parser.add_argument("--trials", default=str(config.DATA_PROCESSED_DIR / "canonical_trials.pkl"))
+    parser.add_argument("--out", required=True)
+    parser.add_argument("--window-mode", choices=config.WINDOW_MODES, required=True)
     parser.add_argument("--permutations", type=int, default=200)
     parser.add_argument("--dims", nargs="+", type=int, default=[2, 3, 8])
     args = parser.parse_args()
@@ -30,7 +34,9 @@ def main():
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     with open(args.trials, "rb") as handle:
-        trials = project_trials_to_table_plane(pickle.load(handle))
+        trials = project_trials_to_table_plane(
+            select_trials_window(pickle.load(handle), args.window_mode)
+        )
     train, _, test = split_subjects(trials, 17, 4, 7, 42)
     features = pd.DataFrame([compute_trial_features(trial) for trial in trials])
     kmeans = kmeans_with_selection_null(
@@ -45,6 +51,7 @@ def main():
         "representation": "x-y table plane",
         "axes": list(MODEL_AXES),
         "axis_names": list(MODEL_AXIS_NAMES),
+        "window_mode": args.window_mode,
         "kmeans": kmeans,
         "spline_per_trial": spline["mean_mse"],
         "spline_pca": spline_pca,

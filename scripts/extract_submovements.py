@@ -63,8 +63,8 @@ def read_completed(path: Path) -> pd.DataFrame:
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--trials", default=str(ROOT / "data" / "corrected_v2" / "trials.pkl"))
-    parser.add_argument("--out", default=str(ROOT / "results" / "final_study" / "submovements_real.csv"))
+    parser.add_argument("--trials", default=str(ROOT / "studies" / "strategy_window_comparison" / "data" / "canonical_trials.pkl"))
+    parser.add_argument("--out", default=str(ROOT / "studies" / "strategy_window_comparison" / "results" / "submovements_real.csv"))
     parser.add_argument("--jobs", type=int, default=min(8, os.cpu_count() or 1))
     parser.add_argument("--backend", choices=("process", "thread"), default="process")
     parser.add_argument("--batch-size", type=int, default=200)

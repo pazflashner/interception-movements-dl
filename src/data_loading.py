@@ -72,6 +72,19 @@ def object_motion_onset_s(
     return float((moving[0] + 1) / stimulus_hz) if moving.size else None
 
 
+def object_motion_speed_screen_s(
+    dot_array: np.ndarray,
+    stimulus_hz: float = config.STIMULUS_HZ,
+    screen_width_px: float = 1920.0,
+) -> Optional[float]:
+    """Median executed target speed in screen widths per second."""
+    if dot_array is None or dot_array.ndim != 2 or len(dot_array) < 2:
+        return None
+    step = np.linalg.norm(np.diff(dot_array, axis=0), axis=1)
+    moving = step[step > 1e-6]
+    return float(np.median(moving) * stimulus_hz / screen_width_px) if moving.size else None
+
+
 def load_trial_metadata(mat_path: Path) -> dict:
     """
     Per-trial fields we need from ``trialinfo_*.mat`` (the CSV alone has none of
@@ -93,13 +106,20 @@ def load_trial_metadata(mat_path: Path) -> dict:
     arrival_s = (pressed_t - start_t) if (pressed_t is not None and start_t is not None) else None
     tr = getattr(m, "thisresponse", None)
     afe = _mat_scalar(tr, "arrivalFeedbackEnd") if tr is not None else None
-    go_s = object_motion_onset_s(np.array(getattr(m, "dotArray", [])))
+    dot_array = np.array(getattr(m, "dotArray", []))
+    go_s = object_motion_onset_s(dot_array)
+    target_speed = object_motion_speed_screen_s(dot_array)
+    stimulus = getattr(m, "thisstimulus", None)
+    stimulus_name = str(getattr(stimulus, "dotsFilename", "")) if stimulus is not None else ""
     return {
         "responseText": str(resp) if resp is not None else "",
         "successful": int(successful) if successful is not None else None,
         "go_signal_s": go_s,
         "arrival_s": arrival_s,
         "arrival_window_end_s": afe,
+        "target_speed_screen_s": target_speed,
+        "target_motion_onset_s": go_s,
+        "stimulus_name": stimulus_name,
     }
 
 

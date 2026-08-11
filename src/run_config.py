@@ -105,6 +105,7 @@ class RunConfig:
     n_val: int = config.N_VAL
     n_test: int = config.N_TEST
     normalised_length: int = config.NORMALISED_LENGTH
+    window_mode: str = config.WINDOW_MOVEMENT_ONLY
 
     # Model
     latent_dim: int = config.DEFAULT_LATENT_DIM
@@ -180,6 +181,7 @@ class RunConfig:
                 "n_val": d["n_val"],
                 "n_test": d["n_test"],
                 "normalised_length": d["normalised_length"],
+                "window_mode": d["window_mode"],
             },
             "model": {
                 "latent_dim": d["latent_dim"],

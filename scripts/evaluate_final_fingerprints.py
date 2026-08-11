@@ -20,7 +20,7 @@ from scripts.run_corrected_study import load_per_trial_checkpoint
 from src.context_query import split_context_query, tune_and_test_ridge
 from src.evaluate import encode_trials
 from src.train import split_subjects
-from src.trajectory_view import project_trials_to_table_plane
+from src.trajectory_view import project_trials_to_table_plane, select_trials_window
 from src.vae_model import encode_trial_condition
 import config
 
@@ -109,16 +109,17 @@ def add_model_inputs(mu, trials):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--trials", default=str(ROOT / "data" / "final_study" / "trials.pkl"))
-    parser.add_argument("--submovements", default=str(ROOT / "results" / "final_study" / "submovements_real.csv"))
-    parser.add_argument("--models", default=str(ROOT / "results" / "final_study" / "core_models"))
-    parser.add_argument("--out", default=str(ROOT / "results" / "final_study" / "fingerprint_evaluation"))
+    parser.add_argument("--trials", default=str(config.DATA_PROCESSED_DIR / "canonical_trials.pkl"))
+    parser.add_argument("--submovements", default=str(config.RESULTS_DIR / "submovements_real.csv"))
+    parser.add_argument("--models", required=True)
+    parser.add_argument("--out", required=True)
+    parser.add_argument("--window-mode", choices=config.WINDOW_MODES, required=True)
     args = parser.parse_args()
 
     out = Path(args.out); out.mkdir(parents=True, exist_ok=True)
     with open(args.trials, "rb") as handle:
         trials = pickle.load(handle)
-    trials = project_trials_to_table_plane(trials)
+    trials = project_trials_to_table_plane(select_trials_window(trials, args.window_mode))
     sub = pd.read_csv(args.submovements)
     sub = sub[sub.mj_fit_success == True].copy()
     feature_by_id = sub.set_index("trial_id")
@@ -136,7 +137,7 @@ def main():
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     subject_rows, trial_rows = [], []
-    for run in sorted(Path(args.models).glob("trajectory_only_z*_seed*")):
+    for run in sorted(Path(args.models).glob("cvae_*_z*_seed*")):
         if not (run / "checkpoint.pt").exists():
             continue
         model, norm = load_per_trial_checkpoint(run / "checkpoint.pt", device)
@@ -157,7 +158,8 @@ def main():
         )
         dim = model.latent_dim
         seed = int(run.name.rsplit("seed", 1)[1])
-        probe.insert(0, "seed", seed); probe.insert(0, "latent_dim", dim)
+        probe.insert(0, "window_mode", args.window_mode)
+        probe.insert(1, "seed", seed); probe.insert(1, "latent_dim", dim)
         subject_rows.extend(probe.to_dict("records"))
 
         x = add_model_inputs(all_mu, trials)
@@ -168,14 +170,14 @@ def main():
             x[indices["val"]], count[indices["val"]],
             x[indices["test"]], count[indices["test"]],
         )
-        trial_rows.append({"latent_dim": dim, "seed": seed, "target": "mj_n_components",
+        trial_rows.append({"window_mode": args.window_mode, "latent_dim": dim, "seed": seed, "target": "mj_n_components",
                            "metric_type": "classification", **count_result})
         success_result = tune_classifier(
             x[indices["train"]], success[indices["train"]],
             x[indices["val"]], success[indices["val"]],
             x[indices["test"]], success[indices["test"]], binary=True,
         )
-        trial_rows.append({"latent_dim": dim, "seed": seed, "target": "recorded_success",
+        trial_rows.append({"window_mode": args.window_mode, "latent_dim": dim, "seed": seed, "target": "recorded_success",
                            "metric_type": "classification", **success_result})
         for target in CONTINUOUS_TRIAL_TARGETS:
             y = features[target].fillna(0.0).to_numpy(dtype=float)
@@ -184,7 +186,7 @@ def main():
                 x[indices["val"]], y[indices["val"]],
                 x[indices["test"]], y[indices["test"]],
             )
-            trial_rows.append({"latent_dim": dim, "seed": seed, "target": target,
+            trial_rows.append({"window_mode": args.window_mode, "latent_dim": dim, "seed": seed, "target": target,
                                "metric_type": "regression", "r2": r2, "mae": mae, "alpha": alpha})
 
     pd.DataFrame(subject_rows).to_csv(out / "subject_distribution_probes.csv", index=False)

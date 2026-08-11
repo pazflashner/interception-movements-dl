@@ -5,18 +5,19 @@ from pathlib import Path
 
 # ── Paths ──────────────────────────────────────────────────────────────────────
 PROJECT_ROOT = Path(__file__).resolve().parent
-DATA_RAW_DIR = PROJECT_ROOT / "data" / "raw"
-DATA_PROCESSED_DIR = PROJECT_ROOT / "data" / "processed"
-STIMULI_DIR = PROJECT_ROOT / "data" / "stimuli"
-MODELS_DIR = PROJECT_ROOT / "models"
-RESULTS_DIR = PROJECT_ROOT / "results"
+STUDY_ROOT = PROJECT_ROOT / "studies" / "strategy_window_comparison"
+DATA_RAW_DIR = Path(r"D:\DropBox\Dropbox\results")
+STIMULI_DIR = Path(r"D:\DropBox\Dropbox\stimuli")
+DATA_PROCESSED_DIR = STUDY_ROOT / "data"
+MODELS_DIR = STUDY_ROOT / "results" / "models"
+RESULTS_DIR = STUDY_ROOT / "results"
 RUNS_DIR = RESULTS_DIR / "runs"   # one subdirectory per run: config.yaml + checkpoint
 
 # ── Reproducibility ───────────────────────────────────────────────────────────
 SEED = 42                   # default seed; overridden per run via --seed/--seeds
 # Only 28 subjects, so single-run metrics are noisy — repeat across these seeds
 # and report the spread rather than one number.
-REPEAT_SEEDS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+REPEAT_SEEDS = [42, 43, 44]
 
 # ── Recording parameters ──────────────────────────────────────────────────────
 RECORDING_HZ = 240          # Raw data sampling rate
@@ -37,6 +38,11 @@ SPEED_RANGES = {
 
 # ── Condition filter ──────────────────────────────────────────────────────────
 CONDITION_FREE_EYE = 2  # Only analyse condition 2 (free eye movements)
+
+# Two pre-specified representations are compared on the same retained trials.
+WINDOW_MOVEMENT_ONLY = "movement_only"
+WINDOW_GO_TO_ARRIVAL = "go_to_arrival"
+WINDOW_MODES = (WINDOW_MOVEMENT_ONLY, WINDOW_GO_TO_ARRIVAL)
 
 # ── Marker value ──────────────────────────────────────────────────────────────
 STIMULUS_ONSET_MARKER = 5   # marks the frame the object *appears* (always frame 1)
@@ -74,9 +80,10 @@ LATE_ARRIVAL_CUTOFF_S = 1.0
 # A completed trial ends at arrival (< ~2 s). A recording near the 10 s cap means
 # the finger never intercepted (pressedTime empty) — a timeout — and is dropped.
 MAX_TRIAL_DURATION_S = 3.0
-# "Too early" = finger left the start box before the go-signal. Invalid by the
-# task definition (and breaks the "starts at rest at the go-signal" assumption).
-DROP_TOO_EARLY = True
+# Raw-data audit showed that every "Too early" trial has a recorded arrival
+# after target motion onset. It is early ARRIVAL feedback, not evidence of a
+# premature departure, and is retained as valid strategy information.
+DROP_TOO_EARLY = False
 # The "Not fixating on the dot enough!!!" flag is RETAINED: the hand movement is
 # normal and the flag is suspected spurious in condition 2 (Q1). Set False to
 # drop those trials if Prof. Friedman says the flag is real.
@@ -100,7 +107,7 @@ N_VAL = 4
 N_TEST = 7   # 17 + 4 + 7 = 28 subjects
 
 # ── VAE hyperparameters ──────────────────────────────────────────────────────
-LATENT_DIMS_SWEEP = [2, 3, 4, 8, 16]
+LATENT_DIMS_SWEEP = [2, 3, 4, 8]
 DEFAULT_LATENT_DIM = 3
 HIDDEN_DIM = 256
 # Encoder/decoder architecture: "mlp" (default) or "cnn" (1-D convolutional ConvCVAE).

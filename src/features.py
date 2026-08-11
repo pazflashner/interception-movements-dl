@@ -125,7 +125,9 @@ def compute_trial_features(trial: dict, fs: float = config.RECORDING_HZ) -> dict
     Returns the entries of ``KINEMATIC_FEATURES`` plus trial identifiers and
     task metadata.
     """
-    pos = trial["pos_norm"]             # (T, 3)
+    # Behavioral truth is always computed from finger movement onset to
+    # arrival, regardless of which temporal window the CVAE receives.
+    pos = trial.get("pos_movement_norm", trial["pos_norm"])
     meta = trial["metadata"]
 
     # Timing, in seconds. Reaction time is measured from the go-signal
@@ -151,6 +153,41 @@ def compute_trial_features(trial: dict, fs: float = config.RECORDING_HZ) -> dict
         **kin,
     }
     return features
+
+
+def movement_from_generated_window(
+    pos: np.ndarray,
+    movement_time_s: float,
+    initiation_time_s: float,
+    window_mode: str,
+    target_len: int = config.NORMALISED_LENGTH,
+) -> np.ndarray:
+    """Recover the generated movement interval from a model-window trajectory."""
+    pos = np.asarray(pos, dtype=float)
+    if window_mode == config.WINDOW_MOVEMENT_ONLY:
+        return pos
+    if window_mode != config.WINDOW_GO_TO_ARRIVAL:
+        raise ValueError(f"unknown window mode: {window_mode!r}")
+    total = max(float(movement_time_s) + float(initiation_time_s), 1e-6)
+    onset_fraction = float(np.clip(initiation_time_s / total, 0.0, 0.98))
+    phase = np.linspace(0.0, 1.0, len(pos))
+    movement_phase = np.linspace(onset_fraction, 1.0, target_len)
+    movement = np.column_stack([
+        np.interp(movement_phase, phase, pos[:, axis]) for axis in range(pos.shape[1])
+    ])
+    return movement - movement[0]
+
+
+def features_from_generated_window(
+    pos: np.ndarray,
+    movement_time_s: float,
+    initiation_time_s: float,
+    window_mode: str,
+) -> dict:
+    movement = movement_from_generated_window(
+        pos, movement_time_s, initiation_time_s, window_mode
+    )
+    return features_from_arrays(movement, movement_time_s, initiation_time_s)
 
 
 def extract_features_dataframe(trials: list[dict]) -> pd.DataFrame:
