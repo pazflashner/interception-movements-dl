@@ -29,6 +29,7 @@ from src.vae_model import (
     NormStats,
     TrajectoryDataset,
     encode_condition,
+    transform_timing,
 )
 from src.features import (
     KINEMATIC_FEATURES,
@@ -59,7 +60,11 @@ def encode_trials(
 
     with torch.no_grad():
         traj_z = (traj - tm) / ts
-        timing_z = (timing - tim_m) / tim_s if model.timing_dim else None
+        timing_z = (
+            (transform_timing(timing, norm.timing_transform) - tim_m) / tim_s
+            if model.timing_dim and getattr(model, "encoder_uses_timing", True)
+            else None
+        )
         mu, logvar = model.encode(traj_z, cond, timing_z)
         z = model.reparameterize(mu, logvar)
 
@@ -111,13 +116,17 @@ def reconstruct(
 
     with torch.no_grad():
         traj_z = (traj - tm) / ts
-        timing_z = (timing - tim_m) / tim_s if model.timing_dim else None
+        timing_z = (
+            (transform_timing(timing, norm.timing_transform) - tim_m) / tim_s
+            if model.timing_dim and getattr(model, "encoder_uses_timing", True)
+            else None
+        )
         mu, logvar = model.encode(traj_z, cond, timing_z)
         z = model.reparameterize(mu, logvar) if sample else mu
         recon_z, recon_timing_z = model.decode(z, cond)
         recon = recon_z * ts + tm
         recon_timing = (
-            (recon_timing_z * tim_s + tim_m).cpu().numpy()
+            norm.denormalise_timing(recon_timing_z.cpu().numpy())
             if recon_timing_z is not None
             else np.empty((len(ds), 0), dtype=np.float32)
         )
@@ -233,7 +242,7 @@ def latent_traversal(
             trajs = ((recon_z * ts + tm).cpu().numpy()
                      .reshape(n_steps, config.NORMALISED_LENGTH, 3))
             timing = (
-                (timing_z * tim_s + tim_m).cpu().numpy()
+                norm.denormalise_timing(timing_z.cpu().numpy())
                 if timing_z is not None else None
             )
 
@@ -541,7 +550,7 @@ def generative_fidelity_ks(
             gen = (recon_z * ts + tm).cpu().numpy()
             gen_trajs = gen.reshape(n_samples, config.NORMALISED_LENGTH, 3)
             gen_timing = (
-                (recon_timing_z * tim_s + tim_m).cpu().numpy()
+                norm.denormalise_timing(recon_timing_z.cpu().numpy())
                 if recon_timing_z is not None
                 else None
             )

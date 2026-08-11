@@ -1,5 +1,11 @@
 # Interception Movements – Deep Learning Pipeline
 
+> **Audited results notice:** The original sections below document the legacy
+> pipeline and may contain superseded labels, units, and numerical claims. Use
+> `CORRECTED_STUDY_README.md` and
+> `output/pdf/Interception_Corrected_Results.pdf` for the corrected-v3 protocol
+> and results.
+
 **From Raw Trajectories to Individual Behavioral Signatures**
 
 A machine learning pipeline for analyzing 3D interception movement data using a Conditional Variational Autoencoder (CVAE). The model learns individual movement "fingerprints" from kinematic trajectory data captured during a ballistic interception task.
@@ -136,12 +142,19 @@ setting beats another.
 
 ### Interactive Dashboard
 ```bash
-streamlit run src/dashboard.py
+python scripts/build_dashboard_assets.py
+python -m streamlit run src/dashboard.py
 ```
 
-The dashboard provides:
-- **Inference Mode**: Upload raw CSV → extract latent fingerprint
-- **Exploration Mode**: Manipulate latent sliders → generate trajectories
+The final-study dashboard provides:
+- **Generate**: switch between `n=2`, `n=3`, and `n=8`; select a population or held-out participant fingerprint; change latent and task controls; inspect generated 2-D trajectories, velocity, timing, and minimum-jerk components.
+- **Distribution check**: compare disjoint held-out query trials with generated samples for each reported output using KS/Wasserstein or JSD/total variation.
+- **Model comparison**: inspect repeated-seed reconstruction, timing, identification, and generation metrics.
+- **Protocol and downloads**: review assumptions for Prof. Friedman and export the report and compact result tables.
+
+`python scripts/package_dashboard.py` creates the email-sized standalone bundle at
+`output/share/Interception_Movement_Dashboard.zip`. The bundle contains the trained
+models and compact held-out results, but no raw Dropbox trajectories.
 
 ## Pipeline Details
 

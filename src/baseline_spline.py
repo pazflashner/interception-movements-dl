@@ -7,7 +7,7 @@ far worse than it is:
 ``evaluate_spline_baseline`` (per-trial fit)
     Fits a spline to each trajectory independently and measures how well it
     reproduces *that same* trajectory. With 5 interior knots and degree 3 that
-    is 9 coefficients x 3 dims = 27 free parameters per trial, chosen with the
+    is 9 coefficients per modeled coordinate, chosen with the
     answer in hand. It is an **interpolation ceiling** — how much of a
     trajectory survives smoothing — not a competing representation. A 3-dim
     latent cannot and should not beat it.
@@ -65,7 +65,8 @@ def evaluate_spline_baseline(trials: list[dict], n_knots: int = config.SPLINE_N_
         mses.append(mse)
 
     mses = np.array(mses)
-    n_params = (n_knots + config.SPLINE_DEGREE + 1) * 3
+    dimensions = trials[0]["pos_norm"].shape[1]
+    n_params = (n_knots + config.SPLINE_DEGREE + 1) * dimensions
     result = {
         "mean_mse": float(np.mean(mses)),
         "std_mse": float(np.std(mses)),
@@ -176,6 +177,7 @@ class SplinePCARepresentation:
         ])
         self.pca_ = PCA(n_components=self.n_components).fit(X)
         self.T_ = train_trials[0]["pos_norm"].shape[0]
+        self.dimensions_ = train_trials[0]["pos_norm"].shape[1]
         self.basis_ = _spline_basis(self.T_, self.n_knots, self.degree, self.n_coef)
         return self
 
@@ -190,14 +192,15 @@ class SplinePCARepresentation:
         return self.pca_.transform(X)
 
     def decode(self, codes: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
-        """Codes -> (trajectories (N, T, 3), timing (N, 2) in seconds)."""
+        """Codes -> (trajectories (N, T, D), timing (N, 2) in seconds)."""
         X = self.pca_.inverse_transform(np.atleast_2d(codes))
-        C = X[:, : 3 * self.n_coef] * self.coef_std_ + self.coef_mean_
-        timing = X[:, 3 * self.n_coef :] * self.timing_std_ + self.timing_mean_
+        coefficient_width = self.dimensions_ * self.n_coef
+        C = X[:, :coefficient_width] * self.coef_std_ + self.coef_mean_
+        timing = X[:, coefficient_width:] * self.timing_std_ + self.timing_mean_
 
         trajs = np.stack([
             np.stack(
-                [self.basis_ @ C[i, d * self.n_coef : (d + 1) * self.n_coef] for d in range(3)],
+                [self.basis_ @ C[i, d * self.n_coef : (d + 1) * self.n_coef] for d in range(self.dimensions_)],
                 axis=1,
             )
             for i in range(len(C))
@@ -246,9 +249,10 @@ def evaluate_spline_pca_baseline(
 
     basis = _spline_basis(T, n_knots, degree, n_coef)
     mses = []
+    dimensions = train_trials[0]["pos_norm"].shape[1]
     for i, trial in enumerate(test_trials):
         recon = np.stack(
-            [basis @ test_recon_C[i, d * n_coef : (d + 1) * n_coef] for d in range(3)], axis=1
+            [basis @ test_recon_C[i, d * n_coef : (d + 1) * n_coef] for d in range(dimensions)], axis=1
         )
         mses.append(float(np.mean((trial["pos_norm"] - recon) ** 2)))
 

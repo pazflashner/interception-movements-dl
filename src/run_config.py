@@ -110,6 +110,10 @@ class RunConfig:
     latent_dim: int = config.DEFAULT_LATENT_DIM
     hidden_dim: int = config.HIDDEN_DIM
     architecture: str = config.ARCHITECTURE   # "mlp" (default) or "cnn"
+    # Baseline=True reconstructs timing after giving it to the encoder. False
+    # makes the timing head predict timing from trajectory shape + condition.
+    encoder_uses_timing: bool = True
+    timing_transform: str = "log"
     # Reconstruct movement/initiation time alongside the trajectory, so the
     # latent keeps the temporal axis that resampling removes.
     predict_timing: bool = config.PREDICT_TIMING
@@ -117,6 +121,7 @@ class RunConfig:
     # Optimisation
     epochs: int = config.NUM_EPOCHS
     batch_size: int = config.BATCH_SIZE
+    balance_subjects: bool = False
     lr: float = config.LEARNING_RATE
     kl_weight: float = config.KL_WEIGHT
     timing_weight: float = config.TIMING_WEIGHT
@@ -179,11 +184,15 @@ class RunConfig:
             "model": {
                 "latent_dim": d["latent_dim"],
                 "hidden_dim": d["hidden_dim"],
+                "architecture": d["architecture"],
+                "encoder_uses_timing": d["encoder_uses_timing"],
+                "timing_transform": d["timing_transform"],
                 "predict_timing": d["predict_timing"],
             },
             "train": {
                 "epochs": d["epochs"],
                 "batch_size": d["batch_size"],
+                "balance_subjects": d["balance_subjects"],
                 "lr": d["lr"],
                 "kl_weight": d["kl_weight"],
                 "timing_weight": d["timing_weight"],

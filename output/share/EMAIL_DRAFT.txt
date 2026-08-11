@@ -1,0 +1,16 @@
+Subject: Interception movement fingerprint - preliminary report and dashboard
+
+Hi Jason,
+
+Attached are our current report and an interactive dashboard for the interception-movement model.
+
+The dashboard lets you switch between n=2, n=3, and n=8, change the latent variables and task condition, inspect generated trajectories, velocity and minimum-jerk components, and compare recorded and generated held-out distributions for different outputs.
+
+The main result so far is that participant-specific information is learnable, while exact distribution reproduction remains feature-dependent. n=8 gives the strongest overall fidelity; n=2 and n=3 preserve the low-dimensional control goal but lose some detail. We have kept the modeling assumptions and questions requiring your confirmation explicit in both the report and dashboard.
+
+To run the dashboard, extract the ZIP and double-click setup_and_launch.bat. No raw experiment files are included.
+
+We would appreciate your feedback, especially on the assumptions listed in the final section of the report.
+
+Best,
+Seman and Paz

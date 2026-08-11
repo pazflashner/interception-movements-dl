@@ -242,7 +242,7 @@ def main():
             print(f"Checkpoint not found: {model_path}. Train first with --phase 3")
             return
 
-        from src.vae_model import ConditionalVAE, NormStats
+        from src.vae_model import ConditionalVAE, ConvCVAE, NormStats
 
         # The run's own config governs evaluation, including the seed that
         # determines which subjects are held out.
@@ -253,12 +253,14 @@ def main():
 
         device = "cuda" if torch.cuda.is_available() else "cpu"
         ckpt = torch.load(model_path, map_location=device, weights_only=False)
-        model = ConditionalVAE(
+        ModelClass = ConvCVAE if run_cfg.architecture == "cnn" else ConditionalVAE
+        model = ModelClass(
             latent_dim=ckpt["latent_dim"],
             hidden_dim=run_cfg.hidden_dim,
             # Read from the checkpoint, not the config: a checkpoint trained
             # before the timing head has no timing weights to load.
             timing_dim=ckpt.get("timing_dim", 0),
+            encoder_uses_timing=ckpt.get("encoder_uses_timing", True),
         ).to(device)
         model.load_state_dict(ckpt["model_state"])
         norm = NormStats.from_checkpoint(ckpt)

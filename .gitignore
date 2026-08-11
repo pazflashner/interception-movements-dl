@@ -1,6 +1,7 @@
 # Data
 data/raw/
 data/processed/
+data/corrected_v*/
 data/stimuli/
 data/*.zip
 
@@ -12,6 +13,10 @@ models/*.json
 # Run directories (results/runs/<name>/config.yaml + checkpoint.pt + history.json)
 # stay local; the config.yaml in each one is the local record of that run.
 results/
+output/pdf/figures/
+output/pdf/rendered/
+.tmp/
+external/jason-submovements/
 
 # Office lock files (created while a .docx/.xlsx is open)
 ~$*

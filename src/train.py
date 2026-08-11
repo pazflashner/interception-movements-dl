@@ -22,14 +22,14 @@ from pathlib import Path
 
 import numpy as np
 import torch
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, WeightedRandomSampler
 from tqdm import tqdm
 
 import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import config
 from src.run_config import RunConfig, make_run_dir, seed_worker, set_seed
-from src.vae_model import ConditionalVAE, ConvCVAE, TrajectoryDataset, kl_weight_at, vae_loss
+from src.vae_model import ConditionalVAE, ConvCVAE, TrajectoryDataset, kl_weight_at, vae_loss, transform_timing
 
 
 # ── Data splitting ────────────────────────────────────────────────────────────
@@ -148,10 +148,17 @@ def train_vae(
     # Datasets & loaders
     train_ds = TrajectoryDataset(train_trials)
     val_ds = TrajectoryDataset(val_trials)
+    sampler = None
+    if cfg.balance_subjects:
+        labels, counts = np.unique(train_ds.subjects, return_counts=True)
+        inv = {label: 1.0 / count for label, count in zip(labels, counts)}
+        weights = torch.as_tensor([inv[s] for s in train_ds.subjects], dtype=torch.double)
+        sampler = WeightedRandomSampler(weights, len(weights), replacement=True, generator=generator)
     train_loader = DataLoader(
         train_ds,
         batch_size=cfg.batch_size,
-        shuffle=True,
+        shuffle=sampler is None,
+        sampler=sampler,
         drop_last=False,
         generator=generator,
         worker_init_fn=seed_worker,
@@ -162,15 +169,29 @@ def train_vae(
     # separately: seconds and millimetres are not on a comparable scale.
     train_mean = torch.from_numpy(train_ds.trajectories.mean(axis=0)).to(device)
     train_std = torch.from_numpy(train_ds.trajectories.std(axis=0) + 1e-8).to(device)
-    timing_mean = torch.from_numpy(train_ds.timings.mean(axis=0)).to(device)
-    timing_std = torch.from_numpy(train_ds.timings.std(axis=0) + 1e-8).to(device)
+    transformed_train_timing = transform_timing(train_ds.timings, cfg.timing_transform).astype(np.float32)
+    timing_mean = torch.from_numpy(transformed_train_timing.mean(axis=0)).to(device)
+    timing_std = torch.from_numpy(transformed_train_timing.std(axis=0) + 1e-8).to(device)
 
     # Model
     ModelClass = ConvCVAE if getattr(cfg, "architecture", "mlp") == "cnn" else ConditionalVAE
+    input_dim = int(train_ds.trajectories.shape[1])
+    condition_dim = int(train_ds.conditions.shape[1])
+    channels = input_dim // cfg.normalised_length
+    if input_dim != cfg.normalised_length * channels:
+        raise ValueError(f"trajectory width {input_dim} is not divisible by sequence length {cfg.normalised_length}")
+    model_kwargs = {
+        "input_dim": input_dim,
+        "condition_dim": condition_dim,
+        "latent_dim": cfg.latent_dim,
+        "hidden_dim": cfg.hidden_dim,
+        "timing_dim": cfg.timing_dim,
+        "encoder_uses_timing": cfg.encoder_uses_timing,
+    }
+    if ModelClass is ConvCVAE:
+        model_kwargs.update(seq_len=cfg.normalised_length, channels=channels)
     model = ModelClass(
-        latent_dim=cfg.latent_dim,
-        hidden_dim=cfg.hidden_dim,
-        timing_dim=cfg.timing_dim,
+        **model_kwargs,
     ).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=cfg.lr)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
@@ -194,7 +215,8 @@ def train_vae(
         timing = timing.to(device)
         cond = cond.to(device)
         traj_z = (traj - train_mean) / train_std          # z-score
-        timing_z = (timing - timing_mean) / timing_std
+        timing_transformed = transform_timing(timing, cfg.timing_transform)
+        timing_z = (timing_transformed - timing_mean) / timing_std
         if cfg.timing_dim == 0:
             timing_z = None
 
@@ -300,12 +322,17 @@ def train_vae(
                 {
                     "model_state": model.state_dict(),
                     "latent_dim": cfg.latent_dim,
+                    "input_dim": input_dim,
+                    "trajectory_channels": channels,
+                    "condition_dim": condition_dim,
                     "timing_dim": cfg.timing_dim,
+                    "encoder_uses_timing": cfg.encoder_uses_timing,
                     "train_mean": train_mean.cpu().numpy().tolist(),
                     "train_std": train_std.cpu().numpy().tolist(),
                     "timing_mean": timing_mean.cpu().numpy().tolist(),
                     "timing_std": timing_std.cpu().numpy().tolist(),
                     "timing_features": config.TIMING_FEATURES,
+                    "timing_transform": cfg.timing_transform,
                     "config": cfg.to_dict(),
                     "epoch": epoch,
                     "val_loss": vl,

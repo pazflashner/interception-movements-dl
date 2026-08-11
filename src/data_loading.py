@@ -68,7 +68,8 @@ def object_motion_onset_s(
         return None
     step = np.linalg.norm(np.diff(dot_array, axis=0), axis=1)
     moving = np.where(step > 1e-6)[0]
-    return float(moving[0] / stimulus_hz) if moving.size else None
+    # diff[i] compares samples i and i+1; movement is first present at i+1.
+    return float((moving[0] + 1) / stimulus_hz) if moving.size else None
 
 
 def load_trial_metadata(mat_path: Path) -> dict:

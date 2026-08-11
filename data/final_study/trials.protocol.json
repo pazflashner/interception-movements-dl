@@ -1,0 +1,18 @@
+{
+  "authoritative_target": "thistrial.dotArray from paired MAT file",
+  "linked_external_filename_field": "thistrial.thisstimulus.dotsFilename",
+  "n_trials": 4684,
+  "target_sample_hz": 60.0,
+  "screen_width_px": 1920.0,
+  "speed_unit": "screen widths per second",
+  "speed_min_median_max": [
+    0.49980000000000757,
+    0.6359999999999975,
+    0.7842000000000056
+  ],
+  "max_abs_cached_onset_difference_s": 0.0,
+  "external_audit_n": 112,
+  "external_speed_mismatch_gt_0.005_rate": 0.11607142857142858,
+  "external_onset_mismatch_gt_one_frame_rate": 0.11607142857142858,
+  "link_failures": 0
+}

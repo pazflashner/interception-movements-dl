@@ -1,0 +1,306 @@
+ Learning Low-Dimensional Movement
+ Fingerprints
+ A conditional variational autoencoder study of fast interception movements
+
+ Seman Libbiss and Paz Flashner | Deep Learning Workshop | Prof. Jason Friedman | Advisor:
+ Moni
+
+
+
+ Research objective
+ Can two or three continuous latent parameters learned directly from movement trajectories
+ represent an individual and reproduce that person's held-out distributions of movement shape,
+ timing, and minimum-jerk submovement structure?
+
+ The main contribution is the conditional variational autoencoder and its held-out subject evaluation. K-Means,
+ spline/PCA, and minimum-jerk decomposition are used as baselines and interpretable measurement tools.
+
+ Headline findings
+ Question                            Result
+
+ Is subject information present?     Yes, but natural clustering is weak. Enrolled-subject identification is best at n=8, averaging 61.4%
+                                     versus 14.3% chance.
+
+ Does movement shape contain         Movement duration is partly predictable, best at n=8 with mean R2=0.77; initiation time is weaker.
+ timing?
+
+ Are interpretable patterns          The minimum-jerk rule assigns 39.6% single-component and 60.4% multi-component trials.
+ present?
+
+ Do fingerprints predict             Only 3/28 low-dimensional probe/model combinations have positive test R2; most summary
+ unseen-subject summaries?           targets do not transfer reliably.
+
+ Do 2-3 controls reproduce           They capture some structure but fidelity remains feature-dependent; n=8 gives the best
+ distributions?                      component-count JSD among the tested dimensions.
+
+
+
+
+Low-dimensional interception movement fingerprints                                                                                 Page 1
+ 1. Experiment and data
+ Participants moved a tracked finger forward on a table to intercept a visual target entering a goal region. The task
+ required rapid movement after the target began moving. We analyze condition 2 only and condition the model on
+ the start-position/speed category, starting side, and exact target speed derived from the executed 60 Hz MAT
+ dotArray.
+
+ Item                                Study value
+
+ Retained data                       4,684 trials from 28 participants
+
+ Sampling                            Finger position at 240 Hz; target trajectory at 60 Hz
+
+ Trajectory                          x lateral, y forward, z vertical; tracker coordinate unit not assumed to be mm
+
+ Timing                              Frame counter used; receipt-time column ignored
+
+ Filtering                           Fourth-order Butterworth low-pass, 10 Hz
+
+ Events                              Target motion (go), finger movement onset, recorded arrival
+
+
+
+
+ The x-y plane is used by the final baseline, CVAE, and submovement model. The y coordinate carries the dominant
+ forward reach; z is treated as off-plane variation. In a 112-trial audit, 11.6% of external stimulus files differed
+ materially from the executed MAT target, so MAT dotArray is the authoritative condition source.
+
+
+
+
+Low-dimensional interception movement fingerprints                                                                    Page 2
+ 2. Deep-learning formulation
+ Every movement-onset-to-arrival trajectory is translated to start at zero and resampled to 100 phase points.
+ Temporal normalization makes input dimensions equal but removes physical duration. The decoder therefore
+ generates movement duration and initiation time as separate positive log-time outputs.
+
+
+
+
+ Primary model
+ A trajectory-only conditional VAE receives 200 table-plane coordinates (100 phase points x 2 axes) and the task
+ condition, compresses them to n=2, n=3, or n=8, and reconstructs trajectory and timing. True timing is withheld from
+ the encoder, so timing performance measures inference from trajectory shape rather than copying an input.
+
+ Held-out protocol
+ Stage                                  Information allowed
+
+ Training                               17 participants
+
+ Hyperparameter validation              4 separate participants
+
+ Final test                             7 untouched participants
+
+ Fingerprint enrollment                 Context half of each test participant's trials
+
+ Evaluation                             Disjoint query half; stratified by task condition
+
+ Repetition                             Three neural-network initialization seeds
+
+
+
+
+Low-dimensional interception movement fingerprints                                                              Page 3
+ 3. Baselines
+
+
+
+
+ With k fixed to the known 28 participants, K-Means gives trajectory ARI=0.063 and feature ARI=0.069. Both exceed
+ a 200-permutation null, but the small ARI shows that trials do not form clean natural subject clusters.
+
+ Spline/PCA is a strong deterministic compression baseline. It is more accurate at high dimension, whereas the
+ CVAE is competitive at low dimension while also learning a continuous probabilistic latent and generating timing.
+ Therefore reconstruction MSE is one criterion, not the complete research objective.
+
+
+
+
+Low-dimensional interception movement fingerprints                                                              Page 4
+ 4. CVAE performance
+
+
+
+
+ Movement duration is recoverable from trajectory shape to a useful but incomplete degree. Initiation time occurs
+ before the modeled movement and is consequently harder to infer. This difference is expected and demonstrates
+ why the two timing variables are reported separately.
+
+ n             Trajectory MSE                 Movement-time R2        Initiation-time R2           Fingerprint ID
+
+ 2             0.174                          0.51                    -0.02                        35.1%
+
+ 3             0.089                          0.46                    -0.05                        41.8%
+
+ 8             0.018                          0.77                    0.09                         61.4%
+
+ Fingerprint identification is closed-set enrollment: the model sees context trials from each new participant and
+ identifies their query trials. It demonstrates stable transferable identity information, not zero-shot identification of a
+ person with no recorded movement.
+
+
+
+
+Low-dimensional interception movement fingerprints                                                                      Page 5
+ 5. Minimum-jerk behavioral interpretation
+ Recorded and generated x-y velocity profiles are decomposed into a sum of one to four minimum-jerk components
+ following Prof. Friedman's repository. Each component has onset, duration, lateral displacement, and forward
+ displacement. The count is the smallest model reaching normalized error <=0.05, then <0.10, otherwise the
+ minimum-error model.
+
+ A BIC sensitivity check selected the maximum four-component model for 69.0% of trials. Because filtered velocity
+ residuals are temporally correlated and violate the independent-error assumption behind that penalty, BIC is not
+ used as the primary order rule; this remains an explicit validation question for Prof. Friedman.
+
+
+
+
+ Derived variable                         Interpretation
+
+ Component count                          Effective number of minimum-jerk primitives needed for the velocity profile
+
+ Secondary amplitude fraction             Share of fitted displacement assigned beyond the first component
+
+ Overlap                                  Temporal overlap between consecutive components
+
+ Relative onset                           Next onset relative to the previous component duration
+
+ Fit error                                Normalized residual velocity energy
+
+ These are kinematic patterns consistent with single or corrective movement organization. They are not direct
+ measurements of a cognitive decision strategy.
+
+
+
+
+Low-dimensional interception movement fingerprints                                                                      Page 6
+ 6. Submovement structure in recorded trials
+
+
+
+
+ Median normalized fit error is 0.028. The eight-restart stability audit reproduces the selected component count in
+ 100.0% of audited trials. Most multi-component profiles overlap, which is compatible with online correction but does
+ not by itself identify feedback control.
+
+ The recorded outcome label 'Not fixating on the dot enough!!!' is kept as its own category. It is not silently combined
+ with ordinary failure because its meaning in free-eye condition 2 requires confirmation.
+
+
+
+
+Low-dimensional interception movement fingerprints                                                                 Page 7
+ 7. What the learned latent represents
+
+
+
+
+ Subject-level probes use only context latent means and predict distribution summaries calculated from disjoint
+ query trials. Trial-level probes add the known task condition and ask whether individual latent codes contain
+ component-count or recorded-outcome information.
+
+ Positive R2 indicates transfer to previously unseen participants; negative R2 means the probe is worse than a
+ training/validation mean prediction. Across n=2 and n=3, only 3 of 28 probe/model combinations are positive. The
+ latent clearly carries identity and some trial behavior, but a general two- or three-number map to every subject
+ distribution is not established.
+
+
+
+
+Low-dimensional interception movement fingerprints                                                                Page 8
+ 8. Generated query distributions
+ For each test participant, the context-mean latent is the only personal fingerprint. Samples add one shared
+ latent-noise covariance estimated from training subjects, combine it with the query condition mixture, and decode.
+ This preserves the requested n personal controls without quietly adding subject-specific variance parameters.
+
+
+
+
+ Continuous variables are compared with KS statistics and Wasserstein distances. Component count is discrete, so
+ total-variation distance and Jensen-Shannon divergence are used instead of applying a continuous KS p-value.
+
+ A value near zero indicates closer distributional agreement. The purpose is not to select a model from the test set;
+ n=2/3 are the scientific target and n=8 is the pre-specified capacity comparison.
+
+
+
+
+Low-dimensional interception movement fingerprints                                                                Page 9
+ 9. Controlling the latent variables
+ The pre-specified seed-42 n=2 decoder is evaluated on a grid spanning -2 to +2 training-set standard deviations
+ around the population latent center while holding task condition fixed. This directly tests the requested use case:
+ change two controls and observe the generated movement.
+
+
+
+
+ A valid within-model interpretation requires smooth changes and plausible trajectories. VAE axes may rotate,
+ reflect, or permute across initialization seeds, so this plot is descriptive for one pre-specified decoder; it does not
+ assign a universal or causal human trait to latent 1 or latent 2.
+
+
+
+
+Low-dimensional interception movement fingerprints                                                                   Page 10
+ 10. Conclusions
+ What the study supports
+ - Interception trajectories carry participant-specific information that transfers after enrollment.
+ - A CVAE can jointly represent phase-normalized shape and generate the timing removed by normalization.
+ - Minimum-jerk decomposition provides interpretable measurements for both recorded and generated movements.
+ - The context/query design allows a subject fingerprint to be evaluated without reusing the same trials as targets.
+
+ What remains limited
+ - Natural unsupervised subject clusters are weak.
+ - Initiation timing is substantially harder to infer than movement duration.
+ - Two or three latent controls do not reproduce every behavioral distribution equally well.
+ - Outcome interpretation is limited by the condition-2 not-fixating label.
+ - The data contain only 28 participants with condition-2 trials, so subject-level generalization has wide uncertainty.
+
+ Overall interpretation
+ The project demonstrates a complete deep generative pipeline from raw trajectories to low-dimensional fingerprints,
+ held-out subject enrollment, trajectory/timing generation, and behavioral distribution validation. The strongest
+ conclusion is that individual information is learnable; the stronger claim of a universally sufficient two-parameter
+ human model is not yet established.
+
+
+
+
+Low-dimensional interception movement fingerprints                                                                 Page 11
+ 11. Assumptions for Prof. Friedman
+ The analysis was completed under explicit, rerunnable assumptions. Feedback on any item can be applied through
+ configuration followed by a full reproducible rerun.
+
+ Assumption                                 Decision used
+
+ Task plane                                 x-y table plane; z treated as off-plane variation
+
+ Submovement timing                         100 ms minimum component duration; 50 ms minimum onset spacing
+
+ Model order                                Smallest k reaching 0.05 normalized error, 0.10 fallback
+
+ Eye-fixation label                         Retained and reported separately in condition 2
+
+ Position unit                              Tracker units; no unverified conversion to millimetres
+
+ Executed target                            Paired MAT dotArray used when the external stimulus CSV differs; speed scaled by a
+                                            1920-pixel screen width
+
+ Late arrivals                              Arrival more than one second after the target window excluded
+
+ Participant count                          28 participants have retained condition-2 trials
+
+ References
+ Brenner, E. & Smeets, J. B. J Neurophysiol (2018), doi:10.1152/jn.00517.2018.
+ Flash, T. & Hogan, N. J Neurosci (1985), minimum-jerk movement model.
+ Friedman, J. submovements repository, commit 9c2f40c, github.com/JasonFriedman/submovements.
+ Kingma, D. P. & Welling, M. Auto-Encoding Variational Bayes, ICLR (2014).
+ Sohn, K., Lee, H. & Yan, X. Conditional deep generative models, NeurIPS (2015).
+ Slowinski, P. et al. Dynamic similarity and individual motor signatures, J R Soc Interface (2016),
+ doi:10.1098/rsif.2015.1093.
+ All numerical results and figures are generated by the repository scripts from saved final-study artifacts. The PDF contains no manually
+ entered result values.
+
+
+
+
+Low-dimensional interception movement fingerprints                                                                                     Page 12
+

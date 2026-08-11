@@ -15,8 +15,8 @@ Run either way:
 from __future__ import annotations
 
 import shutil
+import os
 import sys
-import tempfile
 from pathlib import Path
 
 import numpy as np
@@ -371,7 +371,11 @@ def test_train_vae_end_to_end_on_dummy_data():
     )
     assert train_trials and val_trials and test_trials
 
-    tmp = Path(tempfile.mkdtemp(prefix="vae_smoke_"))
+    # Keep the temporary run under the repository. Some managed Windows
+    # environments create system-temp directories with an owner ACL that the
+    # test process cannot subsequently write into.
+    tmp = Path(".tmp") / f"vae_smoke_{os.getpid()}"
+    tmp.mkdir(parents=True, exist_ok=True)
     try:
         cfg = RunConfig(
             seed=0, latent_dim=3, hidden_dim=64,
