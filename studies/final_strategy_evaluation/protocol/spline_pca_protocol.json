@@ -1,0 +1,15 @@
+{
+  "protocol_version": "strategy-confirmatory-v1",
+  "model_family": "spline_pca",
+  "encoder_inputs": "shape-only cubic spline coefficients",
+  "timing_withheld_from_encoder": true,
+  "timing_predictor": "ridge from latent code plus task condition",
+  "pca_fit": "training participants only",
+  "latent_dims": [
+    2,
+    3,
+    4,
+    8
+  ],
+  "deterministic": true
+}

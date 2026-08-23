@@ -1,0 +1,11 @@
+{
+  "protocol_version": "strategy-confirmatory-v1",
+  "model_family": "conditional_ae",
+  "comparison_purpose": "effect of variational regularisation",
+  "matched_to_primary_cvae": true,
+  "latent_dims": [3, 8],
+  "training_seeds": [42, 43, 44],
+  "variational": false,
+  "use_condition": true,
+  "kl_weight": 0.0
+}
