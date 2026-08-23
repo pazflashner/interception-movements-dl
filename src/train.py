@@ -187,6 +187,8 @@ def train_vae(
         "hidden_dim": cfg.hidden_dim,
         "timing_dim": cfg.timing_dim,
         "encoder_uses_timing": cfg.encoder_uses_timing,
+        "variational": cfg.variational,
+        "use_condition": cfg.use_condition,
     }
     if ModelClass is ConvCVAE:
         model_kwargs.update(seq_len=cfg.normalised_length, channels=channels)
@@ -327,6 +329,8 @@ def train_vae(
                     "condition_dim": condition_dim,
                     "timing_dim": cfg.timing_dim,
                     "encoder_uses_timing": cfg.encoder_uses_timing,
+                    "variational": cfg.variational,
+                    "use_condition": cfg.use_condition,
                     "train_mean": train_mean.cpu().numpy().tolist(),
                     "train_std": train_std.cpu().numpy().tolist(),
                     "timing_mean": timing_mean.cpu().numpy().tolist(),

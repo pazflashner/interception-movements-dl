@@ -191,6 +191,8 @@ def load_per_trial_checkpoint(path, device):
     model = ConditionalVAE(
         input_dim=input_dim, condition_dim=condition_dim, latent_dim=ckpt["latent_dim"], hidden_dim=model_cfg["hidden_dim"], timing_dim=ckpt["timing_dim"],
         encoder_uses_timing=ckpt.get("encoder_uses_timing", True),
+        variational=ckpt.get("variational", model_cfg.get("variational", True)),
+        use_condition=ckpt.get("use_condition", model_cfg.get("use_condition", True)),
     ).to(device)
     model.load_state_dict(ckpt["model_state"])
     return model, NormStats.from_checkpoint(ckpt)

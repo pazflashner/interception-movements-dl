@@ -34,6 +34,7 @@ studies/*/data/**/*.csv
 studies/*/data/*.json
 studies/*/data/**/*.json
 studies/*/results/
+studies/*/runs/
 studies/*/output/
 studies/*/data_audit/*.csv
 
@@ -45,6 +46,8 @@ session-transcript.pdf
 
 # Python
 __pycache__/
+.pytest_cache/
+pytest-cache-files-*/
 *.pyc
 *.pyo
 .eggs/

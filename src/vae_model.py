@@ -156,6 +156,8 @@ class ConditionalVAE(nn.Module):
         latent_dim: int = config.DEFAULT_LATENT_DIM,
         timing_dim: int = TIMING_DIM,
         encoder_uses_timing: bool = True,
+        variational: bool = True,
+        use_condition: bool = True,
     ):
         super().__init__()
         self.input_dim = input_dim
@@ -163,6 +165,8 @@ class ConditionalVAE(nn.Module):
         self.latent_dim = latent_dim
         self.timing_dim = timing_dim
         self.encoder_uses_timing = encoder_uses_timing
+        self.variational = variational
+        self.use_condition = use_condition
 
         # Encoder — sees the trajectory, its timing, and the task condition
         enc_input = input_dim + (timing_dim if encoder_uses_timing else 0) + condition_dim
@@ -199,18 +203,23 @@ class ConditionalVAE(nn.Module):
                     f"model has timing_dim={self.timing_dim}; encode() needs a timing tensor"
                 )
             parts.append(timing)
-        parts.append(c)
+        parts.append(c if self.use_condition else torch.zeros_like(c))
         h = self.encoder(torch.cat(parts, dim=-1))
-        return self.fc_mu(h), self.fc_logvar(h)
+        mu = self.fc_mu(h)
+        logvar = self.fc_logvar(h) if self.variational else torch.full_like(mu, -30.0)
+        return mu, logvar
 
     def reparameterize(self, mu: torch.Tensor, logvar: torch.Tensor) -> torch.Tensor:
+        if not self.variational:
+            return mu
         std = torch.exp(0.5 * logvar)
         eps = torch.randn_like(std)
         return mu + eps * std
 
     def decode(self, z: torch.Tensor, c: torch.Tensor):
         """Returns (trajectory, timing); timing is None when timing_dim == 0."""
-        h = self.decoder(torch.cat([z, c], dim=-1))
+        condition = c if self.use_condition else torch.zeros_like(c)
+        h = self.decoder(torch.cat([z, condition], dim=-1))
         timing = self.timing_head(h) if self.timing_head is not None else None
         return self.traj_head(h), timing
 

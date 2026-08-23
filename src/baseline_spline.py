@@ -150,10 +150,14 @@ class SplinePCARepresentation:
         n_components: int = config.DEFAULT_LATENT_DIM,
         n_knots: int = config.SPLINE_N_KNOTS,
         degree: int = config.SPLINE_DEGREE,
+        include_timing: bool = True,
+        standardize_coefficients: bool = True,
     ):
         self.n_components = n_components
         self.n_knots = n_knots
         self.degree = degree
+        self.include_timing = include_timing
+        self.standardize_coefficients = standardize_coefficients
         self.n_coef = n_knots + degree + 1
 
     # ── Feature construction ─────────────────────────────────────────────
@@ -171,10 +175,16 @@ class SplinePCARepresentation:
         C, timing = self._raw(train_trials)
         self.coef_mean_, self.coef_std_ = C.mean(0), C.std(0) + 1e-8
         self.timing_mean_, self.timing_std_ = timing.mean(0), timing.std(0) + 1e-8
-        X = np.hstack([
-            (C - self.coef_mean_) / self.coef_std_,
-            (timing - self.timing_mean_) / self.timing_std_,
-        ])
+        coefficient_features = (
+            (C - self.coef_mean_) / self.coef_std_
+            if self.standardize_coefficients
+            else C
+        )
+        X = (
+            np.hstack([coefficient_features, (timing - self.timing_mean_) / self.timing_std_])
+            if self.include_timing
+            else coefficient_features
+        )
         self.pca_ = PCA(n_components=self.n_components).fit(X)
         self.T_ = train_trials[0]["pos_norm"].shape[0]
         self.dimensions_ = train_trials[0]["pos_norm"].shape[1]
@@ -185,18 +195,33 @@ class SplinePCARepresentation:
     def encode(self, trials: list[dict]) -> np.ndarray:
         """(N, n_components) codes — the analogue of the encoder's μ."""
         C, timing = self._raw(trials)
-        X = np.hstack([
-            (C - self.coef_mean_) / self.coef_std_,
-            (timing - self.timing_mean_) / self.timing_std_,
-        ])
+        coefficient_features = (
+            (C - self.coef_mean_) / self.coef_std_
+            if self.standardize_coefficients
+            else C
+        )
+        X = (
+            np.hstack([coefficient_features, (timing - self.timing_mean_) / self.timing_std_])
+            if self.include_timing
+            else coefficient_features
+        )
         return self.pca_.transform(X)
 
     def decode(self, codes: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
         """Codes -> (trajectories (N, T, D), timing (N, 2) in seconds)."""
         X = self.pca_.inverse_transform(np.atleast_2d(codes))
         coefficient_width = self.dimensions_ * self.n_coef
-        C = X[:, :coefficient_width] * self.coef_std_ + self.coef_mean_
-        timing = X[:, coefficient_width:] * self.timing_std_ + self.timing_mean_
+        encoded_coefficients = X[:, :coefficient_width]
+        C = (
+            encoded_coefficients * self.coef_std_ + self.coef_mean_
+            if self.standardize_coefficients
+            else encoded_coefficients
+        )
+        timing = (
+            X[:, coefficient_width:] * self.timing_std_ + self.timing_mean_
+            if self.include_timing
+            else np.empty((len(X), 0), dtype=float)
+        )
 
         trajs = np.stack([
             np.stack(

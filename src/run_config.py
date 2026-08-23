@@ -111,6 +111,8 @@ class RunConfig:
     latent_dim: int = config.DEFAULT_LATENT_DIM
     hidden_dim: int = config.HIDDEN_DIM
     architecture: str = config.ARCHITECTURE   # "mlp" (default) or "cnn"
+    variational: bool = True
+    use_condition: bool = True
     # Baseline=True reconstructs timing after giving it to the encoder. False
     # makes the timing head predict timing from trajectory shape + condition.
     encoder_uses_timing: bool = True
@@ -187,6 +189,8 @@ class RunConfig:
                 "latent_dim": d["latent_dim"],
                 "hidden_dim": d["hidden_dim"],
                 "architecture": d["architecture"],
+                "variational": d["variational"],
+                "use_condition": d["use_condition"],
                 "encoder_uses_timing": d["encoder_uses_timing"],
                 "timing_transform": d["timing_transform"],
                 "predict_timing": d["predict_timing"],
