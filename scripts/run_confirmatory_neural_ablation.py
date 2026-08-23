@@ -22,7 +22,12 @@ import config
 from scripts.run_confirmatory_cvae import DEFAULT_STUDY
 from scripts.run_corrected_study import evaluate_per_trial_run, load_per_trial_checkpoint
 from src.confirmatory_evaluation import prediction_tables
-from src.confirmatory_protocol import PROTOCOL_VERSION, partition_trials, write_or_verify_manifest
+from src.confirmatory_protocol import (
+    PROTOCOL_VERSION,
+    partition_trials,
+    write_or_verify_manifest,
+    write_or_verify_protocol,
+)
 from src.run_config import RunConfig
 from src.train import train_vae
 from src.trajectory_view import project_trials_to_table_plane, select_trials_window
@@ -88,7 +93,7 @@ def main() -> None:
         **family_cfg,
     }
     protocol_path = args.study / "protocol" / f"{args.family}_protocol.json"
-    protocol_path.write_text(json.dumps(protocol, indent=2), encoding="utf-8")
+    write_or_verify_protocol(protocol_path, protocol)
 
     for fold_index in requested_folds:
         fold = folds[fold_index]

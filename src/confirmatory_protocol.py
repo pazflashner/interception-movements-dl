@@ -148,3 +148,14 @@ def write_or_verify_manifest(path: Path, trials: list[dict]) -> list[Participant
     else:
         path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
     return folds
+
+
+def write_or_verify_protocol(path: Path, payload: dict) -> None:
+    """Persist a protocol once and reject semantic changes on later runs."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if path.exists():
+        existing = json.loads(path.read_text(encoding="utf-8"))
+        if existing != payload:
+            raise ValueError(f"existing protocol differs from requested protocol: {path}")
+        return
+    path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")

@@ -16,7 +16,12 @@ sys.path.insert(0, str(ROOT))
 import config
 from scripts.run_confirmatory_cvae import DEFAULT_STUDY
 from src.baseline_spline import SplinePCARepresentation
-from src.confirmatory_protocol import PROTOCOL_VERSION, partition_trials, write_or_verify_manifest
+from src.confirmatory_protocol import (
+    PROTOCOL_VERSION,
+    partition_trials,
+    write_or_verify_manifest,
+    write_or_verify_protocol,
+)
 from src.confirmatory_spline import TimingRidge, evaluate_spline_run
 from src.trajectory_view import project_trials_to_table_plane, select_trials_window
 
@@ -49,21 +54,18 @@ def main() -> None:
     run_root = args.study / "runs" / "spline_pca"
     results_dir = args.study / "results"
     results_dir.mkdir(parents=True, exist_ok=True)
-    (args.study / "protocol" / "spline_pca_protocol.json").write_text(
-        json.dumps(
-            {
-                "protocol_version": PROTOCOL_VERSION,
-                "model_family": "spline_pca",
-                "encoder_inputs": "shape-only cubic spline coefficients",
-                "timing_withheld_from_encoder": True,
-                "timing_predictor": "ridge from latent code plus task condition",
-                "pca_fit": "training participants only",
-                "latent_dims": args.dims,
-                "deterministic": True,
-            },
-            indent=2,
-        ),
-        encoding="utf-8",
+    write_or_verify_protocol(
+        args.study / "protocol" / "spline_pca_protocol.json",
+        {
+            "protocol_version": PROTOCOL_VERSION,
+            "model_family": "spline_pca",
+            "encoder_inputs": "shape-only cubic spline coefficients",
+            "timing_withheld_from_encoder": True,
+            "timing_predictor": "ridge from latent code plus task condition",
+            "pca_fit": "training participants only",
+            "latent_dims": args.dims,
+            "deterministic": True,
+        },
     )
 
     for fold_index in args.folds:

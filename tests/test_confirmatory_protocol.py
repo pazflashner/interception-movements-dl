@@ -13,6 +13,7 @@ from src.confirmatory_protocol import (
     make_participant_folds,
     partition_trials,
     validate_participant_folds,
+    write_or_verify_protocol,
 )
 from src.confirmatory_evaluation import summarise_prediction_tables
 
@@ -75,3 +76,19 @@ def test_prediction_summary_distinguishes_trial_and_subject_weighting():
     assert np.isclose(result["trajectory_mse_subject_balanced"], 2.0)
     assert np.isclose(result["movement_time_mae_ms_trial_pooled"], 250.0)
     assert np.isclose(result["movement_time_mae_ms_subject_balanced"], 500.0)
+
+
+def test_protocol_writer_preserves_existing_format_and_rejects_changes():
+    local_tmp = Path(__file__).resolve().parents[1] / "tmp"
+    local_tmp.mkdir(exist_ok=True)
+    path = local_tmp / "protocol_writer_test.json"
+    path.unlink(missing_ok=True)
+    try:
+        path.write_text('{"a": 1, "b": [2, 3]}\n', encoding="utf-8")
+        original = path.read_bytes()
+        write_or_verify_protocol(path, {"a": 1, "b": [2, 3]})
+        assert path.read_bytes() == original
+        with np.testing.assert_raises(ValueError):
+            write_or_verify_protocol(path, {"a": 2, "b": [2, 3]})
+    finally:
+        path.unlink(missing_ok=True)

@@ -23,6 +23,7 @@ from scripts.run_corrected_study import evaluate_per_trial_run, load_per_trial_c
 from src.confirmatory_protocol import (
     PROTOCOL_VERSION,
     partition_trials,
+    write_or_verify_protocol,
     write_or_verify_manifest,
 )
 from src.confirmatory_evaluation import prediction_tables
@@ -101,8 +102,7 @@ def main() -> None:
         "exploratory_latent_dims": [2, 4],
     }
     protocol_path = args.study / "protocol" / "cvae_protocol.json"
-    protocol_path.parent.mkdir(parents=True, exist_ok=True)
-    protocol_path.write_text(json.dumps(protocol, indent=2), encoding="utf-8")
+    write_or_verify_protocol(protocol_path, protocol)
 
     for fold_index in requested_folds:
         fold = folds[fold_index]
