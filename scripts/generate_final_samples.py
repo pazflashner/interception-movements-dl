@@ -130,9 +130,15 @@ def evaluate_run(generated, empirical, test_trials):
                 row[f"ks_{feature}"] = float(ks.statistic)
                 row[f"ks_p_{feature}"] = float(ks.pvalue)
                 row[f"wasserstein_{feature}"] = float(stats.wasserstein_distance(ev, gv))
-        tv, jsd = categorical_distances(e.mj_n_components.to_numpy(), g.mj_n_components.to_numpy())
-        row["count_total_variation"] = tv
-        row["count_jsd"] = jsd
+        for count_column, suffix in (
+            ("mj_n_components", ""),
+            ("mj_n_components_bic", "_bic"),
+        ):
+            tv, jsd = categorical_distances(
+                e[count_column].to_numpy(), g[count_column].to_numpy()
+            )
+            row[f"count_total_variation{suffix}"] = tv
+            row[f"count_jsd{suffix}"] = jsd
         p_columns = [f"ks_p_{feature}" for feature in CONTINUOUS_FEATURES if f"ks_p_{feature}" in row]
         row["ks_rejected_fdr"] = int(benjamini_hochberg(np.array([row[column] for column in p_columns])).sum())
         row["ks_features_tested"] = len(p_columns)

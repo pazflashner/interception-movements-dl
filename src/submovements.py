@@ -164,7 +164,7 @@ def fit_component_count(
     lower = np.asarray(lower, dtype=float)
     upper = np.asarray(upper, dtype=float)
 
-    net_displacement = np.trapz(velocity, time, axis=0)
+    net_displacement = np.trapezoid(velocity, time, axis=0)
     rng = np.random.default_rng(seed + 1009 * n_components)
     best = None
 

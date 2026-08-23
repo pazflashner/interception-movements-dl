@@ -12,6 +12,7 @@ from scipy.stats import wilcoxon
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
+import config
 from src.context_query import benjamini_hochberg
 from src.confirmatory_evaluation import summarise_prediction_tables
 from src.features import kinematic_features_for_dim
@@ -20,7 +21,13 @@ from src.features import kinematic_features_for_dim
 STUDY = ROOT / "studies" / "final_strategy_evaluation"
 RUNS = STUDY / "runs"
 OUT = STUDY / "results" / "analysis"
-FAMILIES = ("cvae", "conditional_ae", "unconditional_vae", "spline_pca")
+FAMILIES = (
+    "cvae",
+    "conditional_ae",
+    "unconditional_vae",
+    "spline_pca",
+    "condition_ridge",
+)
 LOSS_METRICS = (
     "trajectory_mse",
     "movement_time_mae_ms",
@@ -53,7 +60,12 @@ def _active_fdr_rejections(frame: pd.DataFrame, p_columns: list[str]) -> np.ndar
 
 
 def _run_directories(family: str) -> list[Path]:
-    pattern = "fold*/*_z*" if family == "spline_pca" else "fold*/*_z*_seed*"
+    if family == "spline_pca":
+        pattern = "fold*/*_z*"
+    elif family == "condition_ridge":
+        pattern = "fold*/condition_ridge_seed*"
+    else:
+        pattern = "fold*/*_z*_seed*"
     return sorted((RUNS / family).glob(pattern))
 
 
@@ -61,9 +73,9 @@ def _metadata(run_dir: Path) -> dict:
     result = json.loads((run_dir / "result.json").read_text(encoding="utf-8"))
     return {
         "model_family": result["model_family"],
-        "latent_dim": int(result["latent_dim"]),
+        "latent_dim": int(result["latent_dim"] or 0),
         "outer_fold": int(result["outer_fold"]),
-        "training_seed": result.get("training_seed"),
+        "training_seed": result.get("training_seed") or result.get("generation_seed"),
     }
 
 
@@ -216,6 +228,44 @@ def build_feature_fidelity() -> pd.DataFrame:
     return frame
 
 
+def build_timing_outlier_audit() -> pd.DataFrame:
+    rows = []
+    for family in FAMILIES:
+        directories = _run_directories(family)
+        metadata = pd.DataFrame([_metadata(path) | {"path": path} for path in directories])
+        group_columns = ["model_family", "latent_dim", "training_seed"]
+        for keys, group in metadata.groupby(group_columns, dropna=False):
+            timing = pd.concat(
+                [pd.read_csv(path / "timing_predictions.csv") for path in group.path],
+                ignore_index=True,
+            )
+            if timing.duplicated(["subject", "trial_id"]).any():
+                raise ValueError(f"duplicated OOF timing predictions for {keys}")
+            row = dict(zip(group_columns, keys))
+            for stem, plausibility_limit in (
+                ("movement_time", config.MAX_MOVEMENT_TIME_S),
+                ("initiation_time", config.MAX_INITIATION_TIME_S),
+            ):
+                true = timing[f"{stem}_true_s"].to_numpy(dtype=float)
+                predicted = timing[f"{stem}_pred_s"].to_numpy(dtype=float)
+                error_ms = np.abs(predicted - true) * 1000
+                row.update(
+                    {
+                        f"{stem}_median_abs_error_ms": float(np.median(error_ms)),
+                        f"{stem}_p95_abs_error_ms": float(np.quantile(error_ms, 0.95)),
+                        f"{stem}_max_abs_error_ms": float(np.max(error_ms)),
+                        f"{stem}_predictions_above_plausibility_limit": int(
+                            np.sum(predicted > plausibility_limit)
+                        ),
+                        f"{stem}_plausibility_limit_s": plausibility_limit,
+                    }
+                )
+            rows.append(row)
+    frame = pd.DataFrame(rows)
+    frame.to_csv(OUT / "timing_outlier_audit.csv", index=False)
+    return frame
+
+
 def build_variance_decomposition() -> pd.DataFrame:
     frames = []
     metrics = [
@@ -259,9 +309,16 @@ def build_paired_comparisons(participant_raw: pd.DataFrame) -> pd.DataFrame:
         primary = averaged[
             (averaged.model_family == "cvae") & (averaged.latent_dim == latent_dim)
         ].set_index("subject")
-        for comparator in ("conditional_ae", "unconditional_vae", "spline_pca"):
+        for comparator in (
+            "conditional_ae",
+            "unconditional_vae",
+            "spline_pca",
+            "condition_ridge",
+        ):
+            comparator_dim = 0 if comparator == "condition_ridge" else latent_dim
             other = averaged[
-                (averaged.model_family == comparator) & (averaged.latent_dim == latent_dim)
+                (averaged.model_family == comparator)
+                & (averaged.latent_dim == comparator_dim)
             ].set_index("subject")
             common = primary.index.intersection(other.index)
             if len(common) != 28:
@@ -315,12 +372,14 @@ def main() -> None:
     participant = build_participant_metrics()
     oof = build_oof_metrics()
     feature = build_feature_fidelity()
+    timing_outliers = build_timing_outlier_audit()
     variability = build_variance_decomposition()
     paired = build_paired_comparisons(participant)
     manifest = {
         "participant_rows": len(participant),
         "oof_model_seed_rows": len(oof),
         "feature_rows": len(feature),
+        "timing_outlier_rows": len(timing_outliers),
         "variability_rows": len(variability),
         "paired_rows": len(paired),
         "principle": "all folds and seeds retained; neural seeds averaged only after participant pairing",

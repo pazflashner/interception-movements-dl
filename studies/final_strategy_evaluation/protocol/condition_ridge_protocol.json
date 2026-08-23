@@ -1,0 +1,14 @@
+{
+  "protocol_version": "strategy-confirmatory-v1",
+  "model_family": "condition_ridge",
+  "purpose": "task-metadata-only lower benchmark without participant fingerprint",
+  "inputs": "sp category, starting side, exact executed target speed",
+  "outputs": "trajectory, movement time, initiation time",
+  "generation": "condition prediction plus residual sampled from matching training stratum",
+  "outer_folds": 4,
+  "generation_seeds": [
+    42,
+    43,
+    44
+  ]
+}
