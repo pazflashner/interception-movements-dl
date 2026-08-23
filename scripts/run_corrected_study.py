@@ -39,6 +39,7 @@ from src.features import (
     compute_trial_features,
     features_from_arrays,
     features_from_generated_window,
+    kinematic_features_for_dim,
     movement_from_generated_window,
 )
 from src.hierarchical_vae import HierarchicalCVAE, HierarchicalNorm, train_hierarchical
@@ -177,7 +178,12 @@ def generate_per_trial_model(model, trials, norm, n_samples, device, seed, share
             for i in range(n_samples)
         ])
         empirical = pd.DataFrame([compute_trial_features(t) for t in query_trials])
-        row = {"subject": split.subject, **distribution_distances(empirical, generated, KINEMATIC_FEATURES)}
+        position_dim = model.input_dim // config.NORMALISED_LENGTH
+        fidelity_features = kinematic_features_for_dim(position_dim)
+        row = {
+            "subject": split.subject,
+            **distribution_distances(empirical, generated, fidelity_features),
+        }
         rows.append(row)
     return finish_fidelity_table(pd.DataFrame(rows))
 
@@ -271,7 +277,12 @@ def generate_hierarchical(model, norm, trials, n_samples, device, seed):
         generated = pd.DataFrame([features_from_arrays(trajectories[i], max(float(timing[i, 0]), 1e-3),
                                                                float(timing[i, 1])) for i in range(n_samples)])
         empirical = pd.DataFrame([compute_trial_features(t) for t in query])
-        rows.append({"subject": split.subject, **distribution_distances(empirical, generated, KINEMATIC_FEATURES)})
+        position_dim = model.input_dim // config.NORMALISED_LENGTH
+        fidelity_features = kinematic_features_for_dim(position_dim)
+        rows.append({
+            "subject": split.subject,
+            **distribution_distances(empirical, generated, fidelity_features),
+        })
     return finish_fidelity_table(pd.DataFrame(rows))
 
 

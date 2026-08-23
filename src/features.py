@@ -45,6 +45,25 @@ KINEMATIC_FEATURES = [
 ]
 
 
+def kinematic_features_for_dim(position_dim: int) -> list[str]:
+    """Return fidelity features that exist in the modeled position space.
+
+    ``features_from_arrays`` keeps ``end_z`` as a legacy compatibility field
+    for two-dimensional trajectories, where its value is always zero.  A
+    constant placeholder must not enter distribution averages or multiplicity
+    correction, so confirmatory 2-D analyses explicitly omit it.
+    """
+    if position_dim < 1 or position_dim > 3:
+        raise ValueError(f"position_dim must be in [1, 3], got {position_dim}")
+    endpoint_features = {"end_x", "end_y", "end_z"}
+    available_endpoints = set(("end_x", "end_y", "end_z")[:position_dim])
+    return [
+        feature
+        for feature in KINEMATIC_FEATURES
+        if feature not in endpoint_features or feature in available_endpoints
+    ]
+
+
 def features_from_arrays(
     pos: np.ndarray,
     movement_time_s: float,

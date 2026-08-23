@@ -14,7 +14,7 @@ from scripts.run_corrected_study import context_query_for_trials, finish_fidelit
 from src.baseline_spline import SplinePCARepresentation
 from src.confirmatory_evaluation import summarise_prediction_tables
 from src.context_query import distribution_distances, fingerprint_identification, subject_summary, tune_and_test_ridge
-from src.features import KINEMATIC_FEATURES, compute_trial_features, features_from_generated_window, movement_from_generated_window
+from src.features import compute_trial_features, features_from_generated_window, kinematic_features_for_dim, movement_from_generated_window
 from src.vae_model import encode_timing, encode_trial_condition, inverse_timing, transform_timing
 
 
@@ -206,10 +206,15 @@ def evaluate_spline_run(
             ]
         )
         empirical = pd.DataFrame([compute_trial_features(t) for t in query_trials])
+        position_dim = generated_trajectories.shape[-1]
         fidelity_rows.append(
             {
                 "subject": split.subject,
-                **distribution_distances(empirical, generated_features, KINEMATIC_FEATURES),
+                **distribution_distances(
+                    empirical,
+                    generated_features,
+                    kinematic_features_for_dim(position_dim),
+                ),
             }
         )
     fidelity = finish_fidelity_table(pd.DataFrame(fidelity_rows))
