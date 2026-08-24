@@ -1,0 +1,38 @@
+"""Minimal configuration required by the standalone confirmatory dashboard."""
+from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).resolve().parent
+STUDY_ROOT = PROJECT_ROOT / "studies" / "final_strategy_evaluation"
+RESULTS_DIR = STUDY_ROOT / "results"
+
+RECORDING_HZ = 240
+NORMALISED_LENGTH = 100
+LOWPASS_CUTOFF_HZ = 10
+LOWPASS_ORDER = 4
+STIMULUS_ONSET_MARKER = 5
+ONSET_SPEED_THRESHOLD = 5.0
+ONSET_SUSTAIN_FRAMES = 3
+POSITION_UNIT = "tracker_unit"
+
+WINDOW_MOVEMENT_ONLY = "movement_only"
+WINDOW_GO_TO_ARRIVAL = "go_to_arrival"
+
+STARTING_POSITIONS = {1: 120, 2: 140, 3: 160}
+SPEED_RANGES = {1: (255, 300), 2: (298, 350), 3: (340, 400)}
+
+LATE_ARRIVAL_CUTOFF_S = 1.0
+MAX_TRIAL_DURATION_S = 3.0
+DROP_TOO_EARLY = False
+KEEP_NOT_FIXATING = True
+
+DEFAULT_LATENT_DIM = 3
+HIDDEN_DIM = 256
+ARCHITECTURE = "mlp"
+TIMING_DIM = 2
+TIMING_WEIGHT = 20.0
+KL_WEIGHT = 1.0
+KL_ANNEAL = "linear"
+KL_ANNEAL_EPOCHS = 50
+KL_ANNEAL_CYCLES = 4
+KL_ANNEAL_RATIO = 0.5
+

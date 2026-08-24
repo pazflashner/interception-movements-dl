@@ -15,6 +15,8 @@ models/*.json
 results/
 output/pdf/figures/
 output/pdf/rendered/
+output/release/Interception_Movements_Advisor_Package/
+output/release/advisor_package_*/
 .tmp/
 tmp/
 external/jason-submovements/

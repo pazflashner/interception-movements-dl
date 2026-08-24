@@ -1,0 +1,11 @@
+Minimum-jerk submovement decomposition
+---------------------------------------
+The scientific parameterization in src/submovements.py was adapted from Prof.
+Jason Friedman's GPL-3.0 submovements repository, commit
+9c2f40ccc922d542242329c46cfd524c21188b4a:
+
+    https://github.com/JasonFriedman/submovements
+
+The original repository and its license should be consulted before
+redistributing a derivative implementation outside this academic project.
+
