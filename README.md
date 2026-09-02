@@ -19,16 +19,23 @@ secondary, model-order-sensitive kinematic analysis.
 
 ## Navigation
 
+- **Independent review: [REVIEW_HANDOFF.md](REVIEW_HANDOFF.md)** lists the exact
+  current reports, source modules, saved predictions, and checks to perform.
 - `studies/final_strategy_evaluation/`: frozen confirmatory protocols, runs, and
   result tables.
-- `src/`: shared loading, preprocessing, CVAE, evaluation, and submovement code.
-- `scripts/`: reproducible data, training, evaluation, and reporting commands.
+- `src/`: shared code; [source map](src/README.md).
+- `scripts/`: [current entry points and dependency notes](scripts/README.md).
 - `reports/`: scientific-report and interpretation-guide builders.
 - `output/pdf/`: final scientific report and companion results guide.
 - `output/release/`: standalone dashboard bundle and email-ready ZIP.
 - `tests/`: protocol and model checks.
-- `archive/movement_only_2026-08-10/`: local, ignored, explicitly outdated
-  snapshot kept only for context.
+- `archive/`: [historical snapshots and superseded entry points](archive/README.md).
+
+The canonical data and a few shared diagnostics remain under
+`studies/strategy_window_comparison/`; the final study still reads them. Do not
+archive that entire directory. Most run/checkpoint/result files are local and
+Git-ignored, so a GitHub clone is not the full evidence set. The current PDFs and
+compact advisor ZIP are tracked; do not mistake the ZIP for a complete run archive.
 
 ## Final outputs
 
