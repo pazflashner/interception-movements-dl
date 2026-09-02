@@ -49,7 +49,7 @@ STIMULUS_ONSET_MARKER = 5   # marks the frame the object *appears* (always frame
 
 # ── Trial segmentation (event-based, from the .mat metadata) ──────────────────
 # The object appears (marker=5), holds still for a randomised foreperiod
-# (0.18-0.48 s), then starts moving — the "go-signal". The participant may only
+# (0.20-0.50 s in the audited data), then starts moving — the "go-signal". The participant may only
 # move once the object moves. We take the go-signal as the behavioural zero-time
 # (reaction/wait time is measured from it), which removes the randomised
 # foreperiod from the trajectories. The recording ends at finger arrival

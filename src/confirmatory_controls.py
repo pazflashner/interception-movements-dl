@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import json
 
 import numpy as np
 import pandas as pd
@@ -15,7 +16,7 @@ from scripts.run_corrected_study import (
     mean_ks_statistic,
 )
 from src.confirmatory_evaluation import summarise_prediction_tables
-from src.context_query import distribution_distances
+from src.context_query import DistanceReference, distribution_distances
 from src.features import (
     compute_trial_features,
     features_from_generated_window,
@@ -166,6 +167,7 @@ def evaluate_condition_ridge(
     test_trials: list[dict],
     out_dir,
     generation_seed: int,
+    distance_reference: DistanceReference | None = None,
 ) -> dict:
     reconstructed, predicted_timing = model.predict(test_trials)
     recorded = np.stack([trial["pos_norm"] for trial in test_trials])
@@ -196,6 +198,8 @@ def evaluate_condition_ridge(
 
     fidelity_rows = []
     features = kinematic_features_for_dim(model.position_dim)
+    if distance_reference is not None:
+        (out_dir / "distance_reference.json").write_text(json.dumps(distance_reference.to_dict(), indent=2))
     for split in context_query_for_trials(test_trials, config.CONTEXT_QUERY_SEED):
         query_trials = [test_trials[i] for i in split.query_indices]
         rng = np.random.default_rng(
@@ -219,7 +223,7 @@ def evaluate_condition_ridge(
         fidelity_rows.append(
             {
                 "subject": split.subject,
-                **distribution_distances(empirical, generated, features),
+                **distribution_distances(empirical, generated, features, distance_reference),
             }
         )
     fidelity = finish_fidelity_table(pd.DataFrame(fidelity_rows))

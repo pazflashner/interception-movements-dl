@@ -109,9 +109,11 @@ def tune_and_test_ridge(
     test_x: pd.DataFrame,
     test_y: pd.DataFrame,
     alphas: tuple[float, ...] = (0.01, 0.1, 1.0, 10.0, 100.0),
+    prediction_path=None,
 ) -> pd.DataFrame:
     """Tune Ridge on validation subjects and score test subjects exactly once."""
     rows = []
+    predictions = []
     for target in train_y.columns:
         scaler = StandardScaler().fit(train_x.values)
         xtr = scaler.transform(train_x.values)
@@ -128,6 +130,10 @@ def tune_and_test_ridge(
                 best_mse, best_alpha = mse, alpha
         model = Ridge(alpha=best_alpha).fit(np.vstack([xtr, xval]), np.r_[ytr, yval])
         pred = model.predict(xte)
+        for subject, true, predicted in zip(test_y.index, yte, pred):
+            predictions.append({"subject": subject, "target": target,
+                                "true": float(true), "predicted": float(predicted),
+                                "train_mean_baseline": float(ytr.mean())})
         rows.append({
             "target": target,
             "alpha": best_alpha,
@@ -137,32 +143,74 @@ def tune_and_test_ridge(
             "n_val_subjects": len(val_x),
             "n_test_subjects": len(test_x),
         })
+    if prediction_path is not None:
+        pd.DataFrame(predictions).to_csv(prediction_path, index=False)
     return pd.DataFrame(rows)
 
 
-def distribution_distances(empirical: pd.DataFrame, generated: pd.DataFrame, features: list[str]) -> dict:
+@dataclass(frozen=True)
+class DistanceReference:
+    """Fixed feature geometry; final evaluations fit this on training trials."""
+
+    features: tuple[str, ...]
+    centre: np.ndarray
+    scale: np.ndarray
+    gamma: float
+
+    @classmethod
+    def fit(cls, frame: pd.DataFrame, features: list[str], seed: int = 2026):
+        values = frame[features].replace([np.inf, -np.inf], np.nan).dropna().to_numpy(float)
+        if len(values) < 2:
+            raise ValueError("distance reference needs at least two complete observations")
+        centre = values.mean(axis=0)
+        sd = values.std(axis=0)
+        scale = np.where(sd > 1e-6, sd, 1.0)
+        for i, feature in enumerate(features):
+            if feature in {"n_submovements", "speed_peak_count", "mj_n_components"}:
+                scale[i] = max(scale[i], 1.0)
+        selected = np.random.default_rng(seed).choice(len(values), min(len(values), 512), replace=False)
+        standardized = (values[selected] - centre) / scale
+        squared = np.sum((standardized[:, None, :] - standardized[None, :, :]) ** 2, axis=-1)
+        positive = squared[squared > 0]
+        gamma = 1.0 / float(np.median(positive)) if positive.size else 1.0
+        return cls(tuple(features), centre, scale, gamma)
+
+    def to_dict(self) -> dict:
+        return {"features": list(self.features), "centre": self.centre.tolist(),
+                "scale": self.scale.tolist(), "rbf_gamma": self.gamma,
+                "policy": "training_sd_count_floor_one_fixed_training_bandwidth"}
+
+
+def distribution_distances(
+    empirical: pd.DataFrame, generated: pd.DataFrame, features: list[str],
+    reference: DistanceReference | None = None,
+) -> dict:
     """Effect sizes and FDR-ready p-values for one subject's query sample."""
     row: dict[str, float] = {}
     for feature in features:
-        e = empirical[feature].dropna().to_numpy()
-        g = generated[feature].dropna().to_numpy()
+        e = empirical[feature].replace([np.inf, -np.inf], np.nan).dropna().to_numpy()
+        g = generated[feature].replace([np.inf, -np.inf], np.nan).dropna().to_numpy()
+        if not len(e) or not len(g):
+            raise ValueError(f"no finite observations for {feature}")
         ks = stats.ks_2samp(e, g)
         row[f"ks_{feature}"] = float(ks.statistic)
         row[f"ks_p_{feature}"] = float(ks.pvalue)
         row[f"wasserstein_{feature}"] = float(stats.wasserstein_distance(e, g))
     e = empirical[features].replace([np.inf, -np.inf], np.nan).dropna().to_numpy(dtype=float)
     g = generated[features].replace([np.inf, -np.inf], np.nan).dropna().to_numpy(dtype=float)
-    centre = e.mean(axis=0)
-    scale = e.std(axis=0) + 1e-8
-    e, g = (e - centre) / scale, (g - centre) / scale
+    if min(len(e), len(g)) < 2:
+        raise ValueError("multivariate distances need at least two complete rows per sample")
+    # Legacy callers use an empirical-only reference. Current runners explicitly
+    # supply a training reference shared by all models and held-out participants.
+    reference = reference or DistanceReference.fit(empirical, features)
+    if reference.features != tuple(features):
+        raise ValueError("distance reference feature order does not match")
+    e, g = (e - reference.centre) / reference.scale, (g - reference.centre) / reference.scale
     dxy = np.linalg.norm(e[:, None, :] - g[None, :, :], axis=-1)
     dxx = np.linalg.norm(e[:, None, :] - e[None, :, :], axis=-1)
     dyy = np.linalg.norm(g[:, None, :] - g[None, :, :], axis=-1)
     row["energy_distance"] = float(2 * dxy.mean() - dxx.mean() - dyy.mean())
-    pooled = np.vstack([e, g])
-    d2 = np.sum((pooled[:, None, :] - pooled[None, :, :]) ** 2, axis=-1)
-    median = np.median(d2[d2 > 0]) if np.any(d2 > 0) else 1.0
-    gamma = 1.0 / median
+    gamma = reference.gamma
     kernel = lambda a, b: np.exp(-gamma * np.sum((a[:, None, :] - b[None, :, :]) ** 2, axis=-1))
     kxx, kyy, kxy = kernel(e, e), kernel(g, g), kernel(e, g)
     np.fill_diagonal(kxx, 0); np.fill_diagonal(kyy, 0)

@@ -25,6 +25,7 @@ sys.path.insert(0, str(ROOT))
 import config
 from src.baseline_spline import evaluate_spline_baseline, evaluate_spline_pca_baseline
 from src.context_query import (
+    DistanceReference,
     benjamini_hochberg,
     distribution_distances,
     fingerprint_identification,
@@ -53,8 +54,8 @@ def save_json(path: Path, obj):
     path.write_text(json.dumps(obj, indent=2, default=float), encoding="utf-8")
 
 
-def finish_fidelity_table(frame: pd.DataFrame) -> pd.DataFrame:
-    pcols = [c for c in frame if c.startswith("ks_p_")]
+def finish_fidelity_table(frame: pd.DataFrame, position_dim: int = 2) -> pd.DataFrame:
+    pcols = [f"ks_p_{feature}" for feature in kinematic_features_for_dim(position_dim)]
     frame = frame.copy()
     frame["ks_rejected_fdr"] = [int(benjamini_hochberg(row[pcols].to_numpy()).sum())
                                  for _, row in frame.iterrows()]
@@ -62,9 +63,11 @@ def finish_fidelity_table(frame: pd.DataFrame) -> pd.DataFrame:
     return frame
 
 
-def mean_ks_statistic(frame: pd.DataFrame) -> float:
-    columns = [c for c in frame if c.startswith("ks_") and not c.startswith("ks_p_")
-               and c not in {"ks_rejected_fdr", "ks_features_tested"}]
+def mean_ks_statistic(frame: pd.DataFrame, position_dim: int = 2) -> float:
+    columns = [f"ks_{feature}" for feature in kinematic_features_for_dim(position_dim)]
+    missing = set(columns) - set(frame.columns)
+    if missing:
+        raise ValueError(f"missing active KS features: {sorted(missing)}")
     return float(frame[columns].mean().mean())
 
 
@@ -150,7 +153,8 @@ def evaluate_timing_and_reconstruction(model, trials, norm, device):
     return row
 
 
-def generate_per_trial_model(model, trials, norm, n_samples, device, seed, shared_covariance):
+def generate_per_trial_model(model, trials, norm, n_samples, device, seed, shared_covariance,
+                             distance_reference=None):
     mu, logvar, _, subjects = encode_trials(model, trials, norm, device)
     tm, ts, tim_m, tim_s = norm.torch(device)
     rows = []
@@ -182,7 +186,7 @@ def generate_per_trial_model(model, trials, norm, n_samples, device, seed, share
         fidelity_features = kinematic_features_for_dim(position_dim)
         row = {
             "subject": split.subject,
-            **distribution_distances(empirical, generated, fidelity_features),
+            **distribution_distances(empirical, generated, fidelity_features, distance_reference),
         }
         rows.append(row)
     return finish_fidelity_table(pd.DataFrame(rows))
@@ -211,6 +215,7 @@ def evaluate_per_trial_run(model, norm, train_trials, val_trials, test_trials, o
     probes = tune_and_test_ridge(
         tables["train"][0], tables["train"][1], tables["val"][0], tables["val"][1],
         tables["test"][0], tables["test"][1],
+        prediction_path=out_dir / "behavioral_probe_predictions.csv",
     )
     probes.to_csv(out_dir / "behavioral_probe.csv", index=False)
     if model.latent_dim <= 3:
@@ -219,13 +224,19 @@ def evaluate_per_trial_run(model, norm, train_trials, val_trials, test_trials, o
         std_probes = tune_and_test_ridge(
             std_tables["train"][0], std_tables["train"][1], std_tables["val"][0], std_tables["val"][1],
             std_tables["test"][0], std_tables["test"][1],
+            prediction_path=out_dir / "behavioral_probe_mean_plus_sd_predictions.csv",
         )
         std_probes.to_csv(out_dir / "behavioral_probe_mean_plus_sd_ablation.csv", index=False)
     ident = fingerprint_identification(tables["test"][2], tables["test"][3])
     timing = evaluate_timing_and_reconstruction(model, test_trials, norm, device)
     shared_covariance = training_latent_noise_covariance(model, train_trials, norm, device)
+    reference = DistanceReference.fit(
+        pd.DataFrame([compute_trial_features(t) for t in train_trials]),
+        kinematic_features_for_dim(model.input_dim // config.NORMALISED_LENGTH),
+    )
+    save_json(out_dir / "distance_reference.json", reference.to_dict())
     fidelity = generate_per_trial_model(
-        model, test_trials, norm, 120, device, cq_seed, shared_covariance
+        model, test_trials, norm, 120, device, cq_seed, shared_covariance, reference
     )
     fidelity.to_csv(out_dir / "context_query_fidelity.csv", index=False)
     return {**timing, **{f"fingerprint_{k}": v for k, v in ident.items()},

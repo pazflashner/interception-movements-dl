@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import argparse
 from pathlib import Path
 import sys
 
@@ -367,7 +368,12 @@ def build_paired_comparisons(participant_raw: pd.DataFrame) -> pd.DataFrame:
     return frame
 
 
-def main() -> None:
+def main(study: Path | None = None) -> None:
+    global STUDY, RUNS, OUT
+    if study is not None:
+        STUDY = study
+        RUNS = STUDY / "runs"
+        OUT = STUDY / "results" / "analysis"
     OUT.mkdir(parents=True, exist_ok=True)
     participant = build_participant_metrics()
     oof = build_oof_metrics()
@@ -391,4 +397,6 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--study", type=Path, default=STUDY)
+    main(parser.parse_args().study)

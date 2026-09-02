@@ -1,7 +1,7 @@
 """
 Preprocessing pipeline.
 
-1. Identify movement onset (stimulus marker = 5) and movement offset.
+1. Identify target appearance (marker 5), target motion, and finger motion.
 2. Low-pass Butterworth filter (10 Hz cutoff at 240 Hz).
 3. Temporal normalisation to T=100 frames via cubic spline interpolation.
 4. Spatial normalisation (subtract initial position).
@@ -221,12 +221,15 @@ def preprocess_trial(
     pos_filtered = lowpass_filter(pos_raw, cutoff=filter_cutoff)
     n = len(pos_filtered)
 
-    # Go-signal (object starts moving) in finger frames, synced to marker==5.
-    go_idx = stim_idx if _nan(go_s) else stim_idx + int(round(go_s * config.RECORDING_HZ))
-    go_idx = int(min(max(go_idx, 0), n - 1))
+    # Do not substitute target appearance when the actual go event is missing.
+    if _nan(go_s):
+        return drop("missing_target_motion_onset")
+    go_idx = stim_idx + int(round(go_s * config.RECORDING_HZ))
+    if go_idx < stim_idx or go_idx >= n:
+        return drop("target_motion_outside_recording")
 
-    # END = arrival: the recording already stops at interception, so the last
-    # frame is the arrival (timeouts, which run to the 10 s cap, were dropped).
+    # The final tracker sample is an arrival proxy, not pressedTime itself.
+    # The measured CSV/MAT offset is audited separately; do not invent samples.
     arrival_idx = n - 1
     if arrival_idx - go_idx < 4:
         return drop("window_too_short")

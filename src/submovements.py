@@ -1,9 +1,10 @@
 """Minimum-jerk submovement decomposition for the interception study.
 
-The parameterization and normalized velocity error follow Prof. Jason
-Friedman's GPL-3.0 ``submovements`` repository (commit 9c2f40c, inspected
-2026-08-10). This implementation keeps the same scientific model while making
-the temporal constraints configurable for the shorter interception reaches.
+The minimum-jerk basis is adapted from Prof. Jason Friedman's GPL-3.0
+``submovements`` repository (commit 9c2f40c). This is a reimplementation, not
+byte-identical upstream execution: the optimizer, component bounds, and the
+tangential term (norm of the summed velocity) differ. These choices require
+separate validation and are included in the sensitivity analysis.
 
 Each 2-D component is ``[onset_s, duration_s, lateral_displacement,
 forward_displacement]``. The measured velocity is modeled as the sum of the

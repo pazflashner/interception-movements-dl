@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import json
 
 import numpy as np
 import pandas as pd
@@ -13,7 +14,7 @@ import config
 from scripts.run_corrected_study import context_query_for_trials, finish_fidelity_table, mean_ks_statistic
 from src.baseline_spline import SplinePCARepresentation
 from src.confirmatory_evaluation import summarise_prediction_tables
-from src.context_query import distribution_distances, fingerprint_identification, subject_summary, tune_and_test_ridge
+from src.context_query import DistanceReference, distribution_distances, fingerprint_identification, subject_summary, tune_and_test_ridge
 from src.features import compute_trial_features, features_from_generated_window, kinematic_features_for_dim, movement_from_generated_window
 from src.vae_model import encode_timing, encode_trial_condition, inverse_timing, transform_timing
 
@@ -173,6 +174,7 @@ def evaluate_spline_run(
         tables["validation"][1],
         tables["test"][0],
         tables["test"][1],
+        prediction_path=out_dir / "behavioral_probe_predictions.csv",
     )
     probes.to_csv(out_dir / "behavioral_probe.csv", index=False)
     identification = fingerprint_identification(tables["test"][2], tables["test"][3])
@@ -180,6 +182,11 @@ def evaluate_spline_run(
     train_codes = representation.encode(train_trials)
     train_subjects = np.asarray([t["metadata"]["subject"] for t in train_trials])
     shared_covariance = _training_noise_covariance(train_codes, train_subjects)
+    reference = DistanceReference.fit(
+        pd.DataFrame([compute_trial_features(t) for t in train_trials]),
+        kinematic_features_for_dim(recorded.shape[-1]),
+    )
+    (out_dir / "distance_reference.json").write_text(json.dumps(reference.to_dict(), indent=2))
     fidelity_rows = []
     for split in context_query_for_trials(test_trials, seed):
         context_codes = codes[split.context_indices]
@@ -214,6 +221,7 @@ def evaluate_spline_run(
                     empirical,
                     generated_features,
                     kinematic_features_for_dim(position_dim),
+                    reference,
                 ),
             }
         )
