@@ -1,0 +1,9 @@
+{
+  "zip_sha256": "5234a2dd39b696f3313055e06fb027e4814017b99181296c9c0821a3749acc98",
+  "zip_bytes": 9836866,
+  "entries": 62,
+  "tested_payload_files_unchanged": 60,
+  "unit_tests_passed": 61,
+  "dashboard_section_dimension_checks": 48,
+  "notes": "AppTest temporary-directory cleanup permission warning only; no application exception."
+}

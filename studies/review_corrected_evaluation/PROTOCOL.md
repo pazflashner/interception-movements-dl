@@ -49,4 +49,15 @@ folds remain unchanged unless a separate, documented decision is made.
 - [x] Summarize behavioural probes and timing sensitivity (48 common-head fits).
 - [x] Calibrate minimum-jerk sampling uncertainty (500 empirical repetitions).
 - [x] Rebuild and visually verify the scientific report and student guide (12/5 pages).
-- [ ] Refresh and test dashboard assets/package; commit code and provenance.
+- [x] Refresh and test dashboard assets/package; commit code and provenance.
+
+## Verification completed
+
+- 61 automated tests passed, zero skipped.
+- 124 corrected evaluations share the same training reference within each fold.
+- Original timing/reconstruction predictions reproduce within numerical tolerance.
+- All six dashboard sections run at n=2,3,4,8, both in the checkout and a fresh
+  ZIP extraction; no app exceptions in those 48 section/dimension checks.
+- Both PDFs were rendered and all 17 pages visually checked; text bounds checked.
+- Windows AppTest emitted a temporary-directory cleanup permission warning at
+  interpreter exit; application checks passed with process exit code zero.

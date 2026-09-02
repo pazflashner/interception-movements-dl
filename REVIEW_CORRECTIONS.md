@@ -100,3 +100,15 @@ the 1 s late threshold and minimum-jerk settings. None is silently resolved by
 the new typography or by an improved metric. The 12-page report is ready for
 critical discussion, not a declaration that these task-specific assumptions
 have been approved.
+
+## Completed checks
+
+The full automated suite passes (61 tests, no skips). The verification script
+checks 124 corrected runs, four shared feature references, unchanged original
+timing/reconstruction predictions and all 48 common-head cells. Both PDFs were
+rendered and every page inspected (12 scientific, five guide pages). AppTest
+exercised all six sections at all four dimensions in the source checkout and a
+fresh standalone ZIP extraction, with no app exceptions. It emitted a Windows
+temporary-directory cleanup permission warning at interpreter exit; the checks
+completed and the process returned zero. The ZIP contains only reference live
+checkpoints, not the whole training archive.

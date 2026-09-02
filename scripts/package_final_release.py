@@ -91,6 +91,7 @@ def build_bundle(bundle: Path) -> None:
 
     corrected = ROOT / "studies/review_corrected_evaluation"
     copy_to_bundle(corrected / "PROTOCOL.md", Path("evaluation/PROTOCOL.md"), bundle)
+    copy_to_bundle(corrected / "VERIFICATION.json", Path("evaluation/VERIFICATION.json"), bundle)
     for folder in ("analysis", "behavioral_probes", "timing_fairness", "sampling_reference", "event_audit"):
         for path in sorted((corrected / "results" / folder).glob("*")):
             if path.is_file() and path.suffix in {".csv", ".json"}:
