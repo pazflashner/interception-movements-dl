@@ -1,9 +1,10 @@
 {
-  "zip_sha256": "5234a2dd39b696f3313055e06fb027e4814017b99181296c9c0821a3749acc98",
-  "zip_bytes": 9836866,
+  "zip_sha256": "4bed2c733d88b0024d2ecc560e6e55537511a7d87f849880f1dff307bfa0383f",
+  "zip_bytes": 9837735,
   "entries": 62,
-  "tested_payload_files_unchanged": 60,
+  "tested_payload_files_unchanged": 57,
   "unit_tests_passed": 61,
-  "dashboard_section_dimension_checks": 48,
-  "notes": "AppTest temporary-directory cleanup permission warning only; no application exception."
+  "previous_dashboard_section_dimension_checks": 48,
+  "dashboard_retested_this_documentation_fix": false,
+  "notes": "Only the two PDF copies per document and VERIFICATION.json changed from the previously tested ZIP. All 57 other entries, including dashboard code, checkpoints and results, are byte-identical. Scientific report text changed only on page 2; guide text is unchanged. The 61-test suite and full 124-run verifier were rerun successfully. Previous AppTest checks had only a temporary-directory cleanup permission warning, with no application exception."
 }

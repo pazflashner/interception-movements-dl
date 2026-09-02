@@ -14,12 +14,12 @@
     {
       "path": "output\\pdf\\Interception_Movements_Final_Scientific_Report.pdf",
       "pages": 12,
-      "sha256": "c31f1d6cd966b7cac7cf795305c13752c8530cd2fcf2285af588ee4f15293be7"
+      "sha256": "7f792428a8087fb428ca5ae7a5793810d67135c14877ac7e3fe6e4442f08b942"
     },
     {
       "path": "output\\pdf\\Interception_Movements_Results_Guide.pdf",
       "pages": 5,
-      "sha256": "dbb1ac891b3e5e3d8e7b4afd35cbd313cbbd9f37c1e4953be6f7ba5fe5fb0384"
+      "sha256": "e3cbd08b659555e0036c75ee3c39455184a8e5c20e2117aa3bddd63c4b2f08bf"
     }
   ],
   "runs": [
@@ -643,5 +643,588 @@
       "source_result_sha256": "d19656fe7dd7ff56074854d378d113667b7ebe8f4a678b4f125f6ccb35901e71",
       "checkpoint_sha256": null
     }
-  ]
+  ],
+  "neural_training": {
+    "run_count": 96,
+    "epoch_limit": 150,
+    "runs_reaching_cap": 5,
+    "runs": [
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\cvae\\fold0\\cvae_z2_seed42",
+        "epoch_limit": 150,
+        "epochs_completed": 81,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\cvae\\fold0\\cvae_z2_seed43",
+        "epoch_limit": 150,
+        "epochs_completed": 55,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\cvae\\fold0\\cvae_z2_seed44",
+        "epoch_limit": 150,
+        "epochs_completed": 68,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\cvae\\fold0\\cvae_z3_seed42",
+        "epoch_limit": 150,
+        "epochs_completed": 116,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\cvae\\fold0\\cvae_z3_seed43",
+        "epoch_limit": 150,
+        "epochs_completed": 99,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\cvae\\fold0\\cvae_z3_seed44",
+        "epoch_limit": 150,
+        "epochs_completed": 98,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\cvae\\fold0\\cvae_z4_seed42",
+        "epoch_limit": 150,
+        "epochs_completed": 116,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\cvae\\fold0\\cvae_z4_seed43",
+        "epoch_limit": 150,
+        "epochs_completed": 128,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\cvae\\fold0\\cvae_z4_seed44",
+        "epoch_limit": 150,
+        "epochs_completed": 85,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\cvae\\fold0\\cvae_z8_seed42",
+        "epoch_limit": 150,
+        "epochs_completed": 150,
+        "reached_cap": true
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\cvae\\fold0\\cvae_z8_seed43",
+        "epoch_limit": 150,
+        "epochs_completed": 150,
+        "reached_cap": true
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\cvae\\fold0\\cvae_z8_seed44",
+        "epoch_limit": 150,
+        "epochs_completed": 121,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\cvae\\fold1\\cvae_z2_seed42",
+        "epoch_limit": 150,
+        "epochs_completed": 71,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\cvae\\fold1\\cvae_z2_seed43",
+        "epoch_limit": 150,
+        "epochs_completed": 59,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\cvae\\fold1\\cvae_z2_seed44",
+        "epoch_limit": 150,
+        "epochs_completed": 75,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\cvae\\fold1\\cvae_z3_seed42",
+        "epoch_limit": 150,
+        "epochs_completed": 63,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\cvae\\fold1\\cvae_z3_seed43",
+        "epoch_limit": 150,
+        "epochs_completed": 116,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\cvae\\fold1\\cvae_z3_seed44",
+        "epoch_limit": 150,
+        "epochs_completed": 88,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\cvae\\fold1\\cvae_z4_seed42",
+        "epoch_limit": 150,
+        "epochs_completed": 91,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\cvae\\fold1\\cvae_z4_seed43",
+        "epoch_limit": 150,
+        "epochs_completed": 71,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\cvae\\fold1\\cvae_z4_seed44",
+        "epoch_limit": 150,
+        "epochs_completed": 59,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\cvae\\fold1\\cvae_z8_seed42",
+        "epoch_limit": 150,
+        "epochs_completed": 84,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\cvae\\fold1\\cvae_z8_seed43",
+        "epoch_limit": 150,
+        "epochs_completed": 109,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\cvae\\fold1\\cvae_z8_seed44",
+        "epoch_limit": 150,
+        "epochs_completed": 102,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\cvae\\fold2\\cvae_z2_seed42",
+        "epoch_limit": 150,
+        "epochs_completed": 108,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\cvae\\fold2\\cvae_z2_seed43",
+        "epoch_limit": 150,
+        "epochs_completed": 89,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\cvae\\fold2\\cvae_z2_seed44",
+        "epoch_limit": 150,
+        "epochs_completed": 78,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\cvae\\fold2\\cvae_z3_seed42",
+        "epoch_limit": 150,
+        "epochs_completed": 86,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\cvae\\fold2\\cvae_z3_seed43",
+        "epoch_limit": 150,
+        "epochs_completed": 89,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\cvae\\fold2\\cvae_z3_seed44",
+        "epoch_limit": 150,
+        "epochs_completed": 64,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\cvae\\fold2\\cvae_z4_seed42",
+        "epoch_limit": 150,
+        "epochs_completed": 86,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\cvae\\fold2\\cvae_z4_seed43",
+        "epoch_limit": 150,
+        "epochs_completed": 106,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\cvae\\fold2\\cvae_z4_seed44",
+        "epoch_limit": 150,
+        "epochs_completed": 133,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\cvae\\fold2\\cvae_z8_seed42",
+        "epoch_limit": 150,
+        "epochs_completed": 150,
+        "reached_cap": true
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\cvae\\fold2\\cvae_z8_seed43",
+        "epoch_limit": 150,
+        "epochs_completed": 140,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\cvae\\fold2\\cvae_z8_seed44",
+        "epoch_limit": 150,
+        "epochs_completed": 150,
+        "reached_cap": true
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\cvae\\fold3\\cvae_z2_seed42",
+        "epoch_limit": 150,
+        "epochs_completed": 90,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\cvae\\fold3\\cvae_z2_seed43",
+        "epoch_limit": 150,
+        "epochs_completed": 146,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\cvae\\fold3\\cvae_z2_seed44",
+        "epoch_limit": 150,
+        "epochs_completed": 113,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\cvae\\fold3\\cvae_z3_seed42",
+        "epoch_limit": 150,
+        "epochs_completed": 68,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\cvae\\fold3\\cvae_z3_seed43",
+        "epoch_limit": 150,
+        "epochs_completed": 51,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\cvae\\fold3\\cvae_z3_seed44",
+        "epoch_limit": 150,
+        "epochs_completed": 65,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\cvae\\fold3\\cvae_z4_seed42",
+        "epoch_limit": 150,
+        "epochs_completed": 59,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\cvae\\fold3\\cvae_z4_seed43",
+        "epoch_limit": 150,
+        "epochs_completed": 73,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\cvae\\fold3\\cvae_z4_seed44",
+        "epoch_limit": 150,
+        "epochs_completed": 68,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\cvae\\fold3\\cvae_z8_seed42",
+        "epoch_limit": 150,
+        "epochs_completed": 98,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\cvae\\fold3\\cvae_z8_seed43",
+        "epoch_limit": 150,
+        "epochs_completed": 104,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\cvae\\fold3\\cvae_z8_seed44",
+        "epoch_limit": 150,
+        "epochs_completed": 95,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\conditional_ae\\fold0\\conditional_ae_z3_seed42",
+        "epoch_limit": 150,
+        "epochs_completed": 100,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\conditional_ae\\fold0\\conditional_ae_z3_seed43",
+        "epoch_limit": 150,
+        "epochs_completed": 99,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\conditional_ae\\fold0\\conditional_ae_z3_seed44",
+        "epoch_limit": 150,
+        "epochs_completed": 98,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\conditional_ae\\fold0\\conditional_ae_z8_seed42",
+        "epoch_limit": 150,
+        "epochs_completed": 90,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\conditional_ae\\fold0\\conditional_ae_z8_seed43",
+        "epoch_limit": 150,
+        "epochs_completed": 86,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\conditional_ae\\fold0\\conditional_ae_z8_seed44",
+        "epoch_limit": 150,
+        "epochs_completed": 74,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\conditional_ae\\fold1\\conditional_ae_z3_seed42",
+        "epoch_limit": 150,
+        "epochs_completed": 57,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\conditional_ae\\fold1\\conditional_ae_z3_seed43",
+        "epoch_limit": 150,
+        "epochs_completed": 82,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\conditional_ae\\fold1\\conditional_ae_z3_seed44",
+        "epoch_limit": 150,
+        "epochs_completed": 70,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\conditional_ae\\fold1\\conditional_ae_z8_seed42",
+        "epoch_limit": 150,
+        "epochs_completed": 105,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\conditional_ae\\fold1\\conditional_ae_z8_seed43",
+        "epoch_limit": 150,
+        "epochs_completed": 72,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\conditional_ae\\fold1\\conditional_ae_z8_seed44",
+        "epoch_limit": 150,
+        "epochs_completed": 107,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\conditional_ae\\fold2\\conditional_ae_z3_seed42",
+        "epoch_limit": 150,
+        "epochs_completed": 78,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\conditional_ae\\fold2\\conditional_ae_z3_seed43",
+        "epoch_limit": 150,
+        "epochs_completed": 59,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\conditional_ae\\fold2\\conditional_ae_z3_seed44",
+        "epoch_limit": 150,
+        "epochs_completed": 62,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\conditional_ae\\fold2\\conditional_ae_z8_seed42",
+        "epoch_limit": 150,
+        "epochs_completed": 80,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\conditional_ae\\fold2\\conditional_ae_z8_seed43",
+        "epoch_limit": 150,
+        "epochs_completed": 71,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\conditional_ae\\fold2\\conditional_ae_z8_seed44",
+        "epoch_limit": 150,
+        "epochs_completed": 74,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\conditional_ae\\fold3\\conditional_ae_z3_seed42",
+        "epoch_limit": 150,
+        "epochs_completed": 44,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\conditional_ae\\fold3\\conditional_ae_z3_seed43",
+        "epoch_limit": 150,
+        "epochs_completed": 34,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\conditional_ae\\fold3\\conditional_ae_z3_seed44",
+        "epoch_limit": 150,
+        "epochs_completed": 45,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\conditional_ae\\fold3\\conditional_ae_z8_seed42",
+        "epoch_limit": 150,
+        "epochs_completed": 78,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\conditional_ae\\fold3\\conditional_ae_z8_seed43",
+        "epoch_limit": 150,
+        "epochs_completed": 61,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\conditional_ae\\fold3\\conditional_ae_z8_seed44",
+        "epoch_limit": 150,
+        "epochs_completed": 65,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\unconditional_vae\\fold0\\unconditional_vae_z3_seed42",
+        "epoch_limit": 150,
+        "epochs_completed": 126,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\unconditional_vae\\fold0\\unconditional_vae_z3_seed43",
+        "epoch_limit": 150,
+        "epochs_completed": 118,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\unconditional_vae\\fold0\\unconditional_vae_z3_seed44",
+        "epoch_limit": 150,
+        "epochs_completed": 114,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\unconditional_vae\\fold0\\unconditional_vae_z8_seed42",
+        "epoch_limit": 150,
+        "epochs_completed": 90,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\unconditional_vae\\fold0\\unconditional_vae_z8_seed43",
+        "epoch_limit": 150,
+        "epochs_completed": 136,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\unconditional_vae\\fold0\\unconditional_vae_z8_seed44",
+        "epoch_limit": 150,
+        "epochs_completed": 150,
+        "reached_cap": true
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\unconditional_vae\\fold1\\unconditional_vae_z3_seed42",
+        "epoch_limit": 150,
+        "epochs_completed": 91,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\unconditional_vae\\fold1\\unconditional_vae_z3_seed43",
+        "epoch_limit": 150,
+        "epochs_completed": 111,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\unconditional_vae\\fold1\\unconditional_vae_z3_seed44",
+        "epoch_limit": 150,
+        "epochs_completed": 62,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\unconditional_vae\\fold1\\unconditional_vae_z8_seed42",
+        "epoch_limit": 150,
+        "epochs_completed": 129,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\unconditional_vae\\fold1\\unconditional_vae_z8_seed43",
+        "epoch_limit": 150,
+        "epochs_completed": 123,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\unconditional_vae\\fold1\\unconditional_vae_z8_seed44",
+        "epoch_limit": 150,
+        "epochs_completed": 102,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\unconditional_vae\\fold2\\unconditional_vae_z3_seed42",
+        "epoch_limit": 150,
+        "epochs_completed": 105,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\unconditional_vae\\fold2\\unconditional_vae_z3_seed43",
+        "epoch_limit": 150,
+        "epochs_completed": 121,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\unconditional_vae\\fold2\\unconditional_vae_z3_seed44",
+        "epoch_limit": 150,
+        "epochs_completed": 110,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\unconditional_vae\\fold2\\unconditional_vae_z8_seed42",
+        "epoch_limit": 150,
+        "epochs_completed": 132,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\unconditional_vae\\fold2\\unconditional_vae_z8_seed43",
+        "epoch_limit": 150,
+        "epochs_completed": 144,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\unconditional_vae\\fold2\\unconditional_vae_z8_seed44",
+        "epoch_limit": 150,
+        "epochs_completed": 117,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\unconditional_vae\\fold3\\unconditional_vae_z3_seed42",
+        "epoch_limit": 150,
+        "epochs_completed": 61,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\unconditional_vae\\fold3\\unconditional_vae_z3_seed43",
+        "epoch_limit": 150,
+        "epochs_completed": 53,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\unconditional_vae\\fold3\\unconditional_vae_z3_seed44",
+        "epoch_limit": 150,
+        "epochs_completed": 76,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\unconditional_vae\\fold3\\unconditional_vae_z8_seed42",
+        "epoch_limit": 150,
+        "epochs_completed": 64,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\unconditional_vae\\fold3\\unconditional_vae_z8_seed43",
+        "epoch_limit": 150,
+        "epochs_completed": 105,
+        "reached_cap": false
+      },
+      {
+        "run": "studies\\final_strategy_evaluation\\runs\\unconditional_vae\\fold3\\unconditional_vae_z8_seed44",
+        "epoch_limit": 150,
+        "epochs_completed": 134,
+        "reached_cap": false
+      }
+    ]
+  }
 }

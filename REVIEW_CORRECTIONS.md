@@ -18,6 +18,7 @@ evidence, not the current metric definitions.
 | Event audit | All 4,732 canonical trials audited for pre-go raw/filtered speed and CSV/MAT arrival offset. No trial relabelled or removed. |
 | Report and guide | Rebuilt as conventional academic documents with high-contrast tables, explicit metric units and separate unsuccessful-probe reporting. |
 | Dashboard | Corrected benchmarks and added probe, timing-fairness, event and sampling diagnostics. Live checkpoints unchanged. |
+| Second-pass epoch correction | Saved configurations and histories confirm a 150-epoch cap in all 96 neural runs, with five reaching it. Corrected the methods paragraph and added a verification guard. No retraining or metric changes. |
 
 Main neural weights were NOT retrained. Deterministic spline and Ridge models
 were reconstructed using their recorded train/validation settings. Raw Dropbox
@@ -112,3 +113,9 @@ fresh standalone ZIP extraction, with no app exceptions. It emitted a Windows
 temporary-directory cleanup permission warning at interpreter exit; the checks
 completed and the process returned zero. The ZIP contains only reference live
 checkpoints, not the whole training archive.
+
+After the second-pass epoch correction, the 61-test suite and 124-run verifier
+passed again. Only page 2's scientific-report text changed; the guide text did
+not change. The rebuilt ZIP differs only in its PDFs and verification manifest;
+all 57 other entries are byte-identical to the previously tested package.
+Dashboard AppTest was not repeated for this documentation-only change.
