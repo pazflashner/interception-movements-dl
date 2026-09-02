@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 OUTPUT = ROOT / "output" / "release"
 PACKAGE_NAME = "Interception_Movements_Advisor_Package"
 ARCHIVE = OUTPUT / "Interception_Movements_Advisor_Package.zip"
-ASSETS = ROOT / "studies" / "final_strategy_evaluation" / "results" / "dashboard"
+ASSETS = ROOT / "studies" / "review_corrected_evaluation" / "results" / "dashboard"
 RUNS = ROOT / "studies" / "final_strategy_evaluation" / "runs" / "cvae" / "fold0"
 
 SOURCE_FILES = [
@@ -44,6 +44,11 @@ ASSET_FILES = [
     "timing_outlier_audit.csv",
     "minimum_jerk_summary.csv",
     "minimum_jerk_sensitivity.csv",
+    "behavioral_probe_summary.csv",
+    "timing_fairness_summary.csv",
+    "timing_fairness_paired.csv",
+    "submovement_sampling_reference.csv",
+    "event_audit.json",
 ]
 
 
@@ -71,7 +76,7 @@ def build_bundle(bundle: Path) -> None:
         source = ASSETS / name
         copy_to_bundle(
             source,
-            Path("studies") / "final_strategy_evaluation" / "results" / "dashboard" / name,
+            Path("studies") / "review_corrected_evaluation" / "results" / "dashboard" / name,
             bundle,
         )
     for latent_dim in (2, 3, 4, 8):
@@ -83,6 +88,17 @@ def build_bundle(bundle: Path) -> None:
             "fold0" / run / "checkpoint.pt",
             bundle,
         )
+
+    corrected = ROOT / "studies/review_corrected_evaluation"
+    copy_to_bundle(corrected / "PROTOCOL.md", Path("evaluation/PROTOCOL.md"), bundle)
+    for folder in ("analysis", "behavioral_probes", "timing_fairness", "sampling_reference", "event_audit"):
+        for path in sorted((corrected / "results" / folder).glob("*")):
+            if path.is_file() and path.suffix in {".csv", ".json"}:
+                copy_to_bundle(path, Path("evaluation") / folder / path.name, bundle)
+    licence = ROOT / "external/jason-submovements/LICENSE"
+    if not licence.exists():
+        raise FileNotFoundError("Upstream submovements licence is required in the bundle")
+    copy_to_bundle(licence, Path("licenses/submovements-LICENSE.txt"), bundle)
 
     # Reports are available both beside the README and under output/pdf so the
     # standalone dashboard resolves the same paths as the research checkout.

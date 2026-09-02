@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import copy
+import argparse
 import json
 import pickle
 from pathlib import Path
@@ -12,6 +13,7 @@ import pandas as pd
 from sklearn.metrics import r2_score
 from sklearn.neural_network import MLPRegressor
 from sklearn.preprocessing import StandardScaler
+from scipy.stats import wilcoxon, false_discovery_control
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
@@ -79,7 +81,46 @@ def codes(family, dim, seed, fold, train, validation, test):
             for part in (train, validation, test)]
 
 
+def summarize(raw):
+    detail=[]
+    participant=[]
+    for keys,g in raw.groupby(["comparison","model_family","latent_dim","seed"],dropna=False):
+        for endpoint in ("movement","initiation"):
+            errors = g.assign(err=(g[f"{endpoint}_true_s"]-g[f"{endpoint}_pred_s"]).abs()).groupby("subject").err.mean()*1000
+            metadata = dict(zip(["comparison","model_family","latent_dim","seed"],keys)) | {"endpoint": endpoint}
+            detail.append(metadata | {"mae_ms_subject_balanced": errors.mean(),
+                "r2_trial_pooled":r2_score(g[f"{endpoint}_true_s"],g[f"{endpoint}_pred_s"])})
+            participant.extend(metadata | {"subject": s, "mae_ms": value} for s, value in errors.items())
+    detail=pd.DataFrame(detail); detail.to_csv(OUT/"summary_by_seed.csv",index=False)
+    detail.groupby(["comparison","model_family","latent_dim","endpoint"],dropna=False).agg(
+      mae_ms_mean=("mae_ms_subject_balanced","mean"),mae_ms_sd=("mae_ms_subject_balanced","std"),
+      r2_mean=("r2_trial_pooled","mean")).reset_index().to_csv(OUT/"summary.csv",index=False)
+    participant=pd.DataFrame(participant).groupby(
+        ["comparison","model_family","latent_dim","endpoint","subject"],as_index=False).mae_ms.mean()
+    participant.to_csv(OUT/"participant_seed_averaged.csv",index=False)
+    paired=[]
+    for keys,g in participant.groupby(["comparison","latent_dim","endpoint"]):
+        wide=g.pivot(index="subject",columns="model_family",values="mae_ms")
+        if len(wide)!=28 or wide.isna().any().any():
+            raise ValueError("Timing comparison requires 28 paired participants")
+        d=(wide.cvae-wide.spline_pca).to_numpy()
+        paired.append(dict(zip(["comparison","latent_dim","endpoint"],keys)) | {
+            "n_participants":len(d),"cvae_mean_ms":wide.cvae.mean(),"spline_mean_ms":wide.spline_pca.mean(),
+            "mean_difference_ms":d.mean(),"cvae_better_participants":int((d<0).sum()),
+            "wilcoxon_p":float(wilcoxon(d,zero_method="pratt").pvalue) if np.any(d) else 1.0})
+    paired=pd.DataFrame(paired)
+    paired["p_fdr_bh"]=false_discovery_control(paired.wilcoxon_p.to_numpy())
+    paired.to_csv(OUT/"paired_comparisons.csv",index=False)
+    print(pd.read_csv(OUT/"summary.csv").to_string(index=False))
+
+
 def main():
+    parser=argparse.ArgumentParser()
+    parser.add_argument("--summarize-only",action="store_true")
+    args=parser.parse_args()
+    if args.summarize_only:
+        summarize(pd.read_csv(OUT/"predictions.csv"))
+        return
     import torch
     from threadpoolctl import threadpool_limits
     torch.set_num_threads(1)
@@ -129,17 +170,7 @@ def main():
                           "movement_pred_s":r.movement_time_pred_s*factors[0],"initiation_true_s":r.initiation_time_true_s,
                           "initiation_pred_s":r.initiation_time_pred_s*factors[1],"movement_factor":factors[0],"initiation_factor":factors[1]})
     raw=pd.DataFrame(rows); raw.to_csv(OUT/"predictions.csv",index=False)
-    detail=[]
-    for keys,g in raw.groupby(["comparison","model_family","latent_dim","seed"],dropna=False):
-        for endpoint in ("movement","initiation"):
-            by=g.assign(err=(g[f"{endpoint}_true_s"]-g[f"{endpoint}_pred_s"]).abs()).groupby("subject")
-            detail.append(dict(zip(["comparison","model_family","latent_dim","seed"],keys))|{"endpoint":endpoint,
-              "mae_ms_subject_balanced":by.err.mean().mean()*1000,"r2_trial_pooled":r2_score(g[f"{endpoint}_true_s"],g[f"{endpoint}_pred_s"])})
-    detail=pd.DataFrame(detail); detail.to_csv(OUT/"summary_by_seed.csv",index=False)
-    detail.groupby(["comparison","model_family","latent_dim","endpoint"],dropna=False).agg(
-      mae_ms_mean=("mae_ms_subject_balanced","mean"),mae_ms_sd=("mae_ms_subject_balanced","std"),
-      r2_mean=("r2_trial_pooled","mean")).reset_index().to_csv(OUT/"summary.csv",index=False)
-    print(pd.read_csv(OUT/"summary.csv").to_string(index=False))
+    summarize(raw)
 
 
 if __name__ == "__main__":

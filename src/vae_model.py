@@ -1,30 +1,13 @@
-"""
-Phase 3 – Conditional Variational Autoencoder (CVAE) for interception
-movement trajectories.
+"""Conditional trajectory autoencoders with optional timing inputs and outputs.
 
-Architecture
-------------
-Encoder:  trajectory (T*3) + timing (2) + condition_vec → hidden → (μ, log σ²)
-Decoder:  z + condition_vec → hidden → trajectory (T*3)  [head 1]
-                                    → timing (2)         [head 2]
+The final strategy study uses 100 x 2 position inputs, a five-element task
+condition (start category, side and exact target speed), and separate position
+and log-timing decoder heads. Physical timing is WITHHELD from its encoder via
+``encoder_uses_timing=False``. The class retains timing-input support for older
+experiments, so saved checkpoint settings, not defaults, define a run.
 
-Condition vector includes starting position and speed configuration
-so the latent space encodes intrinsic movement style.
-
-Why a timing head
------------------
-Temporal normalisation resamples every trial to ``NORMALISED_LENGTH`` frames,
-which makes the input dimension uniform but throws away *how long* the movement
-took. Without that, the model can only ever describe trajectory shape: two
-movements along the same path at half the speed are identical inputs, velocity
-is recoverable only up to an unknown time scale, and a generated sample has no
-duration to play it back over.
-
-The timing channels (movement time and initiation time, both in seconds) are
-therefore treated as part of what the model reconstructs: they are appended to
-the encoder input so the latent must carry them, and predicted by a separate
-decoder head so sampling ``z`` produces a full movement — shape *and* timing.
-Set ``timing_dim=0`` to recover the shape-only model.
+Conditioning makes task metadata available to the decoder; it does not ensure
+that latent coordinates contain only intrinsic style or have causal semantics.
 """
 from __future__ import annotations
 
@@ -60,16 +43,13 @@ def encode_condition(sp: int, side: int) -> np.ndarray:
     speed) encoding. Adding separate start-position and speed columns would be
     exactly collinear with this one-hot and buy nothing.
 
-    The exact speed within each range was randomised per trial and is not
-    recoverable from the filenames; ``data/stimuli/`` is empty in this
-    checkout, so the range index is the finest speed information available. If
-    per-trial stimulus speeds are recovered later, append them here as a
-    normalised continuous column and bump ``CONDITION_DIM``.
+    The exact speed within each range is not recoverable from filenames.
+    The final loader recovers it from MAT/target metadata and
+    ``encode_trial_condition`` appends it as a fifth continuous coordinate.
 
     This vector is concatenated into the encoder input *and* the decoder input
-    (see ``ConditionalVAE.encode`` / ``.decode``), which is what lets the latent
-    model movement style rather than task-driven variance: the decoder is given
-    the task, so z does not need to encode it.
+    (see ``ConditionalVAE.encode`` / ``.decode``). This makes the task available
+    explicitly but does not guarantee separation of task and person effects.
     """
     vec = np.zeros(4, dtype=np.float32)
     if 1 <= sp <= 3:

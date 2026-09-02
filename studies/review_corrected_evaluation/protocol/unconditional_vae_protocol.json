@@ -1,0 +1,11 @@
+{
+  "protocol_version": "strategy-confirmatory-v1",
+  "model_family": "unconditional_vae",
+  "comparison_purpose": "effect of task conditioning",
+  "matched_to_primary_cvae": true,
+  "latent_dims": [3, 8],
+  "training_seeds": [42, 43, 44],
+  "variational": true,
+  "use_condition": false,
+  "kl_weight": 1.0
+}

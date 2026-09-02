@@ -21,6 +21,7 @@ def test_dashboard_manifest_matches_frozen_protocol() -> None:
     assert manifest["validation_dimensions"] == [3, 8]
     assert len(manifest["all_validation_subjects"]) == 28
     assert manifest["condition_controls_validated"] is False
+    assert manifest["evaluation_version"] == "post-review-training-reference-v1"
 
 
 def test_dashboard_validation_assets_cover_all_held_out_participants() -> None:
@@ -62,3 +63,13 @@ def test_dashboard_reports_exist() -> None:
     report_dir = root / "output" / "pdf"
     assert (report_dir / "Interception_Movements_Final_Scientific_Report.pdf").exists()
     assert (report_dir / "Interception_Movements_Results_Guide.pdf").exists()
+
+
+def test_dashboard_exposes_negative_probes_and_fair_timing_comparisons():
+    probe = pd.read_csv(ASSETS / "behavioral_probe_summary.csv")
+    selected = probe[(probe.model_family == "cvae") & (probe.latent_dim == 3) & (probe.fingerprint == "mean")]
+    assert len(selected) == 14
+    assert (selected.r2_oof_mean < 0).sum() == 10
+    timing = pd.read_csv(ASSETS / "timing_fairness_paired.csv")
+    assert len(timing) == 8
+    assert timing.n_participants.eq(28).all()

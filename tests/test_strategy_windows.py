@@ -5,6 +5,7 @@ import sys
 
 import numpy as np
 import pandas as pd
+import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
@@ -43,6 +44,18 @@ def test_too_early_is_retained_and_both_windows_exist():
     # Waiting is represented as a long near-zero prefix only in go-to-arrival.
     assert np.abs(trial["pos_go_to_arrival_norm"][:20, 1]).max() < 0.1
     assert trial["pos_movement_norm"][20, 1] > 0.1
+
+
+@pytest.mark.parametrize("go, reason", [(np.nan,"missing_target_motion_onset"),
+                                      (np.inf,"missing_target_motion_onset"),
+                                      (-1.,"target_motion_outside_recording"),
+                                      (2.,"target_motion_outside_recording")])
+def test_missing_or_outside_go_does_not_fall_back_to_appearance(go, reason):
+    frame = synthetic_trial()
+    frame["go_signal_s"] = go
+    trial = preprocess_trial(frame)
+    assert not trial["valid"]
+    assert trial["drop_reason"] == reason
 
 
 def test_behavioral_truth_does_not_change_with_encoder_window():

@@ -52,8 +52,8 @@ STIMULUS_ONSET_MARKER = 5   # marks the frame the object *appears* (always frame
 # (0.20-0.50 s in the audited data), then starts moving — the "go-signal". The participant may only
 # move once the object moves. We take the go-signal as the behavioural zero-time
 # (reaction/wait time is measured from it), which removes the randomised
-# foreperiod from the trajectories. The recording ends at finger arrival
-# (pressedTime), i.e. at interception. Confirming with Prof. Friedman — see
+# foreperiod from the trajectories. The last tracker sample is an arrival
+# proxy, not pressedTime itself (about 26 ms earlier in the event audit). See
 # jason_clarifications.md, Q2.
 #
 # Movement ONSET is the first frame after the go-signal whose finger speed
@@ -142,9 +142,9 @@ KL_ANNEAL_RATIO = 0.5
 # ── Timing head ───────────────────────────────────────────────────────────────
 # Resampling every trial to NORMALISED_LENGTH frames discards how long the
 # movement actually took, so the network only ever sees trajectory *shape*.
-# The timing channels restore the temporal axis: they are encoded alongside the
-# trajectory and reconstructed by a dedicated decoder head, so a sampled latent
-# yields a shape *and* the duration to play it back over.
+# The final-study encoder withholds these timing channels. A dedicated decoder
+# head predicts them from the trajectory code and task condition, so a sampled
+# latent yields both shape and the duration used for playback.
 PREDICT_TIMING = True
 TIMING_FEATURES = ["movement_time_s", "initiation_time_s"]  # seconds
 TIMING_DIM = len(TIMING_FEATURES)

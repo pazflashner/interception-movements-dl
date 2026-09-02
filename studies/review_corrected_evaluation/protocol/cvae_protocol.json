@@ -1,0 +1,35 @@
+{
+  "protocol_version": "strategy-confirmatory-v1",
+  "model": "conditional variational autoencoder",
+  "primary_window": "target motion onset to finger arrival",
+  "window_mode": "go_to_arrival",
+  "trajectory": "100 phase samples, x lateral and y forward, 10 Hz low-pass",
+  "encoder_inputs": "trajectory and task condition; physical timing withheld",
+  "decoder_outputs": "trajectory, movement time, initiation time",
+  "task_condition": "sp category, starting side, exact executed target speed",
+  "outer_folds": 4,
+  "participants_per_fold": {
+    "train": 17,
+    "validation": 4,
+    "test": 7
+  },
+  "latent_dims": [
+    2,
+    3,
+    4,
+    8
+  ],
+  "training_seeds": [
+    42,
+    43,
+    44
+  ],
+  "context_query_seed": 2026,
+  "epochs": 150,
+  "primary_latent_dim": 3,
+  "capacity_comparator": 8,
+  "exploratory_latent_dims": [
+    2,
+    4
+  ]
+}

@@ -27,6 +27,7 @@ external/jason-submovements/
 archive/movement_only_2026-08-10/*
 !archive/movement_only_2026-08-10/README.md
 archive/runtime_cache_2026-09-02/
+archive/pre_review_corrections_2026-09-02/
 
 # Current study artifacts are reproducible and can be large. Protocols,
 # summaries, and source code remain tracked; caches/checkpoints/exports do not.

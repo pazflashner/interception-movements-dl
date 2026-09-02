@@ -43,10 +43,10 @@ folds remain unchanged unless a separate, documented decision is made.
 
 ## Status
 
-- [ ] Implement and test metric corrections.
-- [ ] Complete pre-go/event audit without relabelling trials.
-- [ ] Re-evaluate the full saved model matrix.
-- [ ] Summarize behavioural probes and timing sensitivity.
-- [ ] Calibrate minimum-jerk sampling uncertainty.
-- [ ] Rebuild and visually verify the scientific report and student guide.
+- [x] Implement and test metric corrections.
+- [x] Complete pre-go/event audit without relabelling trials.
+- [x] Re-evaluate the full saved model matrix (124 evaluations).
+- [x] Summarize behavioural probes and timing sensitivity (48 common-head fits).
+- [x] Calibrate minimum-jerk sampling uncertainty (500 empirical repetitions).
+- [x] Rebuild and visually verify the scientific report and student guide (12/5 pages).
 - [ ] Refresh and test dashboard assets/package; commit code and provenance.

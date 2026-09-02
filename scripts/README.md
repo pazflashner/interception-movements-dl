@@ -6,6 +6,11 @@ reviewing results. This is a code map, not an instruction to rerun the pipeline.
 
 ## Current study entry points
 
+Post-review outputs are under `studies/review_corrected_evaluation/`. The report
+and dashboard builders read this version and reuse original neural checkpoints.
+The commands below train the original matrix; do not rerun training just to
+rebuild a PDF. See `../REVIEW_CORRECTIONS.md` for the evaluated correction sequence.
+
 | Stage | Script |
 |---|---|
 | Audit raw CSV/MAT completion | `audit_trial_completion.py` |
@@ -22,6 +27,13 @@ reviewing results. This is a code map, not an instruction to rerun the pipeline.
 | Submovement assumption sensitivity | `audit_submovement_assumptions.py` |
 | Current dashboard assets | `build_confirmatory_dashboard_assets.py` |
 | Current standalone package | `package_final_release.py` |
+| Frozen-checkpoint reevaluation | `reevaluate_review_corrections.py` |
+| Full pre-go/event audit | `audit_pre_go_motion.py` |
+| All saved behavioural probes | `analyze_behavioral_probes.py` |
+| Validation calibration and common timing heads | `analyze_timing_fairness.py` |
+| Minimum-jerk sample-size reference | `calibrate_submovement_sampling.py` |
+| Output coverage, invariance, PDF rendering | `verify_post_review_outputs.py` |
+| All dashboard sections and dimensions | `check_dashboard_delivery.py` |
 
 The report builder is `../reports/build_final_reports.py` and the app is
 `../src/confirmatory_dashboard.py`. Inspect CLI arguments before running anything;

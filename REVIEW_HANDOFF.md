@@ -1,5 +1,13 @@
 # Independent code and results review
 
+**Update:** the review below describes the pre-correction snapshot. Read
+[REVIEW_CORRECTIONS.md](REVIEW_CORRECTIONS.md) first for the current outputs,
+changed metric definitions and added tests. The original PDFs/ZIP are preserved
+in `archive/pre_review_corrections_2026-09-02/`; the paths under `output/` now
+contain the revised report and guide. Do not compare their hashes with the
+historical hashes below. Existing `review/` files are the independent review and
+were not modified by this correction pass.
+
 Prepared 2026-09-02. Scientific snapshot: commit `a1fea96` before the
 navigation-only cleanup. This file is a map, not a certification of correctness.
 Please challenge the code, saved results, and report independently; do not try

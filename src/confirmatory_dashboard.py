@@ -28,7 +28,7 @@ from src.vae_model import ConditionalVAE, NormStats, encode_trial_condition
 
 STUDY = ROOT / "studies" / "final_strategy_evaluation"
 RUNS = STUDY / "runs" / "cvae" / "fold0"
-ASSETS = STUDY / "results" / "dashboard"
+ASSETS = ROOT / "studies" / "review_corrected_evaluation" / "results" / "dashboard"
 REPORT = ROOT / "output" / "pdf" / "Interception_Movements_Final_Scientific_Report.pdf"
 GUIDE = ROOT / "output" / "pdf" / "Interception_Movements_Results_Guide.pdf"
 WINDOW_MODE = config.WINDOW_GO_TO_ARRIVAL
@@ -545,11 +545,31 @@ def diagnostics_tab(
     st.dataframe(sensitivity, hide_index=True, width="stretch")
     st.caption("The fitted component count changes materially under alternative filter and model-order assumptions; it is a secondary kinematic descriptor.")
 
+    st.markdown("### Participant behavioural probes")
+    probes = read_csv(str(ASSETS / "behavioral_probe_summary.csv"))
+    family = st.selectbox("Probe model", sorted(probes.model_family.unique()),
+                          format_func=lambda value: MODEL_LABELS[value])
+    dim = st.selectbox("Probe dimension", sorted(probes[probes.model_family == family].latent_dim.unique()))
+    selected = probes[(probes.model_family == family) & (probes.latent_dim == dim)]
+    st.dataframe(selected[["fingerprint", "target", "r2_oof_mean", "r2_fold_mean",
+                           "mae_model_mean", "mae_baseline_mean"]], hide_index=True, width="stretch")
+    st.caption("Pooled R-squared uses 28 out-of-fold participant summaries per seed. Fold R-squared averages seven-participant scores. Negative values are retained.")
+    st.markdown("### Timing-head sensitivity")
+    st.dataframe(read_csv(str(ASSETS / "timing_fairness_paired.csv")), hide_index=True, width="stretch")
+    st.caption("Validation-only calibration and a common MLP on frozen codes; these sensitivity predictions do not replace the live generator's original timing head.")
+    st.markdown("### Finite-sample component reference")
+    sampling = read_csv(str(ASSETS / "submovement_sampling_reference.csv"))
+    st.dataframe(sampling[sampling.n_generated == 10], hide_index=True, width="stretch")
+    st.caption("Matched-size empirical resampling reference, not a formal p-value or a hard KS floor. Generated component fits still use 10 samples per participant and seed.")
+    st.markdown("### Event audit")
+    st.json(read_json(str(ASSETS / "event_audit.json")), expanded=False)
+
 
 def protocol_tab(manifest: dict, comparison: pd.DataFrame) -> None:
     rows = [
         ("Cohort", f"{manifest['n_trials']:,} retained condition-2 trials; {manifest['n_subjects']} participants"),
-        ("Window", "Target motion onset to finger arrival"),
+        ("Window", "MAT target motion to recording end (arrival proxy); marker 5 is appearance"),
+        ("Evaluation version", manifest.get("evaluation_version", "unversioned")),
         ("Representation", "2-D table plane; 10 Hz low-pass; 100 phase points"),
         ("Timing", "Withheld from the encoder; initiation and movement time decoded separately"),
         ("Outer evaluation", "Four deterministic 17/4/7 participant folds; every participant tested once"),
@@ -565,6 +585,8 @@ def protocol_tab(manifest: dict, comparison: pd.DataFrame) -> None:
         "text/csv",
     )
     downloads = st.columns(2)
+    st.download_button("Download behavioural probe CSV",
+        (ASSETS / "behavioral_probe_summary.csv").read_bytes(),"behavioral_probe_summary.csv","text/csv")
     if REPORT.exists():
         downloads[0].download_button(
             "Download scientific report", REPORT.read_bytes(), REPORT.name, "application/pdf"

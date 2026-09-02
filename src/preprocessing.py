@@ -222,7 +222,7 @@ def preprocess_trial(
     n = len(pos_filtered)
 
     # Do not substitute target appearance when the actual go event is missing.
-    if _nan(go_s):
+    if _nan(go_s) or not np.isfinite(go_s):
         return drop("missing_target_motion_onset")
     go_idx = stim_idx + int(round(go_s * config.RECORDING_HZ))
     if go_idx < stim_idx or go_idx >= n:

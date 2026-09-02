@@ -189,7 +189,7 @@ def generate_per_trial_model(model, trials, norm, n_samples, device, seed, share
             **distribution_distances(empirical, generated, fidelity_features, distance_reference),
         }
         rows.append(row)
-    return finish_fidelity_table(pd.DataFrame(rows))
+    return finish_fidelity_table(pd.DataFrame(rows), position_dim=model.input_dim // config.NORMALISED_LENGTH)
 
 
 def load_per_trial_checkpoint(path, device):

@@ -15,6 +15,8 @@ sys.path.insert(0, str(ROOT))
 import config
 from scripts.run_confirmatory_cvae import DEFAULT_STUDY
 from src.confirmatory_controls import ConditionRidge, evaluate_condition_ridge
+from src.context_query import DistanceReference
+from src.features import compute_trial_features, kinematic_features_for_dim
 from src.confirmatory_protocol import (
     PROTOCOL_VERSION,
     partition_trials,
@@ -67,6 +69,10 @@ def main() -> None:
     for fold_index in args.folds:
         train, validation, test = partition_trials(trials, folds[fold_index])
         model = ConditionRidge.fit(train, validation)
+        reference = DistanceReference.fit(
+            pd.DataFrame([compute_trial_features(t) for t in train]),
+            kinematic_features_for_dim(2),
+        )
         for seed in args.seeds:
             run_dir = run_root / f"fold{fold_index}" / f"condition_ridge_seed{seed}"
             result_path = run_dir / "result.json"
@@ -74,7 +80,9 @@ def main() -> None:
                 print(f"Skip completed: {run_dir}")
                 continue
             run_dir.mkdir(parents=True, exist_ok=True)
-            summary = evaluate_condition_ridge(model, test, run_dir, seed)
+            summary = evaluate_condition_ridge(
+                model, test, run_dir, seed, distance_reference=reference
+            )
             result = {
                 "protocol_version": PROTOCOL_VERSION,
                 "model_family": "condition_ridge",

@@ -29,11 +29,12 @@ from src.features import compute_trial_features
 from src.trajectory_view import project_trials_to_table_plane, select_trials_window
 
 
-STUDY = ROOT / "studies" / "final_strategy_evaluation"
+TRAINING_STUDY = ROOT / "studies" / "final_strategy_evaluation"
+STUDY = ROOT / "studies" / "review_corrected_evaluation"
 OUT = STUDY / "results" / "dashboard"
-RUNS = STUDY / "runs"
+RUNS = TRAINING_STUDY / "runs"
 ANALYSIS = STUDY / "results" / "analysis"
-MIN_JERK = STUDY / "results" / "minimum_jerk"
+MIN_JERK = TRAINING_STUDY / "results" / "minimum_jerk"
 REAL_SUBMOVEMENTS = (
     ROOT
     / "studies"
@@ -189,7 +190,7 @@ def main() -> None:
         OUT / "timing_outlier_audit.csv", index=False
     )
     pd.read_csv(
-        STUDY / "results" / "condition_effects" / "condition_trajectory_summary.csv"
+        TRAINING_STUDY / "results" / "condition_effects" / "condition_trajectory_summary.csv"
     ).to_csv(OUT / "condition_trajectory_summary.csv", index=False)
     pd.read_csv(MIN_JERK / "analysis" / "oof_summary.csv").to_csv(
         OUT / "minimum_jerk_summary.csv", index=False
@@ -197,6 +198,15 @@ def main() -> None:
     pd.read_csv(MIN_JERK / "assumption_sensitivity_summary.csv").to_csv(
         OUT / "minimum_jerk_sensitivity.csv", index=False
     )
+    for name, source in {
+        "behavioral_probe_summary.csv": "behavioral_probes/summary.csv",
+        "timing_fairness_summary.csv": "timing_fairness/summary.csv",
+        "timing_fairness_paired.csv": "timing_fairness/paired_comparisons.csv",
+        "submovement_sampling_reference.csv": "sampling_reference/summary.csv",
+    }.items():
+        pd.read_csv(STUDY / "results" / source).to_csv(OUT / name,index=False)
+    (OUT / "event_audit.json").write_text(
+        (STUDY / "results/event_audit/summary.json").read_text(),encoding="utf-8")
 
     speed_rows = []
     for trial in trials:
@@ -215,6 +225,8 @@ def main() -> None:
 
     manifest = {
         "protocol_version": "strategy-confirmatory-v1",
+        "evaluation_version": "post-review-training-reference-v1",
+        "event_anchor": "MAT target motion; marker 5 is appearance; recording end is an arrival proxy",
         "window_mode": config.WINDOW_GO_TO_ARRIVAL,
         "n_trials": len(trials),
         "n_subjects": len(set(subjects)),

@@ -54,6 +54,8 @@ def main():
     frame = pd.DataFrame(rows)
     frame.to_csv(OUT / "pre_go_trial_audit.csv", index=False)
     zero = frame.initiation_s == 0
+    log_target = np.log(frame.initiation_s.to_numpy() + .001)
+    centred_sq = (log_target - log_target.mean()) ** 2
     report = {
         "n_trials": len(frame), "zero_onset_trials": int(zero.sum()),
         "zero_onset_sustained_above_go_3d": int((zero & frame.filtered3d_above_go_sustained).sum()),
@@ -64,6 +66,8 @@ def main():
         "csv_minus_mat_arrival_mean_s": float(frame.csv_minus_mat_arrival_s.mean()),
         "csv_minus_mat_arrival_sd_s": float(frame.csv_minus_mat_arrival_s.std()),
         "zero_onset_by_outcome": frame.loc[zero, "responseText"].value_counts().to_dict(),
+        "zero_onset_share_centred_log_target_variance": float(centred_sq[zero].sum()/centred_sq.sum()),
+        "variance_note": "Centred target variation, not model residual loss or evidence for an extrapolation mechanism.",
         "decision": "No trials removed or relabelled. Threshold evidence is not a diagnosis of anticipation; zero-phase filtering can smear motion backward in time.",
     }
     (OUT / "summary.json").write_text(json.dumps(report, indent=2), encoding="utf-8")

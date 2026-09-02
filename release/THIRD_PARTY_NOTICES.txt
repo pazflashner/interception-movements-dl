@@ -8,4 +8,5 @@ Jason Friedman's GPL-3.0 submovements repository, commit
 
 The original repository and its license should be consulted before
 redistributing a derivative implementation outside this academic project.
-
+The upstream license text is included as licenses/submovements-LICENSE.txt.
+This notice does not replace the license obligations of any redistributed code.

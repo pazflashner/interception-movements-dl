@@ -1,0 +1,235 @@
+{
+  "protocol_version": "strategy-confirmatory-v1",
+  "outer_fold_seed": 2026,
+  "validation_seed": 2027,
+  "participants": [
+    "subject01",
+    "subject02",
+    "subject04",
+    "subject05",
+    "subject08",
+    "subject10",
+    "subject11",
+    "subject12",
+    "subject13",
+    "subject15",
+    "subject18",
+    "subject19",
+    "subject21",
+    "subject22",
+    "subject23",
+    "subject24",
+    "subject25",
+    "subject26",
+    "subject27",
+    "subject30",
+    "subject33",
+    "subject34",
+    "subject35",
+    "subject36",
+    "subject37",
+    "subject40",
+    "subject41",
+    "subject43"
+  ],
+  "participant_trial_counts": {
+    "subject01": 180,
+    "subject02": 60,
+    "subject04": 180,
+    "subject05": 180,
+    "subject08": 179,
+    "subject10": 180,
+    "subject11": 180,
+    "subject12": 180,
+    "subject13": 180,
+    "subject15": 177,
+    "subject18": 178,
+    "subject19": 178,
+    "subject21": 178,
+    "subject22": 180,
+    "subject23": 180,
+    "subject24": 178,
+    "subject25": 178,
+    "subject26": 179,
+    "subject27": 177,
+    "subject30": 180,
+    "subject33": 174,
+    "subject34": 180,
+    "subject35": 171,
+    "subject36": 180,
+    "subject37": 180,
+    "subject40": 177,
+    "subject41": 28,
+    "subject43": 180
+  },
+  "folds": [
+    {
+      "fold": 0,
+      "train_subjects": [
+        "subject01",
+        "subject02",
+        "subject04",
+        "subject08",
+        "subject11",
+        "subject15",
+        "subject18",
+        "subject21",
+        "subject22",
+        "subject23",
+        "subject25",
+        "subject26",
+        "subject36",
+        "subject37",
+        "subject40",
+        "subject41",
+        "subject43"
+      ],
+      "validation_subjects": [
+        "subject10",
+        "subject12",
+        "subject30",
+        "subject33"
+      ],
+      "test_subjects": [
+        "subject05",
+        "subject13",
+        "subject19",
+        "subject24",
+        "subject27",
+        "subject34",
+        "subject35"
+      ],
+      "trial_counts": {
+        "train": 2774,
+        "validation": 714,
+        "test": 1244
+      }
+    },
+    {
+      "fold": 1,
+      "train_subjects": [
+        "subject01",
+        "subject04",
+        "subject05",
+        "subject11",
+        "subject12",
+        "subject13",
+        "subject15",
+        "subject19",
+        "subject22",
+        "subject24",
+        "subject27",
+        "subject30",
+        "subject33",
+        "subject34",
+        "subject35",
+        "subject37",
+        "subject40"
+      ],
+      "validation_subjects": [
+        "subject02",
+        "subject10",
+        "subject21",
+        "subject36"
+      ],
+      "test_subjects": [
+        "subject08",
+        "subject18",
+        "subject23",
+        "subject25",
+        "subject26",
+        "subject41",
+        "subject43"
+      ],
+      "trial_counts": {
+        "train": 3032,
+        "validation": 598,
+        "test": 1102
+      }
+    },
+    {
+      "fold": 2,
+      "train_subjects": [
+        "subject02",
+        "subject05",
+        "subject08",
+        "subject11",
+        "subject18",
+        "subject19",
+        "subject22",
+        "subject24",
+        "subject25",
+        "subject26",
+        "subject27",
+        "subject30",
+        "subject33",
+        "subject35",
+        "subject40",
+        "subject41",
+        "subject43"
+      ],
+      "validation_subjects": [
+        "subject13",
+        "subject23",
+        "subject34",
+        "subject37"
+      ],
+      "test_subjects": [
+        "subject01",
+        "subject04",
+        "subject10",
+        "subject12",
+        "subject15",
+        "subject21",
+        "subject36"
+      ],
+      "trial_counts": {
+        "train": 2757,
+        "validation": 720,
+        "test": 1255
+      }
+    },
+    {
+      "fold": 3,
+      "train_subjects": [
+        "subject04",
+        "subject05",
+        "subject12",
+        "subject13",
+        "subject18",
+        "subject19",
+        "subject21",
+        "subject23",
+        "subject24",
+        "subject25",
+        "subject26",
+        "subject27",
+        "subject34",
+        "subject35",
+        "subject36",
+        "subject41",
+        "subject43"
+      ],
+      "validation_subjects": [
+        "subject01",
+        "subject08",
+        "subject10",
+        "subject15"
+      ],
+      "test_subjects": [
+        "subject02",
+        "subject11",
+        "subject22",
+        "subject30",
+        "subject33",
+        "subject37",
+        "subject40"
+      ],
+      "trial_counts": {
+        "train": 2885,
+        "validation": 716,
+        "test": 1131
+      }
+    }
+  ]
+}

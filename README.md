@@ -3,7 +3,8 @@
 This repository studies whether fast human interception movements admit compact
 participant-specific latent representations that reproduce held-out trajectory,
 timing, and kinematic-feature distributions. The confirmatory analysis uses the
-strategy-inclusive interval from target motion onset to finger arrival.
+strategy-inclusive interval from MAT target motion onset to the last tracker
+sample (arrival proxy). Marker 5 is target appearance, not motion onset.
 
 The frozen `strategy-confirmatory-v1` protocol contains 4,732 condition-2 trials
 from 28 participants. Table-plane x-y position is filtered at 10 Hz and resampled
@@ -19,10 +20,16 @@ secondary, model-order-sensitive kinematic analysis.
 
 ## Navigation
 
+- **Current correction record: [REVIEW_CORRECTIONS.md](REVIEW_CORRECTIONS.md)**.
+  The PDFs and dashboard now consume `studies/review_corrected_evaluation/`.
+  Original checkpoints and unaffected submovement/condition analyses remain in
+  the frozen training study; neither raw data nor main neural weights changed.
 - **Independent review: [REVIEW_HANDOFF.md](REVIEW_HANDOFF.md)** lists the exact
   current reports, source modules, saved predictions, and checks to perform.
 - `studies/final_strategy_evaluation/`: frozen confirmatory protocols, runs, and
-  result tables.
+  original result tables (not the current multivariate distance evaluation).
+- `studies/review_corrected_evaluation/`: corrected evaluations, additional
+  timing-head tests, event audit, behavioural probes, and verification manifest.
 - `src/`: shared code; [source map](src/README.md).
 - `scripts/`: [current entry points and dependency notes](scripts/README.md).
 - `reports/`: scientific-report and interpretation-guide builders.
