@@ -56,10 +56,14 @@ def fit_generated(item, cfg):
             f"{row['run']}-{row['subject']}-{row['sample_id']}",
         )
         row.update(result.summary())
-        row["mj_fit_success"] = True
         row["mj_failure"] = ""
     except Exception as exc:
+        row["mj_fit_completed"] = False
         row["mj_fit_success"] = False
+        row["mj_selected_optimizer_converged"] = None
+        row["mj_bic_optimizer_converged"] = None
+        row["mj_all_candidates_converged"] = None
+        row["mj_candidate_diagnostics_json"] = "{}"
         row["mj_failure"] = f"{type(exc).__name__}: {exc}"
     return row
 

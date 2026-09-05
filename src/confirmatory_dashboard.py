@@ -31,6 +31,7 @@ RUNS = STUDY / "runs" / "cvae" / "fold0"
 ASSETS = ROOT / "studies" / "review_corrected_evaluation" / "results" / "dashboard"
 REPORT = ROOT / "output" / "pdf" / "Interception_Movements_Final_Scientific_Report.pdf"
 GUIDE = ROOT / "output" / "pdf" / "Interception_Movements_Results_Guide.pdf"
+APPENDIX = ROOT / "output" / "pdf" / "Interception_Movements_Supplementary_Appendix.pdf"
 WINDOW_MODE = config.WINDOW_GO_TO_ARRIVAL
 LIVE_SEED = 42
 COLORS = {
@@ -534,7 +535,14 @@ def diagnostics_tab(
     st.dataframe(timing_display, hide_index=True, width="stretch")
     st.caption("Participant-balanced MAE is primary. Rare log-timing extrapolations are reported without post-hoc clipping.")
 
-    st.markdown("### Minimum-jerk fidelity and sensitivity")
+    st.markdown("### Personal fingerprint controls")
+    st.dataframe(read_csv(str(ASSETS / "fingerprint_control_summary.csv")), hide_index=True, width="stretch")
+    st.caption("Same decoder, conditions and latent noise; own context versus the training average and all six other test-context fingerprints. All 12 BH-corrected contrasts favour own context; this does not establish cognitive-strategy semantics.")
+    st.markdown("### Matched-procedure minimum-jerk fidelity")
+    st.dataframe(read_csv(str(ASSETS / "matched_component_summary.csv")), hide_index=True, width="stretch")
+    st.dataframe(read_csv(str(ASSETS / "matched_component_diagnostics.csv")), hide_index=True, width="stretch")
+    st.caption("2,376 query recordings and 1,680 generated movements; shared 100-point downstream representation and two-restart/400-evaluation fits. See the main paper and appendix for sampling and convergence limits.")
+    st.markdown("### Historical minimum-jerk fidelity and sensitivity")
     mj_display = min_jerk[[
         "latent_dim", "mean_count_total_variation_across_seeds",
         "mean_count_jsd_across_seeds", "mean_ks_mj_first_duration_s_across_seeds",
@@ -554,6 +562,9 @@ def diagnostics_tab(
     st.dataframe(selected[["fingerprint", "target", "r2_oof_mean", "r2_fold_mean",
                            "mae_model_mean", "mae_baseline_mean"]], hide_index=True, width="stretch")
     st.caption("Pooled R-squared uses 28 out-of-fold participant summaries per seed. Fold R-squared averages seven-participant scores. Negative values are retained.")
+    st.markdown("### Direct-context summary control")
+    st.dataframe(read_csv(str(ASSETS / "direct_context_summary.csv")), hide_index=True, width="stretch")
+    st.caption("Direct measured context summaries have lower MAE than the CVAE probes on all 14 targets at n=3 and n=8. They retain target-specific quantities rather than one shared compact code; this is distinct from full trajectory generation.")
     st.markdown("### Timing-head sensitivity")
     st.dataframe(read_csv(str(ASSETS / "timing_fairness_paired.csv")), hide_index=True, width="stretch")
     st.caption("Validation-only calibration and a common MLP on frozen codes; these sensitivity predictions do not replace the live generator's original timing head.")
@@ -584,7 +595,7 @@ def protocol_tab(manifest: dict, comparison: pd.DataFrame) -> None:
         "confirmatory_model_comparison.csv",
         "text/csv",
     )
-    downloads = st.columns(2)
+    downloads = st.columns(3)
     st.download_button("Download behavioural probe CSV",
         (ASSETS / "behavioral_probe_summary.csv").read_bytes(),"behavioral_probe_summary.csv","text/csv")
     if REPORT.exists():
@@ -594,6 +605,10 @@ def protocol_tab(manifest: dict, comparison: pd.DataFrame) -> None:
     if GUIDE.exists():
         downloads[1].download_button(
             "Download results guide", GUIDE.read_bytes(), GUIDE.name, "application/pdf"
+        )
+    if APPENDIX.exists():
+        downloads[2].download_button(
+            "Download supplementary appendix", APPENDIX.read_bytes(), APPENDIX.name, "application/pdf"
         )
 
 
@@ -649,7 +664,7 @@ def main() -> None:
         "Executed target speed",
         float(speed_row.speed_min), float(speed_row.speed_max), float(speed_row.speed_median),
     )
-    st.sidebar.warning("Task-condition controls are exploratory; participant-specific conditioning benefit was not validated.")
+    st.sidebar.warning("Task-condition responses are exploratory; causal effects of these sliders were not validated.")
 
     sections = [
         "Generate", "Held-out validation", "Benchmarks", "Latent associations",

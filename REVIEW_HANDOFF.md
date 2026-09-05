@@ -1,6 +1,7 @@
 # Independent code and results review
 
-**Update:** the review below describes the pre-correction snapshot. Read
+**Update (5 September):** start with [PAZ_REVIEW_HANDOFF.md](PAZ_REVIEW_HANDOFF.md).
+The review below describes the pre-correction snapshot. Read
 [REVIEW_CORRECTIONS.md](REVIEW_CORRECTIONS.md) first for the current outputs,
 changed metric definitions and added tests. The original PDFs/ZIP are preserved
 in `archive/pre_review_corrections_2026-09-02/`; the paths under `output/` now

@@ -1,5 +1,32 @@
 # Post-review correction protocol
 
+## Numerical and reporting amendment, 5 September 2026
+
+The 56 main paired model comparisons now round participant differences to 12
+decimal places in each metric's reporting units before ranking (two-sided
+Wilcoxon, Pratt zeros, SciPy method='auto'). Means and effect sizes are unchanged.
+This resolves machine-precision ties in discrete KS summaries; it is not a
+precision selected to obtain significance. All 56 significance decisions agree
+with the previous table. Independent aggregation agrees with the amended tests.
+Execution used Python 3.13, NumPy 2.3.4, pandas 2.3.3 and SciPy 1.16.3; the output
+records the SciPy version and test settings. Other sensitivity-test families
+retain their existing numerical conventions. Original and amended tables are
+preserved under review_fresh_2026_09_05/checks/numerical_fix.
+
+Minimum-jerk legacy mj_fit_success denotes execution completion, not optimizer
+convergence. New fits record completion, selected/BIC convergence and candidate
+optimizer diagnostics separately. Historical fits retain their original diagnostics. New matched-procedure fits are
+reported separately below. The legacy min_onset_spacing_s config name means an indexed
+absolute onset lower-bound step, not pairwise separation. Effective constraints
+and selection rules are unchanged. The report now discloses unequal recorded
+and generated fitting budgets and filtering/sampling histories.
+
+Jason's supplied emails and project slides were reviewed (TAD PDF pages 7-9
+only). The research objective is distribution generation across movement
+features and people. Motion before inferred target-motion onset remains a
+descriptive audit finding; these trials are retained. The same-model fingerprint control and matched component refitting are completed
+post-review evaluations, reported below.
+
 This is an explicitly post-review evaluation of the frozen
 `strategy-confirmatory-v1` checkpoints, not a new preregistered experiment.
 Original runs and reports are retained. No selection is based on improved test
@@ -41,23 +68,34 @@ folds remain unchanged unless a separate, documented decision is made.
   hard floor. Additional generated fits, if run, are identified by sample count
   and fitting settings rather than silently mixed with old fits.
 
-## Status
+## Completed extension, 5 September 2026
 
-- [x] Implement and test metric corrections.
-- [x] Complete pre-go/event audit without relabelling trials.
-- [x] Re-evaluate the full saved model matrix (124 evaluations).
-- [x] Summarize behavioural probes and timing sensitivity (48 common-head fits).
-- [x] Calibrate minimum-jerk sampling uncertainty (500 empirical repetitions).
-- [x] Rebuild and visually verify the scientific report and student guide (12/5 pages).
-- [x] Refresh and test dashboard assets/package; commit code and provenance.
+- All 24 n=3/8 CVAE fold/seed checkpoints underwent own/population/wrong-person
+  fingerprint controls; 1,344 donor-level rows. Own scores reproduce saved
+  benchmarks within 1e-6. All 12 BH-adjusted contrasts favour own fingerprints.
+- Direct-context and 21-development-participant constant baselines cover all 14
+  targets. Direct context has lower MAE on all 14 at each dimension; this is
+  descriptive and does not equalize compression budgets.
+- 2,376 recorded query and 1,680 generated model-window trajectories underwent
+  matched downstream preprocessing and two-restart/400-evaluation decomposition.
+  Count TV is 0.213891/0.232263 at n=3/8. All 4,056 selected fits converged;
+  505 fits contain a nonconverged alternative order. No count was excluded.
+- Four-restart/700-evaluation sensitivity: selected counts agree for 56/56
+  recorded and 111/112 generated trajectories. Nine dimension comparisons:
+  none survives BH. The matched 500-replicate sampling reference is descriptive.
+- The main paper has eight pages, plus a separate appendix and student guide.
+  The release bundles summary evidence and four illustrative checkpoints.
 
-## Verification completed
+The controls' frozen settings, per-checkpoint hashes and full result tables are
+under results/review_controls. Compact copies are tracked in review_evidence;
+full CSVs are included in the release ZIP. The PAZ_REVIEW_HANDOFF.md file is the
+current entry point. Its restore script supports independent clone testing.
 
-- 61 automated tests passed, zero skipped.
-- 124 corrected evaluations share the same training reference within each fold.
-- Original timing/reconstruction predictions reproduce within numerical tolerance.
-- All six dashboard sections run at n=2,3,4,8, both in the checkout and a fresh
-  ZIP extraction; no app exceptions in those 48 section/dimension checks.
-- Both PDFs were rendered and all 17 pages visually checked; text bounds checked.
-- Windows AppTest emitted a temporary-directory cleanup permission warning at
-  interpreter exit; application checks passed with process exit code zero.
+## Verification
+
+The full 124-evaluation coverage, common distance references and unchanged
+reconstruction/timing predictions were checked by verify_post_review_outputs.py.
+Its VERIFICATION.json records PDF hashes and the 96 training histories (150-epoch
+cap, five reaching it). New control software and restoration checks join the
+existing synthetic/reference tests. Final delivery check results are recorded
+in review_evidence/DELIVERY_CHECKS.json after packaging.

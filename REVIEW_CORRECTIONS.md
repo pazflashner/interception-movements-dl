@@ -1,6 +1,12 @@
 # Current post-review evaluation
 
-This is the current map as of 2026-09-02. The independent review remains untouched
+Current handoff: [PAZ_REVIEW_HANDOFF.md](PAZ_REVIEW_HANDOFF.md), 5 September 2026.
+The new `review_controls` evidence includes 24 fingerprint-control runs,
+4,056 matched component fits, 168 higher-budget sensitivity fits and direct-context
+controls on all 14 summary targets. The eight-page paper and separate appendix
+report these results. See the corrected-study protocol for execution details.
+
+The following records the earlier correction map as of 2026-09-02. The independent review remains untouched
 in `review/`. The earlier review handoff and original outputs are historical
 evidence, not the current metric definitions.
 

@@ -1,0 +1,41 @@
+{
+  "version": "post-review-controls-v1",
+  "neural_retraining": false,
+  "dims": [
+    3,
+    8
+  ],
+  "folds": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "seeds": [
+    42,
+    43,
+    44
+  ],
+  "context_query_seed": 2026,
+  "fingerprint": {
+    "n_generated": 120,
+    "own": "mean encoder posterior mean over this subject's context",
+    "population": "equal-person mean of the 17 training-context centroids",
+    "wrong": "mean of distances for all six other test-context centroids; no pooling their samples",
+    "fixed": "decoder, target task draws, latent noise, train-only covariance and distance reference",
+    "tests": "12 paired two-sided Pratt Wilcoxon tests: 2 dimensions x 2 controls x 3 distances, BH together; seeds averaged within each of 28 subjects",
+    "inference_limit": "post-review exploratory control; folds have overlapping training sets; within-session context enrollment, no causal/stable-strategy claim"
+  },
+  "minimum_jerk": {
+    "n_generated": 10,
+    "restarts": 2,
+    "max_nfev": 400,
+    "input": "recorded canonical filtered go-window target (100 x 2) and generated go-window (100 x 2)",
+    "common_operator": "same phase crop by own measured/predicted timing to 100 movement points; physical sample_hz=99/movement_seconds; same lowpass and decomposition",
+    "interpretation": "matched downstream evaluation of the model target representation; upstream acquisition filtering is not undone; true vs predicted timing remains an intended difference",
+    "selection": "historical error-based count selection retained regardless of convergence; all statuses reported, no favorable exclusions",
+    "starts": "deterministic trial-specific seed; real trial ID / original generated run-subject-sample ID",
+    "sensitivity": "first two query trials and first two generated samples per participant, n=3/8 seed42; same input, four restarts and max_nfev700",
+    "sample_reference": "500 empirical plugin resamples at observed query and n=10 sizes; 3 seed-like draws averaged per subject, no formal null p"
+  }
+}

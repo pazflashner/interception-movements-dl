@@ -26,11 +26,13 @@ SOURCE_FILES = [
 REPORTS = [
     ROOT / "output" / "pdf" / "Interception_Movements_Final_Scientific_Report.pdf",
     ROOT / "output" / "pdf" / "Interception_Movements_Results_Guide.pdf",
+    ROOT / "output" / "pdf" / "Interception_Movements_Supplementary_Appendix.pdf",
 ]
 RELEASE_DOCS = [
     ROOT / "release" / "README.txt",
     ROOT / "release" / "requirements_dashboard.txt",
     ROOT / "release" / "THIRD_PARTY_NOTICES.txt",
+    ROOT / "PAZ_REVIEW_HANDOFF.md",
 ]
 ASSET_FILES = [
     "manifest.json",
@@ -49,6 +51,12 @@ ASSET_FILES = [
     "timing_fairness_paired.csv",
     "submovement_sampling_reference.csv",
     "event_audit.json",
+    "fingerprint_control_summary.csv",
+    "fingerprint_control_paired.csv",
+    "direct_context_summary.csv",
+    "matched_component_summary.csv",
+    "matched_component_diagnostics.csv",
+    "matched_component_sampling.csv",
 ]
 
 
@@ -67,6 +75,9 @@ def build_bundle(bundle: Path) -> None:
 
     for source in RELEASE_DOCS:
         copy_to_bundle(source, Path(source.name), bundle)
+    for source in sorted((ROOT / "review_evidence").iterdir()):
+        if source.is_file() and source.suffix in {".md", ".csv", ".json"}:
+            copy_to_bundle(source, Path("review_evidence") / source.name, bundle)
     copy_to_bundle(ROOT / "release" / "config.py", Path("config.py"), bundle)
     for source in SOURCE_FILES:
         copy_to_bundle(source, source.relative_to(ROOT), bundle)
@@ -92,14 +103,18 @@ def build_bundle(bundle: Path) -> None:
     corrected = ROOT / "studies/review_corrected_evaluation"
     copy_to_bundle(corrected / "PROTOCOL.md", Path("evaluation/PROTOCOL.md"), bundle)
     copy_to_bundle(corrected / "VERIFICATION.json", Path("evaluation/VERIFICATION.json"), bundle)
-    for folder in ("analysis", "behavioral_probes", "timing_fairness", "sampling_reference", "event_audit"):
+    for folder in ("analysis", "behavioral_probes", "timing_fairness", "sampling_reference", "event_audit", "review_controls"):
         for path in sorted((corrected / "results" / folder).glob("*")):
             if path.is_file() and path.suffix in {".csv", ".json"}:
                 copy_to_bundle(path, Path("evaluation") / folder / path.name, bundle)
+    for path in sorted((corrected / "results/review_controls/fingerprint").glob("*.csv")):
+        copy_to_bundle(path, Path("evaluation/review_controls/fingerprint") / path.name, bundle)
     licence = ROOT / "external/jason-submovements/LICENSE"
     if not licence.exists():
         raise FileNotFoundError("Upstream submovements licence is required in the bundle")
     copy_to_bundle(licence, Path("licenses/submovements-LICENSE.txt"), bundle)
+    for relative in ("external/jason-submovements/LICENSE", "external/jason-submovements/python/movement_decompose_2d.py"):
+        copy_to_bundle(ROOT / relative, Path(relative), bundle)
 
     # Reports are available both beside the README and under output/pdf so the
     # standalone dashboard resolves the same paths as the research checkout.

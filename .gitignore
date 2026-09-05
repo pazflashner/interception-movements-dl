@@ -48,6 +48,12 @@ studies/*/data_audit/*.csv
 # Session artefacts
 session-transcript.pdf
 
+# Private correspondence and local audit working files; handoff is PAZ_REVIEW_HANDOFF.md.
+jason resources/
+review/
+review_second_pass/
+review_fresh_2026_09_05/
+
 # Python
 __pycache__/
 .pytest_cache/

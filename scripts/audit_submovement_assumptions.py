@@ -132,7 +132,7 @@ def main() -> None:
         "participants": int(base.subject.nunique()),
         "trials_per_participant": args.per_subject,
         "n_trials": len(selected_trials),
-        "base": "10 Hz, 100 ms minimum duration, 50 ms onset spacing, 2 restarts",
+        "base": "10 Hz, 100 ms minimum duration, 50 ms indexed onset lower-bound step (not pairwise spacing), 2 restarts",
         "sensitivities": {name: cfg.__dict__ for name, cfg in CONFIGS.items()},
     }
     args.out.with_name("assumption_sensitivity_protocol.json").write_text(

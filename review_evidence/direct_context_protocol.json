@@ -1,0 +1,12 @@
+{
+  "version": "post-review-direct-context-v1",
+  "targets": 14,
+  "dimensions": [
+    3,
+    8
+  ],
+  "evaluation": "same query summaries as saved probes; MAE and pooled R2 per seed then average seeds",
+  "direct_context": "copy corresponding context mean/sample SD; 14 target-specific values jointly",
+  "constant": "mean query-summary target over 21 training plus validation participants, matching probe refit access",
+  "inference": "descriptive; no new significance tests; unequal compression information budgets"
+}

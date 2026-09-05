@@ -207,6 +207,15 @@ def main() -> None:
         pd.read_csv(STUDY / "results" / source).to_csv(OUT / name,index=False)
     (OUT / "event_audit.json").write_text(
         (STUDY / "results/event_audit/summary.json").read_text(),encoding="utf-8")
+    for destination, source in {
+        "fingerprint_control_summary.csv": "fingerprint_summary.csv",
+        "fingerprint_control_paired.csv": "fingerprint_paired.csv",
+        "direct_context_summary.csv": "direct_context_summary.csv",
+        "matched_component_summary.csv": "matched_component_summary.csv",
+        "matched_component_diagnostics.csv": "matched_component_diagnostics.csv",
+        "matched_component_sampling.csv": "matched_component_sampling.csv",
+    }.items():
+        pd.read_csv(STUDY / "results/review_controls" / source).to_csv(OUT / destination, index=False)
 
     speed_rows = []
     for trial in trials:

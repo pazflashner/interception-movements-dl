@@ -8,7 +8,7 @@ import sys
 
 import numpy as np
 import pandas as pd
-from scipy.stats import wilcoxon
+import scipy
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
@@ -17,6 +17,7 @@ import config
 from src.context_query import benjamini_hochberg
 from src.confirmatory_evaluation import summarise_prediction_tables
 from src.features import kinematic_features_for_dim
+from src.statistical_tests import WILCOXON_DECIMALS, paired_wilcoxon
 
 
 STUDY = ROOT / "studies" / "final_strategy_evaluation"
@@ -330,10 +331,7 @@ def build_paired_comparisons(participant_raw: pd.DataFrame) -> pd.DataFrame:
                 cvae_values = primary.loc[common, metric].to_numpy(dtype=float)
                 comparator_values = other.loc[common, metric].to_numpy(dtype=float)
                 difference = comparator_values - cvae_values
-                try:
-                    statistic, p_value = wilcoxon(difference, zero_method="pratt")
-                except ValueError:
-                    statistic, p_value = np.nan, 1.0
+                statistic, p_value = paired_wilcoxon(difference)
                 rows.append(
                     {
                         "latent_dim": latent_dim,
@@ -349,6 +347,9 @@ def build_paired_comparisons(participant_raw: pd.DataFrame) -> pd.DataFrame:
                         "cvae_better_participants": int(np.sum(difference > 0)),
                         "wilcoxon_statistic": float(statistic),
                         "wilcoxon_p_uncorrected": float(p_value),
+                        "wilcoxon_difference_decimals": WILCOXON_DECIMALS,
+                        "wilcoxon_method": "auto; two-sided; pratt",
+                        "scipy_version": scipy.__version__,
                     }
                 )
     frame = pd.DataFrame(rows)

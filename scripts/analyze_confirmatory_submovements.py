@@ -140,6 +140,7 @@ def build_paired_dimension_test(frame: pd.DataFrame) -> pd.DataFrame:
 
 
 def build_fit_success() -> pd.DataFrame:
+    """Report completion separately; legacy rows have unknown convergence."""
     rows = []
     for run_dir in sorted(SOURCE.glob("cvae_z*_fold*_seed*")):
         generated_path = run_dir / "generated_submovements.csv"
@@ -154,6 +155,15 @@ def build_fit_success() -> pd.DataFrame:
                 **_run_metadata(run_dir),
                 "n_generated": len(frame),
                 "fit_success_rate": float(success.mean()),
+                "fit_success_semantics": "legacy alias for completion, not convergence",
+                "fit_completion_rate": float(success.mean()),
+                "optimizer_status_coverage": float(
+                    frame["mj_selected_optimizer_converged"].notna().mean()
+                ) if "mj_selected_optimizer_converged" in frame else 0.0,
+                "selected_optimizer_convergence_rate_among_known": float(
+                    frame["mj_selected_optimizer_converged"].dropna()
+                    .astype(str).str.lower().eq("true").mean()
+                ) if "mj_selected_optimizer_converged" in frame else np.nan,
                 "median_fit_error": float(
                     frame.loc[success, "mj_fit_error"].median()
                 ),

@@ -14,6 +14,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import hashlib
+import json
 
 import numpy as np
 from scipy.optimize import least_squares
@@ -26,6 +27,9 @@ from src.preprocessing import lowpass_filter
 class SubmovementConfig:
     max_components: int = 4
     min_duration_s: float = 0.100
+    # Legacy serialized/constructor name: NOT a pairwise onset separation.
+    # Component i has absolute onset lower bound i * this value; the value
+    # also supplies the end margin and random-restart onset perturbation scale.
     min_onset_spacing_s: float = 0.050
     max_duration_s: float = 1.000
     error_threshold: float = 0.050
@@ -36,6 +40,11 @@ class SubmovementConfig:
     forward_bounds: tuple[float, float] = (0.0, 20.0)
     sample_hz: float = config.RECORDING_HZ
     cutoff_hz: float = config.LOWPASS_CUTOFF_HZ
+
+    @property
+    def onset_lower_bound_step_s(self) -> float:
+        """Accurate name for the legacy ``min_onset_spacing_s`` parameter."""
+        return self.min_onset_spacing_s
 
 
 @dataclass
@@ -48,6 +57,8 @@ class ComponentFit:
     nfev: int
     reconstructed_velocity: np.ndarray
     time: np.ndarray
+    optimizer_status: int | None = None
+    optimizer_message: str = ""
 
 
 @dataclass
@@ -56,7 +67,7 @@ class SubmovementResult:
     selected_bic: ComponentFit
     fits: dict[int, ComponentFit]
 
-    def summary(self) -> dict[str, float | str]:
+    def summary(self) -> dict[str, float | str | bool]:
         p = self.selected.parameters
         amplitudes = np.linalg.norm(p[:, 2:4], axis=1)
         if len(p) > 1:
@@ -83,6 +94,19 @@ class SubmovementResult:
             pattern = "sequential_components"
 
         return {
+            "mj_fit_completed": True,
+            # Backward-compatible alias used by older tables; completion only.
+            "mj_fit_success": True,
+            "mj_selected_optimizer_converged": bool(self.selected.success),
+            "mj_bic_optimizer_converged": bool(self.selected_bic.success),
+            "mj_all_candidates_converged": all(f.success for f in self.fits.values()),
+            "mj_candidate_diagnostics_json": json.dumps({
+                str(k): {"optimizer_converged": bool(f.success),
+                         "optimizer_status": f.optimizer_status,
+                         "optimizer_message": f.optimizer_message,
+                         "nfev": int(f.nfev)}
+                for k, f in sorted(self.fits.items())
+            }),
             "mj_n_components": float(len(p)),
             "mj_n_components_bic": float(self.selected_bic.n_components),
             "mj_fit_error": float(self.selected.normalized_error),
@@ -146,8 +170,8 @@ def fit_component_count(
 ) -> ComponentFit | None:
     """Fit one candidate component count with deterministic random restarts."""
     movement_end = float(time[-1])
-    onset_upper = max(movement_end - cfg.min_onset_spacing_s, cfg.min_onset_spacing_s)
-    onset_lower = np.arange(n_components) * cfg.min_onset_spacing_s
+    onset_upper = max(movement_end - cfg.onset_lower_bound_step_s, cfg.onset_lower_bound_step_s)
+    onset_lower = np.arange(n_components) * cfg.onset_lower_bound_step_s
     if onset_lower[-1] > onset_upper:
         return None
 
@@ -183,7 +207,7 @@ def fit_component_count(
         x0[:, 1] = base_duration
         x0[:, 2:4] = net_displacement[None, :] / n_components
         if restart:
-            x0[:, 0] += rng.normal(0, cfg.min_onset_spacing_s * 0.35, n_components)
+            x0[:, 0] += rng.normal(0, cfg.onset_lower_bound_step_s * 0.35, n_components)
             x0[:, 1] *= rng.uniform(0.75, 1.25, n_components)
             x0[:, 2:4] *= rng.uniform(0.65, 1.35, (n_components, 2))
         x0 = np.clip(x0.ravel(), lower + 1e-7, upper - 1e-7)
@@ -211,7 +235,7 @@ def fit_component_count(
     rss = max(error * denominator, 1e-12)
     n_observations = 3 * len(eval_time)
     bic = n_observations * np.log(rss / n_observations) + 4 * n_components * np.log(n_observations)
-    return ComponentFit(n_components, params, error, float(bic), bool(result.success), int(result.nfev), reconstructed, eval_time)
+    return ComponentFit(n_components, params, error, float(bic), bool(result.success), int(result.nfev), reconstructed, eval_time, int(result.status), str(result.message))
 
 
 def decompose_position(
@@ -230,6 +254,8 @@ def decompose_position(
     if not fits:
         raise RuntimeError(f"no feasible submovement fit for {trial_id}")
 
+    # Preserve the declared error-based selection, including nonconverged
+    # candidates. Convergence is reported separately, never silently filtered.
     ordered = [fits[n] for n in sorted(fits)]
     selected = next((fit for fit in ordered if fit.normalized_error <= cfg.error_threshold), None)
     if selected is None:

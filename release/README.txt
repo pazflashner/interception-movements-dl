@@ -37,11 +37,14 @@ Dashboard scope
 
 Included reports
 ----------------
-- Interception_Movements_Final_Scientific_Report.pdf: concise scientific report.
+- Interception_Movements_Final_Scientific_Report.pdf: eight-page scientific report.
+- Interception_Movements_Supplementary_Appendix.pdf: extended methods, complete
+  comparisons, convergence diagnostics, sensitivity checks and example figures.
 - Interception_Movements_Results_Guide.pdf: matched interpretation guide for
   Simaan and Paz.
 
-The dashboard's Protocol & downloads tab can also download both reports and
+Start with PAZ_REVIEW_HANDOFF.md for the current review status and open decisions.
+The dashboard's Protocol & downloads tab can also download all three PDFs and
 the confirmatory model-comparison table.
 
 The evaluation/ folder contains full corrected comparison tables and additional
@@ -49,3 +52,10 @@ audit/sensitivity results. The original training matrix and raw recordings are
 not included. The guide is intended for the students; the scientific report is
 the advisor-facing document. Source snapshots of the upstream licence are in
 licenses/; see THIRD_PARTY_NOTICES.txt.
+
+New frozen-model controls compare the correct fingerprint with a training-person
+average and all six other test-context fingerprints. Matched component refits use
+2,376 recorded query movements and 1,680 generated samples. Historical component
+tables remain separately labelled. Direct context measurements outperform the
+tested compact probes on all 14 summary targets under MAE; this does not negate
+the positive personal-context generation result.

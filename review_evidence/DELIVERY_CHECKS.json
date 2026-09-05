@@ -1,0 +1,34 @@
+{
+  "date": "2026-09-05",
+  "snapshot": "clean copy of tracked files; no private cache or original result directories; restored from committed release ZIP",
+  "environment": "existing installed Windows Python 3.13 environment, not a fresh dependency installation",
+  "tests": {
+    "passed": 70,
+    "failed": 0,
+    "skipped": 0,
+    "seconds": 23.76
+  },
+  "dashboard": {
+    "clean_checkout_combinations": 24,
+    "standalone_zip_combinations": 24,
+    "application_exceptions": 0,
+    "exit_codes": [
+      0,
+      0
+    ]
+  },
+  "pdfs": {
+    "main_pages": 8,
+    "appendix_pages": 12,
+    "guide_pages": 5,
+    "visual_review": "all 25 pages inspected; final changed pages re-rendered and inspected; main page 3 also checked with Poppler",
+    "text_bounds_passed": true
+  },
+  "arithmetic": "verify_review_handoff.py passed in clean restored checkout; 24 fingerprint runs, 12 contrasts, 28 direct-context comparisons, 4056 fits; all three PDF hashes matched",
+  "scope": "No independent cohort, raw-data training rerun or newly installed environment is certified by these delivery checks.",
+  "resolved_issues": [
+    "Sandbox denied temporary-directory fixture access; final pytest run used normal temporary-directory access.",
+    "Two old dashboard tests targeted retired two-window assets; updated to current shipped dashboard and decoded all 28 live enrolled centroids."
+  ],
+  "environment_warning": "AppTest emitted Windows temporary-directory cleanup permission warnings at interpreter exit; all application checks passed and both process exit codes were zero."
+}

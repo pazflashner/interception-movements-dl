@@ -80,12 +80,15 @@ def main():
     for path in sorted((ROOT/"output/pdf").glob("*.pdf")):
         doc=fitz.open(path); thumbs=[]
         text="\n".join(p.get_text() for p in doc)
-        assert "74.6%" in text and "marker 5)" not in text.lower()
+        assert "marker 5)" not in text.lower()
         assert "common" in text.lower() and "negative" in text.lower()
         if path.name=="Interception_Movements_Final_Scientific_Report.pdf":
             normalized=" ".join(text.split())
+            assert len(doc)==8, ("main report must be eight pages", len(doc))
             assert "150-epoch limit" in normalized and "200-epoch limit" not in normalized
             assert "Five of the 96 neural runs reached this limit." in normalized
+            for phrase in ["2,376", "1,680", "14 targets", "correct participant fingerprint", "74.6%"]:
+                assert phrase in normalized, ("missing essential result", phrase)
         for i,page in enumerate(doc):
             for block in page.get_text("dict")["blocks"]:
                 for line in block.get("lines",[]):

@@ -2,6 +2,7 @@
 from pathlib import Path
 import importlib.util
 import sys
+import json
 
 import numpy as np
 
@@ -52,6 +53,36 @@ def test_recovers_two_overlapping_components():
     assert fit.normalized_error < 0.001
     np.testing.assert_allclose(fit.parameters[:, 0], [0.02, 0.18], atol=0.02)
     np.testing.assert_allclose(fit.parameters[:, 1], [0.30, 0.28], atol=0.03)
+
+
+def test_budget_exhaustion_is_completed_but_not_converged():
+    from scripts.extract_submovements import fit_one
+    from scripts.generate_final_samples import fit_generated
+    import config
+
+    t = np.arange(0, 0.55, 1 / 240.0)
+    position = np.cumsum(minimum_jerk_velocity(t, 0.04, 0.32, np.array([0.3, 12.])), axis=0) / 240
+    cfg = SubmovementConfig(restarts=1, max_nfev=1)
+    trial = {"metadata": {"trial_id": "budget-test"}, "pos_filtered": position,
+             "move_start_idx": 0, "move_end_idx": len(position)-1}
+    rows = [fit_one(trial, cfg), fit_generated(({
+        "run": "test", "subject": "test", "sample_id": 0,
+        "movement_time_s": t[-1], "initiation_time_s": 0.0,
+        "window_mode": config.WINDOW_MOVEMENT_ONLY,
+    }, position), cfg)]
+    for row in rows:
+        assert row["mj_fit_completed"] is True
+        assert row["mj_fit_success"] is True  # documented legacy alias
+        assert row["mj_selected_optimizer_converged"] is False
+        assert row["mj_all_candidates_converged"] is False
+        diagnostics = json.loads(row["mj_candidate_diagnostics_json"])
+        assert diagnostics
+        assert all(x["optimizer_status"] == 0 and x["nfev"] == 1 for x in diagnostics.values())
+
+
+def test_onset_bound_name_preserves_legacy_settings():
+    cfg = SubmovementConfig(min_onset_spacing_s=0.167)
+    assert cfg.onset_lower_bound_step_s == 0.167
 
 
 def main():

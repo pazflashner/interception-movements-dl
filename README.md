@@ -20,12 +20,17 @@ secondary, model-order-sensitive kinematic analysis.
 
 ## Navigation
 
+- **Start here for Paz's review: [PAZ_REVIEW_HANDOFF.md](PAZ_REVIEW_HANDOFF.md).**
+  The current delivery has an eight-page main paper, a separate evidence appendix,
+  and the student guide. Same-decoder fingerprint controls and matched component
+  refits extend the evaluation without retraining the neural models.
+
 - **Current correction record: [REVIEW_CORRECTIONS.md](REVIEW_CORRECTIONS.md)**.
   The PDFs and dashboard now consume `studies/review_corrected_evaluation/`.
-  Original checkpoints and unaffected submovement/condition analyses remain in
+  Original checkpoints and historical submovement/condition analyses remain in
   the frozen training study; neither raw data nor main neural weights changed.
-- **Independent review: [REVIEW_HANDOFF.md](REVIEW_HANDOFF.md)** lists the exact
-  current reports, source modules, saved predictions, and checks to perform.
+- **Historical independent review: [REVIEW_HANDOFF.md](REVIEW_HANDOFF.md)** records
+  the earlier snapshot; use Paz's handoff above for the current testing workflow.
 - `studies/final_strategy_evaluation/`: frozen confirmatory protocols, runs, and
   original result tables (not the current multivariate distance evaluation).
 - `studies/review_corrected_evaluation/`: corrected evaluations, additional
@@ -33,7 +38,7 @@ secondary, model-order-sensitive kinematic analysis.
 - `src/`: shared code; [source map](src/README.md).
 - `scripts/`: [current entry points and dependency notes](scripts/README.md).
 - `reports/`: scientific-report and interpretation-guide builders.
-- `output/pdf/`: final scientific report and companion results guide.
+- `output/pdf/`: eight-page scientific report, supplementary appendix and results guide.
 - `output/release/`: standalone dashboard bundle and email-ready ZIP.
 - `tests/`: protocol and model checks.
 - `archive/`: [historical snapshots and superseded entry points](archive/README.md).

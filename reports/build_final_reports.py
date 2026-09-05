@@ -173,6 +173,27 @@ def make_pipeline_figure(path: Path) -> None:
     plt.close(fig)
 
 
+def make_compact_benchmark_figure(oof: pd.DataFrame, path: Path) -> None:
+    fig, axes = plt.subplots(1, 2, figsize=(9.5, 2.8))
+    x = np.arange(2)
+    for ax, column, title in zip(axes,
+        ["trajectory_mse_subject_balanced_mean", "mean_ks_mean"],
+        ["Reconstruction MSE (tracker units squared)", "Generated distribution: mean KS"]):
+        for offset, family, label, color in [(-.18, "spline_pca", "Spline+PCA", BLUE), (.18, "cvae", "CVAE", TEAL)]:
+            values = [float(model_row(oof, family, n)[column]) for n in (3, 8)]
+            ax.bar(x + offset, values, .36, color=color, label=label)
+        ax.set_xticks(x, ["n=3", "n=8"])
+        ax.set_title(title, loc="left", fontsize=10)
+        ax.set_ylabel("Lower is better", fontsize=9)
+        ax.tick_params(labelsize=9)
+        ax.spines[["top", "right"]].set_visible(False)
+        ax.grid(axis="x", visible=False)
+        ax.legend(fontsize=9)
+    fig.tight_layout()
+    fig.savefig(path, dpi=220)
+    plt.close(fig)
+
+
 def make_benchmark_figure(oof: pd.DataFrame, path: Path) -> None:
     order = [
         ("condition_ridge", 0),
@@ -203,7 +224,7 @@ def make_benchmark_figure(oof: pd.DataFrame, path: Path) -> None:
         ax.grid(axis="x", visible=False)
         ax.spines[["top", "right"]].set_visible(False)
     fig.suptitle(
-        "Figure 2. Out-of-fold benchmark endpoints (28 held-out participants)",
+        "Out-of-fold benchmark endpoints (28 held-out participants)",
         x=0.02,
         ha="left",
         fontsize=12,
@@ -249,7 +270,7 @@ def make_capacity_fingerprint_figure(
         ax.set_xticks([2, 3, 4, 8])
         ax.spines[["top", "right"]].set_visible(False)
     fig.suptitle(
-        "Figure 3. CVAE capacity and fingerprint enrollment",
+        "CVAE capacity and fingerprint enrollment",
         x=0.02,
         ha="left",
         fontsize=12,
@@ -286,7 +307,7 @@ def make_condition_figure(condition: pd.DataFrame, path: Path) -> None:
     ax.set_xticks(x, [f"n={int(n)}" for n in condition.latent_dim])
     ax.set_ylabel("condition-specific trajectory error")
     ax.set_title(
-        "Figure 4. Condition-stratum trajectory comparison",
+        "Condition-stratum trajectory comparison",
         loc="left",
         weight="bold",
     )
@@ -340,7 +361,7 @@ def make_submovement_figure(
     for ax in axes:
         ax.spines[["top", "right"]].set_visible(False)
     fig.suptitle(
-        "Figure 5. Minimum-jerk component analysis is model-order sensitive",
+        "Historical minimum-jerk component analysis",
         x=0.02,
         ha="left",
         fontsize=12,
@@ -423,7 +444,7 @@ def make_reconstruction_generation_figure(path: Path) -> dict[str, str]:
     for ax in axes:
         ax.spines[["top", "right"]].set_visible(False)
     fig.suptitle(
-        "Figure A1. Held-out reconstruction and context-fingerprint generation (fold 0, seed 42)",
+        "Held-out reconstruction and context generation (fold 0, seed 42)",
         x=0.02,
         ha="left",
         fontsize=12,
@@ -451,7 +472,7 @@ def make_timing_outlier_figure(timing: pd.DataFrame, path: Path) -> None:
     ax.semilogy(x, frame.initiation_time_max_abs_error_ms, "^", color=RED, label="maximum")
     ax.set_xticks(x, frame.label, rotation=25, ha="right")
     ax.set_ylabel("absolute initiation-time error (ms, log scale)")
-    ax.set_title("Figure A2. CVAE initiation-time absolute-error quantiles", loc="left")
+    ax.set_title("CVAE initiation-time absolute-error quantiles", loc="left")
     ax.legend(ncol=3, fontsize=8)
     ax.spines[["top", "right"]].set_visible(False)
     fig.tight_layout()
@@ -490,13 +511,73 @@ def make_association_figure(path: Path) -> None:
     fig.tight_layout(); fig.savefig(path,dpi=220); plt.close(fig)
 
 
-from reports.article_layout import scientific_report, guide_report
+from reports.article_layout import guide_report
+from reports.concise_article import scientific_report, appendix_report
+
+
+def make_review_control_figures(figures):
+    controls = RESULTS / "review_controls"
+    frame = pd.read_csv(controls / "fingerprint_participant.csv")
+    fig, ax = plt.subplots(figsize=(9, 3.6))
+    rng = np.random.default_rng(512)
+    labels = []
+    for index, (dim, arm) in enumerate([(3,"population"),(3,"wrong"),(8,"population"),(8,"wrong")]):
+        own = frame[(frame.latent_dim==dim)&(frame.arm=="own")].set_index("subject")
+        other = frame[(frame.latent_dim==dim)&(frame.arm==arm)].set_index("subject").loc[own.index]
+        delta = other.mean_ks.to_numpy()-own.mean_ks.to_numpy()
+        color = BLUE if arm=="population" else TEAL
+        ax.scatter(index+rng.uniform(-.13,.13,len(delta)),delta,s=23,color=color,alpha=.8,zorder=3)
+        ax.plot([index-.2,index+.2],[delta.mean()]*2,color=INK,lw=2.2,zorder=4)
+        labels.append(f"n={dim}\n"+("Training average" if arm=="population" else "Other participants"))
+    ax.axhline(0,color=GRAY,lw=1,ls="--")
+    ax.set_xticks(range(4),labels)
+    ax.set_ylabel("Control mean KS minus own-fingerprint KS")
+    ax.spines[["top","right"]].set_visible(False)
+    fig.tight_layout();fig.savefig(figures["fingerprint_control"],dpi=220);plt.close(fig)
+
+    matched = pd.read_csv(controls / "matched_component_summary.csv").set_index("latent_dim")
+    legacy = pd.read_csv(MIN_JERK / "analysis/oof_summary.csv").set_index("latent_dim")
+    fits = pd.read_csv(controls / "matched_components.csv")
+    fig, axes = plt.subplots(1,2,figsize=(9.5,3.4))
+    x=np.arange(2);width=.34
+    axes[0].bar(x-width/2,[legacy.loc[d,"mean_count_total_variation_across_seeds"] for d in [3,8]],width,color=GRAY,label="Historical procedure")
+    axes[0].bar(x+width/2,[matched.loc[d,"count_total_variation"] for d in [3,8]],width,color=TEAL,label="Matched procedure")
+    axes[0].set_xticks(x,["n=3","n=8"]);axes[0].set_ylabel("Count total variation");axes[0].legend(fontsize=8)
+    real=fits[fits.kind=="recorded"]
+    probs=[]
+    for subject,e in real.groupby("subject"):
+        probs.append([(e.mj_n_components==k).mean() for k in range(1,5)])
+    x=np.arange(4)
+    axes[1].bar(x-.25,np.mean(probs,axis=0),.25,label="Recorded query",color=GRAY)
+    for offset,dim,color in [(0,3,BLUE),(.25,8,TEAL)]:
+        g=fits[(fits.kind=="generated")&(fits.latent_dim==dim)]
+        probs=[[(e.mj_n_components==k).mean() for k in range(1,5)] for _,e in g.groupby(["subject","seed"])]
+        axes[1].bar(x+offset,np.mean(probs,axis=0),.25,label=f"Generated n={dim}",color=color)
+    axes[1].set_xticks(x,["1","2","3","4"]);axes[1].set_xlabel("Selected component count");axes[1].set_ylabel("Mean participant proportion");axes[1].legend(fontsize=8)
+    for ax in axes:ax.spines[["top","right"]].set_visible(False)
+    fig.tight_layout();fig.savefig(figures["matched_components"],dpi=220);plt.close(fig)
+
+    with (ROOT / "studies/strategy_window_comparison/data/canonical_trials.pkl").open("rb") as f:
+        trials=pickle.load(f)
+    trial=next(t for t in trials if t["metadata"]["trial_id"]=="subject01_li_2_2_1_20")
+    times=(np.arange(len(trial["pos_raw"]))-trial["go_signal_idx"])/240
+    mask=(times>=-.2)&(times<=.25)
+    fig,ax=plt.subplots(figsize=(9,2.4))
+    for key,label,color in [("pos_raw","Raw planar speed",GRAY),("pos_filtered","Filtered planar speed",INK)]:
+        speed=np.linalg.norm(np.gradient(trial[key][:,:2],1/240,axis=0),axis=1)
+        ax.plot(times[mask],speed[mask],label=label,color=color,lw=1.3)
+    ax.axvline(0,color=GRAY,ls="--",lw=1);ax.axhline(5,color=GRAY,ls=":",lw=1)
+    ax.set_xlabel("Time relative to target motion (s)");ax.set_ylabel("Speed (tracker units/s)")
+    ax.set_title("subject01_li_2_2_1_20",loc="left",fontsize=9);ax.legend(fontsize=8)
+    ax.spines[["top","right"]].set_visible(False)
+    fig.tight_layout();fig.savefig(figures["event_excerpt"],dpi=220);plt.close(fig)
 
 
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--out", type=Path, default=ROOT / "output" / "pdf")
     args = parser.parse_args()
+    torch.set_num_threads(1)
     args.out.mkdir(parents=True, exist_ok=True)
     figure_dir = args.out / "figures"
     figure_dir.mkdir(parents=True, exist_ok=True)
@@ -513,9 +594,12 @@ def main() -> None:
         "examples": figure_dir / "figure_a1_examples.png",
         "timing": figure_dir / "figure_a2_timing_outliers.png",
         "associations": figure_dir / "figure_a4_associations.png",
+        "fingerprint_control": figure_dir / "fingerprint_controls.png",
+        "matched_components": figure_dir / "matched_components.png",
+        "event_excerpt": figure_dir / "event_excerpt.png",
     }
     make_pipeline_figure(figures["pipeline"])
-    make_benchmark_figure(tables["oof"], figures["benchmark"])
+    make_compact_benchmark_figure(tables["oof"], figures["benchmark"])
     make_capacity_fingerprint_figure(tables["oof"], fingerprints, figures["capacity"])
     make_condition_figure(tables["condition"], figures["condition"])
     make_submovement_figure(
@@ -524,13 +608,17 @@ def main() -> None:
     example_meta = make_reconstruction_generation_figure(figures["examples"])
     make_timing_outlier_figure(tables["timing"], figures["timing"])
     make_association_figure(figures["associations"])
+    make_review_control_figures(figures)
 
     scientific = args.out / "Interception_Movements_Final_Scientific_Report.pdf"
     guide = args.out / "Interception_Movements_Results_Guide.pdf"
+    appendix = args.out / "Interception_Movements_Supplementary_Appendix.pdf"
     scientific_report(scientific, tables, fingerprints, figures, example_meta)
+    appendix_report(appendix, tables, fingerprints, figures, example_meta)
     guide_report(guide, tables, fingerprints, figures)
     print(scientific)
     print(guide)
+    print(appendix)
 
 
 if __name__ == "__main__":

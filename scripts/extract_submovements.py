@@ -1,4 +1,4 @@
-"""Extract Jason-compatible minimum-jerk features for every retained trial."""
+"""Extract minimum-jerk features using the documented adaptation of Jason's code."""
 from __future__ import annotations
 
 import argparse
@@ -34,7 +34,6 @@ def fit_one(trial: dict, cfg: SubmovementConfig) -> dict:
         result = decompose_trial(trial, cfg)
         row.update(result.summary())
         row["mj_parameters_json"] = json.dumps(result.selected.parameters.tolist())
-        row["mj_fit_success"] = True
         row["mj_failure"] = ""
         for n in range(1, cfg.max_components + 1):
             fit = result.fits.get(n)
@@ -43,7 +42,12 @@ def fit_one(trial: dict, cfg: SubmovementConfig) -> dict:
             row[f"mj_nfev_k{n}"] = fit.nfev if fit else np.nan
     except Exception as exc:
         row.update({
+            "mj_fit_completed": False,
             "mj_fit_success": False,
+            "mj_selected_optimizer_converged": None,
+            "mj_bic_optimizer_converged": None,
+            "mj_all_candidates_converged": None,
+            "mj_candidate_diagnostics_json": "{}",
             "mj_failure": f"{type(exc).__name__}: {exc}",
             "mj_n_components": np.nan,
             "mj_n_components_bic": np.nan,
@@ -104,6 +108,8 @@ def main():
         "max_components": cfg.max_components,
         "min_duration_s": cfg.min_duration_s,
         "min_onset_spacing_s": cfg.min_onset_spacing_s,
+        "onset_bound_semantics": "component i absolute lower bound = i * min_onset_spacing_s; not pairwise spacing",
+        "mj_fit_success_semantics": "legacy alias for mj_fit_completed, not optimizer convergence",
         "error_threshold": cfg.error_threshold,
         "fallback_error_threshold": cfg.fallback_error_threshold,
         "restarts": cfg.restarts,

@@ -1,0 +1,3 @@
+kind,n,selected_converged_n,all_candidates_converged_n,count_agreement_with_legacy,median_error
+generated,1680,1680,1440,0.9970238095238095,0.027433389100034053
+recorded,2376,2376,2111,0.7605218855218855,0.0265322587670705

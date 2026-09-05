@@ -1,7 +1,7 @@
 # Script navigation
 
 Run commands from the repository root. This index distinguishes the current
-four-fold study from earlier fixed-split work. Read `REVIEW_HANDOFF.md` before
+four-fold study from earlier fixed-split work. Read `../PAZ_REVIEW_HANDOFF.md` before
 reviewing results. This is a code map, not an instruction to rerun the pipeline.
 
 ## Current study entry points
@@ -34,6 +34,10 @@ rebuild a PDF. See `../REVIEW_CORRECTIONS.md` for the evaluated correction seque
 | Minimum-jerk sample-size reference | `calibrate_submovement_sampling.py` |
 | Output coverage, invariance, PDF rendering | `verify_post_review_outputs.py` |
 | All dashboard sections and dimensions | `check_dashboard_delivery.py` |
+| Same-decoder fingerprint controls / matched component refits | `run_review_controls.py` |
+| Direct-context baseline / matched-component summaries and sampling reference | `analyze_review_controls.py` |
+| Restore bundled evidence/checkpoints in a fresh clone | `prepare_review_workspace.py` |
+| Verify delivered summary arithmetic and PDF hashes | `verify_review_handoff.py` |
 
 The report builder is `../reports/build_final_reports.py` and the app is
 `../src/confirmatory_dashboard.py`. Inspect CLI arguments before running anything;
