@@ -80,3 +80,7 @@ Thumbs.db
 
 # Jupyter
 .ipynb_checkpoints/
+
+# Editable .docx drafts converted from the delivered PDFs (scripts/export_report_docx.py).
+# The PDF and reports/concise_article.py remain authoritative; drafts are local.
+output/docx/
