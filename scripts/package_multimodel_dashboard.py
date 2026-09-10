@@ -19,6 +19,9 @@ def main():
         copy_to_bundle(source,source.relative_to(ROOT),staging)
     report=ROOT/'production/Interception_Movements_Methods_Reconstruction_Review.pdf'
     copy_to_bundle(report,report.relative_to(ROOT),staging)
+    for name in ['README.md','DETAILED_REVIEW_VERIFICATION.json','remaining_results_provenance.json','all_models_direct_context_summary.csv']:
+        source=ROOT/'production'/name
+        copy_to_bundle(source,source.relative_to(ROOT),staging)
     (staging/'README.txt').write_text('''Interception movement explorer - multi-model working release
 
 From this extracted folder:

@@ -39,7 +39,7 @@ class ReviewArticle(Article):
     def finish(self):
         def footer(c,doc):
             c.saveState();c.setFont('Times-Roman',8)
-            c.drawString(22*mm,12*mm,'Review draft 3 | Methods, reconstruction and generation | 10 September 2026')
+            c.drawString(22*mm,12*mm,'Detailed review 4 | Methods and results | 10 September 2026')
             c.drawRightString(188*mm,12*mm,str(doc.page));c.restoreState()
         SimpleDocTemplate(str(self.output),pagesize=(210*mm,297*mm),leftMargin=22*mm,rightMargin=22*mm,
                           topMargin=17*mm,bottomMargin=20*mm,title=self.title,author='Simaan Libbiss and Paz Flashner').build(self.story,onFirstPage=footer,onLaterPages=footer)
@@ -171,10 +171,15 @@ def main():
     means=avg.groupby(['model_family','latent_dim']).trajectory_mse.mean()
     from production.report_equations import render_equations
     from production.generation_section import generation_figures
+    from production.remaining_evidence import load_evidence
+    from production.remaining_figures import remaining_figures
+    evidence=load_evidence()
     figures(avg);chosen=examples(avg);data_figures();render_equations(ASSETS);generation_figures(ASSETS)
+    remaining_figures(evidence,ASSETS)
     dest=OUT/'Interception_Movements_Methods_Reconstruction_Review.pdf'
     a=ReviewArticle(dest,'Compact Representations of Human Interception Movements',
                    'Simaan Libbiss and Paz Flashner<br/>Workshop on Deep Learning, Tel Aviv University<br/>Research supervision: Prof. Jason Friedman | Course advisor: Moni Shahar')
+    a.remaining_evidence=evidence
     write_sections(a,ASSETS,means,chosen,config.STIMULI_DIR/'instructions2.jpg')
     a.finish();print(dest,flush=True)
 

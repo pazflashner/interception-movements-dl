@@ -1,9 +1,9 @@
 {
   "date": "2026-09-10",
-  "revision": 3,
-  "pdf_pages": 13,
-  "pdf_sha256": "eb22367ce44b45830f14299a45f440aa52e6bcffb2aec5aeef133f928fbbb3ab",
-  "tests_note": "90 code tests passed; all 72 sections/capacities passed in both repository and standalone bundle using installed dependencies.",
+  "revision": 4,
+  "pdf_pages": 31,
+  "pdf_sha256": "a1461d66e8034810342be4b89d9ed8e759e79db31c9f2a65d385f51c54b3ba2a",
+  "tests_note": "Revision 3 passed 90 code tests and all 72 dashboard sections/capacities in both repository and standalone bundle. Revision 4 changes the report, descriptive saved-result reaggregation, documentation and packaging; app, model and dashboard asset bytes are unchanged and the bundle PDF was reverified. The 90/72 results are retained prior verification, not a new run.",
   "checkpoint_hashes_unchanged": 96,
   "historical_pdf_hashes_unchanged": 3,
   "cohort_counts_checked": 28,
@@ -11,18 +11,39 @@
   "resampling_max_error": 0.0,
   "reconstruction_examples_checked": 12,
   "maximum_example_mse_difference": 4.016102710113767e-08,
-  "red_jason_questions": 8,
-  "visual_review": "All thirteen pages rendered and inspected. Page 9 shortened, rebuilt and reinspected for footer clearance; live default dashboard inspected in browser.",
-  "scope": "Data, methods, reconstruction and generation working draft; not the complete submission.",
+  "red_jason_questions": 15,
+  "visual_review": "All 31 pages rendered and visually inspected during revision 4. Orphan headings/tables on pages 19 and 22 were corrected and reinspected; updated mathematical notation, dashboard arrows, captions and footers checked. Dashboard remains stopped.",
+  "scope": "Detailed laboratory-review methods and results, including completed secondary analyses. Final abstract, introduction, discussion and eight-page/appendix selection remain for the next stage.",
   "code_suite_tests_passed": 90,
   "generation_evaluations_reproduced": 336,
   "generation_max_distance_error": 4.440892098500626e-16,
   "dashboard_references": 12,
   "standalone_ui_checks_passed": 72,
-  "bundle_sha256": "c333d6dd053640550ad7be27aaba608156325c3ac1eb5570213093ea3ac3502c",
-  "bundle_bytes": 24282547,
+  "bundle_sha256": "1d058f15c5f09d407bd2b21ef385116feb865cc8a95c2cc9596bc18cab4aff15",
+  "bundle_bytes": 25831748,
   "fresh_restore_artifacts": 121,
   "restore_idempotent": true,
   "restore_conflict_rejected": true,
-  "equation_images": 13
+  "equation_images": 19,
+  "figures": 18,
+  "tables": 19,
+  "detailed_results_checks_passed": 147,
+  "detailed_results_verification": "DETAILED_REVIEW_VERIFICATION.json",
+  "revision4_bundle_checks": {
+    "crc_passed": true,
+    "unchanged_app_model_and_dashboard_asset_files": 38,
+    "changed_existing_files": [
+      "Interception_Movements_Multimodel_Dashboard/PAZ_REVIEW_HANDOFF.md",
+      "Interception_Movements_Multimodel_Dashboard/production/Interception_Movements_Methods_Reconstruction_Review.pdf"
+    ],
+    "added_files": [
+      "Interception_Movements_Multimodel_Dashboard/production/DETAILED_REVIEW_VERIFICATION.json",
+      "Interception_Movements_Multimodel_Dashboard/production/README.md",
+      "Interception_Movements_Multimodel_Dashboard/production/all_models_direct_context_summary.csv",
+      "Interception_Movements_Multimodel_Dashboard/production/remaining_results_provenance.json"
+    ],
+    "embedded_pdf_matches": true
+  },
+  "new_neural_training": false,
+  "new_component_optimizer_runs": false
 }

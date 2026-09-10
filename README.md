@@ -23,8 +23,8 @@ secondary, model-order-sensitive kinematic analysis.
 - **New readers:** use the setup instructions below, then follow the
   [source map](src/README.md) and [script map](scripts/README.md).
 - **Current manuscript review: [production/README.md](production/README.md).**
-  Start with the Methods-and-reconstruction PDF. The complete eight-page paper
-  and appendix are being revised one section at a time.
+  Start with the detailed methods/results PDF and its page guide. The eight-page
+  main paper, appendix selection, introduction and discussion will follow review.
 - **For Paz: [PAZ_REVIEW_HANDOFF.md](PAZ_REVIEW_HANDOFF.md).**
 - **Meeting context: [SIMAAN_MONI_REPORT_HANDOFF_2026-09-08.md](SIMAAN_MONI_REPORT_HANDOFF_2026-09-08.md).**
 
@@ -100,6 +100,7 @@ Build the current manuscript section:
 
 ```powershell
 python production\build_methods_reconstruction.py
+python production\verify_detailed_report.py
 ```
 
 Rebuild the earlier complete-paper layout (not the new manuscript section):

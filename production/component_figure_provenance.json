@@ -1,0 +1,20 @@
+[
+  {
+    "label": "Recorded",
+    "job_id": "subject01_li_2_1_1_1",
+    "selected_count": 1,
+    "normalized_error": 0.0431887086856821
+  },
+  {
+    "label": "CVAE n=8",
+    "job_id": "cvae_z8_fold2_seed42-subject01-0",
+    "selected_count": 2,
+    "normalized_error": 0.0344143615228322
+  },
+  {
+    "label": "VAE n=8",
+    "job_id": "unconditional_vae_z8_fold2_seed42-subject01-0",
+    "selected_count": 3,
+    "normalized_error": 0.0466732446247451
+  }
+]

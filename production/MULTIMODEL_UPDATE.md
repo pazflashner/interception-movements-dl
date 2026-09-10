@@ -1,5 +1,9 @@
 # Multi-model dashboard and generation draft
 
+This records the revision-3 dashboard update. The current revision-4 manuscript
+extends the detailed methods/results to 31 pages; see README.md and
+DETAILED_REVIEW_VERIFICATION.json. The dashboard model choices below are unchanged.
+
 10 September 2026. Revision 3 extends the working manuscript to thirteen pages.
 It is still a section-review draft before condensation to the final main paper.
 

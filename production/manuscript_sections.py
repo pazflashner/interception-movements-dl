@@ -97,7 +97,13 @@ def write_sections(a, assets, means, chosen, task_screen):
     a.p('Reconstruction establishes how accurately the models compress observed paths. The fingerprint objective requires a further test: whether a code estimated from one set of a participant\'s movements can reproduce the distribution of other movements. The subsequent sections therefore evaluate duration prediction, generated feature distributions and participant-specific information. Side-by-side generation figures will be labeled separately from these input-output reconstructions.')
     from production.generation_section import write_generation
     write_generation(a,assets)
+    from production.remaining_results import write_remaining
+    write_remaining(a,assets,a.remaining_evidence)
+    a.page()
     a.h('References')
     for ref in ['[1] Kingma DP, Welling M. Auto-Encoding Variational Bayes. ICLR, 2014. arXiv:1312.6114.','[2] Sohn K, Lee H, Yan X. Learning Structured Output Representation using Deep Conditional Generative Models. NeurIPS 28, 2015.','[3] SciPy developers. scipy.stats.wilcoxon and scipy.stats.ks_2samp documentation. Evaluations executed with SciPy 1.16.3.','[4] Bengio Y, Grandvalet Y. No unbiased estimator of the variance of K-fold cross-validation. JMLR. 2004;5:1089-1105.']:
         a.p(ref,'caption')
     a.p('[5] Gretton A, Borgwardt KM, Rasch MJ, Scholkopf B, Smola A. A Kernel Two-Sample Test. JMLR. 2012;13:723-773. https://www.jmlr.org/papers/v13/gretton12a.html','caption')
+    a.p('[6] Flash T, Hogan N. The coordination of arm movements: an experimentally confirmed mathematical model. J Neurosci. 1985;5:1688-1703. doi:10.1523/JNEUROSCI.05-07-01688.1985.','caption')
+    a.p('[7] Friedman J. submovements. https://github.com/JasonFriedman/submovements. Local reference revision 9c2f40ccc922d542242329c46cfd524c21188b4a; adapted implementation, GPL-3.0.','caption')
+    a.p('[8] Rohrer B, Hogan N. Avoiding spurious submovement decompositions II: a scattershot algorithm. Biological Cybernetics. 2006;94:409-414. doi:10.1007/s00422-006-0055-y.','caption')

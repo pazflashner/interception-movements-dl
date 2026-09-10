@@ -6,6 +6,12 @@ from reportlab.platypus import Image,Spacer
 from reportlab.lib.units import mm
 
 FORMULAS={
+ 'mae':r'$\mathrm{MAE}=\frac{1}{S}\sum_{s=1}^{S}\frac{1}{N_s}\sum_{i=1}^{N_s}|t_{si}-\widehat{t}_{si}|.$',
+ 'r2':r'$R^2=1-\frac{\sum_s(y_s-\widehat{y}_s)^2}{\sum_s(y_s-\overline{y})^2}.$',
+ 'mj_velocity':r'$\mathbf{v}_k(t)=\frac{\mathbf{d}_k}{T_k}(30u_k^2-60u_k^3+30u_k^4),\qquad u_k=(t-t_k)/T_k\in(0,1).$',
+ 'mj_error':r'$E_K=\frac{\sum_t\left[\|\widehat{\mathbf{v}}_K-\mathbf{v}\|^2+(\|\widehat{\mathbf{v}}_K\|-\|\mathbf{v}\|)^2\right]}{\sum_t\left[\|\mathbf{v}\|^2+\|\mathbf{v}\|^2\right]},\qquad\widehat{\mathbf{v}}_K=\sum_{k=1}^{K}\mathbf{v}_k.$',
+ 'bic':r'$\mathrm{BIC}_K=N\log(\mathrm{RSS}_K/N)+4K\log N.$',
+ 'tv':r'$\mathrm{TV}(p,q)=\frac{1}{2}\sum_{k=1}^{4}|p_k-q_k|.$',
  'resample':r'$\mathbf{P}_j=\mathbf{S}(j/99)-\mathbf{S}(0),\qquad j=0,\ldots,99.$',
  'spline':r'$\mathbf{c}_x=\mathrm{arg\,min}_{\mathbf{c}}\,\|\mathbf{x}-B\mathbf{c}\|_2^2,\qquad\mathbf{c}_y=\mathrm{arg\,min}_{\mathbf{c}}\,\|\mathbf{y}-B\mathbf{c}\|_2^2.$',
  'pca':r'$\mathbf{z}=V^T[(\mathbf{c}-\mathbf{m})\oslash\mathbf{d}],\qquad\widehat{\mathbf{c}}=\mathbf{m}+\mathbf{d}\odot(V\mathbf{z}).$',

@@ -5,13 +5,15 @@ Updated 10 September 2026 following the code audit and multi-model dashboard upd
 ## Current draft
 
 Read `production/Interception_Movements_Methods_Reconstruction_Review.pdf`.
-This thirteen-page working draft explains the experimental data, input/output pipeline, neural
-models, spline + PCA, reconstruction and generated-feature results with recorded/decoded examples.
-It includes task/data figures, equations and red questions for Jason. It will be
-condensed later and is not the finished eight-page submission. Generation starts
-on page 9; side-by-side trajectories and feature distributions are on pages 12-13.
-Review these sections first; timing, fingerprint controls, enrollment/probes, minimum-jerk results and the
-complete abstract, introduction and discussion are the next writing stages.
+This 31-page detailed draft covers the data, model pipelines and all major completed
+analyses, with 18 figures, 19 tables and 15 red questions for Jason. It is the
+laboratory-review version; selecting the eight-page main paper and appendix is
+still a joint decision. The abstract, introduction and discussion remain to be written.
+
+Generation starts on page 9, personal controls on page 14, timing on page 16,
+enrollment/probes on page 18, conditioning on page 23, minimum jerk on page 24,
+the early-movement audit on page 28 and the dashboard on page 29.
+The complete page guide and reproducible builders are in production/README.md.
 
 Use `production/FIXES_AND_CLEANUP.md` for the confirmed corrections and
 `production/audit_2026_09_08/AUDIT_REPORT.md` for the earlier audit snapshot.
@@ -33,9 +35,15 @@ The current meeting context is in `SIMAAN_MONI_REPORT_HANDOFF_2026-09-08.md`.
   n=3,8. Its default is VAE n=8 for the lowest cohort-average generation distances.
   This is a numerical preference, not superiority on every endpoint or a uniformly
   significant advantage. VAE ignores conditions; spline uses them for timing only.
+- The detailed continuation checks the existing own/population/other-person controls
+  and shows the limitation of behavioural-summary prediction. Direct context summaries
+  have lower mean error on all 14 targets for every matched model/capacity; this
+  descriptive extension uses saved probe predictions and trains no new model.
+- The matched minimum-jerk comparison reduced the earlier mismatch but did not
+  eliminate it. VAE n=8 did not demonstrate better component fidelity than CVAE n=8.
 
-Please check whether you can explain Figures 3-4's inputs and outputs and whether
-Figures 5-10 support the precise reconstruction and generation claims. Units, event semantics,
+Please check the connection between the objective, each experiment and its result.
+Use the red questions to resolve domain assumptions with Jason. Units, event semantics,
 onset threshold and the appearance-to-motion window still need domain judgment.
 Do not infer a biological strategy solely from a latent code or fitted components.
 

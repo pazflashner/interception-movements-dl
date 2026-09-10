@@ -43,6 +43,8 @@ rebuild a PDF. See `../production/FIXES_AND_CLEANUP.md` for current fixes and
 | Verify delivered summary arithmetic and PDF hashes | `verify_review_handoff.py` |
 
 The current manuscript builder is `../production/build_methods_reconstruction.py`.
+Its detailed continuation reads `../production/remaining_evidence.py`; numerical
+and PDF-inventory checks are in `../production/verify_detailed_report.py`.
 `../reports/build_final_reports.py` rebuilds the earlier complete-report layout;
 `verify_review_handoff.py` verifies the September 5 delivery, not the new draft.
 The current app is `../src/confirmatory_dashboard.py`. Inspect CLI arguments before running anything;

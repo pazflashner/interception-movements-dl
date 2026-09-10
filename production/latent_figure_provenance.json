@@ -1,0 +1,114 @@
+[
+  {
+    "family": "cvae",
+    "fold": 0,
+    "seed": 42,
+    "subject": "subject05",
+    "n_context": 90,
+    "n_query": 90
+  },
+  {
+    "family": "cvae",
+    "fold": 0,
+    "seed": 42,
+    "subject": "subject13",
+    "n_context": 90,
+    "n_query": 90
+  },
+  {
+    "family": "cvae",
+    "fold": 0,
+    "seed": 42,
+    "subject": "subject19",
+    "n_context": 88,
+    "n_query": 90
+  },
+  {
+    "family": "cvae",
+    "fold": 0,
+    "seed": 42,
+    "subject": "subject24",
+    "n_context": 88,
+    "n_query": 90
+  },
+  {
+    "family": "cvae",
+    "fold": 0,
+    "seed": 42,
+    "subject": "subject27",
+    "n_context": 87,
+    "n_query": 90
+  },
+  {
+    "family": "cvae",
+    "fold": 0,
+    "seed": 42,
+    "subject": "subject34",
+    "n_context": 90,
+    "n_query": 90
+  },
+  {
+    "family": "cvae",
+    "fold": 0,
+    "seed": 42,
+    "subject": "subject35",
+    "n_context": 85,
+    "n_query": 86
+  },
+  {
+    "family": "unconditional_vae",
+    "fold": 0,
+    "seed": 42,
+    "subject": "subject05",
+    "n_context": 90,
+    "n_query": 90
+  },
+  {
+    "family": "unconditional_vae",
+    "fold": 0,
+    "seed": 42,
+    "subject": "subject13",
+    "n_context": 90,
+    "n_query": 90
+  },
+  {
+    "family": "unconditional_vae",
+    "fold": 0,
+    "seed": 42,
+    "subject": "subject19",
+    "n_context": 88,
+    "n_query": 90
+  },
+  {
+    "family": "unconditional_vae",
+    "fold": 0,
+    "seed": 42,
+    "subject": "subject24",
+    "n_context": 88,
+    "n_query": 90
+  },
+  {
+    "family": "unconditional_vae",
+    "fold": 0,
+    "seed": 42,
+    "subject": "subject27",
+    "n_context": 87,
+    "n_query": 90
+  },
+  {
+    "family": "unconditional_vae",
+    "fold": 0,
+    "seed": 42,
+    "subject": "subject34",
+    "n_context": 90,
+    "n_query": 90
+  },
+  {
+    "family": "unconditional_vae",
+    "fold": 0,
+    "seed": 42,
+    "subject": "subject35",
+    "n_context": 85,
+    "n_query": 86
+  }
+]
