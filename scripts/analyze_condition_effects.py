@@ -21,6 +21,7 @@ from scripts.run_corrected_study import load_per_trial_checkpoint
 from src.condition_effects import build_condition_contrasts, condition_stratified_records
 from src.confirmatory_protocol import partition_trials, write_or_verify_manifest
 from src.trajectory_view import project_trials_to_table_plane, select_trials_window
+from src.statistical_tests import holm_adjust
 
 
 FAMILIES = ("cvae", "unconditional_vae")
@@ -195,10 +196,7 @@ def _trajectory_summary(trajectories: pd.DataFrame) -> pd.DataFrame:
             }
         )
     frame = pd.DataFrame(rows)
-    frame["wilcoxon_p_holm"] = np.minimum(
-        1.0,
-        frame.wilcoxon_p_uncorrected * len(frame),
-    )
+    frame["wilcoxon_p_holm"] = holm_adjust(frame.wilcoxon_p_uncorrected)
     return frame
 
 

@@ -1,0 +1,68 @@
+{
+  "integrity": {
+    "checks": 2457,
+    "passed": 2457,
+    "failed": 0,
+    "neural_checkpoints": 96,
+    "python": "3.13.5 (tags/v3.13.5:6cb20a2, Jun 11 2025, 16:15:46) [MSC v.1943 64 bit (AMD64)]",
+    "torch": "2.12.0+cpu",
+    "numpy": "2.3.4"
+  },
+  "neural_generation": {
+    "runs": 96,
+    "participant_runs": 672,
+    "generated_samples": 80640,
+    "max_metric_difference": 4.440892098500626e-16,
+    "movement_floor_count": 0,
+    "initiation_floor_count": 1828,
+    "crop_cap_count": 0
+  },
+  "classical_generation": {
+    "runs": 28,
+    "participant_runs": 196,
+    "failed": 1,
+    "generated_samples": 23520,
+    "max_metric_difference": 0.00020536714364016717
+  },
+  "auxiliary_statistics": {
+    "checks": 83,
+    "failed": 0,
+    "recomputed_pooled_probe_scores": 560,
+    "mislabel": "condition trajectory correction is Bonferroni, not Holm",
+    "decisions_changed": 0
+  },
+  "preprocessing": {
+    "cached_trials_checked": 4732,
+    "raw_csv_sample_checked": 112,
+    "raw_csv_sample_seed": 20260908,
+    "errors": [],
+    "independent_loss_formula_passed": true,
+    "min_cached_length": 112,
+    "dormant_defects": {
+      "cnn_constructor_rejects_trainer_flags": "ConvCVAE.__init__() got an unexpected keyword argument 'variational'",
+      "filter_length15_boundary": "The length of the input vector x must be greater than padlen, which is 15."
+    }
+  },
+  "ridge_precision": {
+    "n_tests": 140,
+    "changed_raw_p_values": 0,
+    "max_q_change": 1.1102230246251565e-16,
+    "changed_bh_decisions": 0,
+    "one_thread_max_classical_metric_difference": 0.0002053671436401,
+    "affected_participant_runs": 1,
+    "resolved_by": "The single flagged Ridge row reproduces exactly with 2,4,8,16 numerical threads; see ridge_precision_diagnostic.csv."
+  },
+  "candidate_components": {
+    "fits": 840,
+    "completed": 840,
+    "selected_converged": 839,
+    "all_candidates_converged": 734,
+    "sensitivity_fits": 56,
+    "sensitivity_count_agreement": 56,
+    "sensitivity_selected_converged": 56
+  },
+  "trained_models_modified": false,
+  "existing_reports_modified": false,
+  "neural_retraining": false,
+  "interpretation": "Frozen confirmatory model execution reproduced; the one classical single-thread mismatch is explained and independently reproduced with other thread counts. Auxiliary correction mislabel and dormant code defects remain documented; no claim of optimal training or physiological validation."
+}

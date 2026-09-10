@@ -10,11 +10,13 @@
 | Frozen participant folds and context/query partition | `confirmatory_protocol.py` |
 | Reconstruction/timing prediction tables and aggregation | `evaluate.py`, `confirmatory_evaluation.py` |
 | Context fingerprints, distribution distances, enrollment, tests | `context_query.py` |
+| Shared paired Wilcoxon and Holm adjustment | `statistical_tests.py` |
 | Spline+PCA representation and matched timing/generation | `baseline_spline.py`, `confirmatory_spline.py` |
 | Condition-only baseline | `confirmatory_controls.py` |
 | Condition perturbation diagnostics | `condition_effects.py` |
 | Minimum-jerk decomposition | `submovements.py` |
 | Current interactive dashboard | `confirmatory_dashboard.py` |
+| Supported dashboard models, checkpoint loading and portable spline decoding | `dashboard_models.py` |
 | Earlier K-means diagnostic | `baseline_kmeans.py`, `report_kmeans.py` |
 
 Some evaluation and generation helpers also live in

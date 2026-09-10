@@ -24,11 +24,13 @@ from src.submovements import (
     minimum_jerk_velocity,
 )
 from src.vae_model import ConditionalVAE, NormStats, encode_trial_condition
+from src.dashboard_models import SplineReference, load_reference, reference_name, condition_vector
 
 
 STUDY = ROOT / "studies" / "final_strategy_evaluation"
 RUNS = STUDY / "runs" / "cvae" / "fold0"
 ASSETS = ROOT / "studies" / "review_corrected_evaluation" / "results" / "dashboard"
+MULTI_ASSETS = ASSETS / "multimodel"
 REPORT = ROOT / "output" / "pdf" / "Interception_Movements_Final_Scientific_Report.pdf"
 GUIDE = ROOT / "output" / "pdf" / "Interception_Movements_Results_Guide.pdf"
 APPENDIX = ROOT / "output" / "pdf" / "Interception_Movements_Supplementary_Appendix.pdf"
@@ -51,6 +53,11 @@ OUTPUTS = {
     "Path length": "path_length",
     "Curvature index": "curvature_index",
     "Maximum lateral deviation": "max_lateral_deviation",
+    "Relative time to peak speed": "time_to_peak_speed",
+    "Straight-line distance": "straight_line_dist",
+    "Speed-peak count": "n_submovements",
+    "Endpoint x": "end_x",
+    "Endpoint y": "end_y",
     "Minimum-jerk fit error": "mj_fit_error",
     "Component count": "mj_n_components",
     "First component duration": "mj_first_duration_s",
@@ -115,8 +122,8 @@ def load_model(latent_dim: int) -> tuple[ConditionalVAE, NormStats]:
         latent_dim=int(checkpoint["latent_dim"]),
         timing_dim=int(checkpoint["timing_dim"]),
         encoder_uses_timing=bool(checkpoint["encoder_uses_timing"]),
-        variational=True,
-        use_condition=True,
+        variational=bool(checkpoint.get("variational", model_cfg.get("variational", True))),
+        use_condition=bool(checkpoint.get("use_condition", model_cfg.get("use_condition", True))),
     )
     model.load_state_dict(checkpoint["model_state"])
     model.eval()
@@ -131,6 +138,12 @@ def decode(
     side: int,
     target_speed: float,
 ) -> tuple[np.ndarray, np.ndarray]:
+    if isinstance(model, SplineReference):
+        latent = np.atleast_2d(np.asarray(latent, dtype=float))
+        trajectories, timing = model.predict(latent, condition_vector(sp, side, target_speed, len(latent)))
+        timing[:, 0] = np.maximum(timing[:, 0], 1e-3)
+        timing[:, 1] = np.maximum(timing[:, 1], 0)
+        return trajectories, timing
     latent = np.atleast_2d(np.asarray(latent, dtype=np.float32))
     metadata = {"sp": sp, "side": side, "target_speed_screen_s": target_speed}
     condition = encode_trial_condition(metadata, model.condition_dim)
@@ -147,6 +160,11 @@ def decode(
     timing[:, 0] = np.maximum(timing[:, 0], 1e-3)
     timing[:, 1] = np.maximum(timing[:, 1], 0.0)
     return trajectories, timing
+
+
+@st.cache_resource
+def load_selected_model(family: str, latent_dim: int):
+    return load_reference(ROOT, MULTI_ASSETS, family, latent_dim)
 
 
 def movement_start_index(movement_time: float, initiation_time: float, n: int) -> int:
@@ -363,25 +381,30 @@ def validation_tab(
     empirical: pd.DataFrame,
     generated: pd.DataFrame,
     comparison: pd.DataFrame,
+    family: str = "cvae",
 ) -> None:
-    if latent_dim not in (3, 8):
+    if "model_family" not in generated and latent_dim not in (3, 8):
         st.info("All-fold generated validation is precomputed for the compact n=3 and capacity n=8 models.")
         return
     cvae = comparison[
-        (comparison.model_family == "cvae") & (comparison.latent_dim == latent_dim)
+        (comparison.model_family == family) & (comparison.latent_dim == latent_dim)
     ].iloc[0]
     cards = st.columns(5)
     cards[0].metric("Trajectory MSE", f"{cvae.trajectory_mse_subject_balanced_mean:.3f}")
     cards[1].metric("Initiation MAE", f"{cvae.initiation_time_mae_ms_subject_balanced_mean:.1f} ms")
     cards[2].metric("Movement MAE", f"{cvae.movement_time_mae_ms_subject_balanced_mean:.1f} ms")
     cards[3].metric("Mean KS", f"{cvae.mean_ks_mean:.3f}")
-    cards[4].metric("MMD", f"{cvae.mean_mmd_rbf_mean:.3f}")
+    cards[4].metric("MMD²", f"{cvae.mean_mmd_rbf_mean:.3f}")
+    st.caption(f"{MODEL_LABELS[family]} n={latent_dim}: cards aggregate all four folds and available training seeds; plots below use the seed-42 reference evaluations.")
 
     generated_n = generated[generated.latent_dim == latent_dim]
+    if "model_family" in generated_n:
+        generated_n = generated_n[generated_n.model_family == family]
     subjects = sorted(set(empirical.subject) & set(generated_n.subject))
     pickers = st.columns(2)
     subject = pickers[0].selectbox("Held-out participant", subjects)
-    output_label = pickers[1].selectbox("Recorded versus generated", list(OUTPUTS))
+    available_outputs = [label for label, key in OUTPUTS.items() if key in empirical and key in generated_n]
+    output_label = pickers[1].selectbox("Recorded versus generated", available_outputs)
     column = OUTPUTS[output_label]
     real = empirical.loc[empirical.subject == subject, column].replace(
         [np.inf, -np.inf], np.nan
@@ -429,7 +452,7 @@ def benchmark_tab(comparison: pd.DataFrame) -> None:
         "Initiation MAE (ms)": "initiation_time_mae_ms_subject_balanced_mean",
         "Movement MAE (ms)": "movement_time_mae_ms_subject_balanced_mean",
         "Mean KS": "mean_ks_mean",
-        "MMD": "mean_mmd_rbf_mean",
+        "MMD²": "mean_mmd_rbf_mean",
         "Enrollment accuracy": "fingerprint_balanced_accuracy_mean",
     }
     metric_label = st.selectbox("Benchmark endpoint", list(metrics))
@@ -457,7 +480,7 @@ def benchmark_tab(comparison: pd.DataFrame) -> None:
     table.columns = ["Model", "n", metric_label]
     st.dataframe(table, hide_index=True, width="stretch")
     st.caption(
-        "Lower is better for MSE, MAE, KS, and MMD; higher is better for enrollment. "
+        "Lower is better for MSE, MAE, KS, and MMD²; higher is better for enrollment. "
         "Spline+PCA is strongest for deterministic reconstruction, while generative endpoints favor higher-capacity latent models."
     )
 
@@ -504,7 +527,7 @@ def association_tab(
     fig.tight_layout()
     st.pyplot(fig, width="stretch")
     st.caption(
-        "Seed 42, fold 0, current task condition. VAE axes can rotate, permute, or change sign across fits; "
+        "Fold 0 reference; conditions apply only where the selected model uses them. Latent axes can rotate, permute, or change sign across fits; "
         "these associations describe this decoder coordinate system and do not establish causal control."
     )
 
@@ -515,7 +538,8 @@ def diagnostics_tab(
     min_jerk: pd.DataFrame,
     sensitivity: pd.DataFrame,
 ) -> None:
-    st.markdown("### Conditioning diagnostic")
+    st.caption("Study-wide diagnostics below identify their model explicitly; they do not all refer to the selected live model.")
+    st.markdown("### CVAE versus VAE conditioning diagnostic")
     display = condition_summary[[
         "latent_dim", "cvae_median", "unconditional_vae_median",
         "cvae_better_participants", "wilcoxon_p_holm",
@@ -535,7 +559,7 @@ def diagnostics_tab(
     st.dataframe(timing_display, hide_index=True, width="stretch")
     st.caption("Participant-balanced MAE is primary. Rare log-timing extrapolations are reported without post-hoc clipping.")
 
-    st.markdown("### Personal fingerprint controls")
+    st.markdown("### CVAE personal fingerprint controls")
     st.dataframe(read_csv(str(ASSETS / "fingerprint_control_summary.csv")), hide_index=True, width="stretch")
     st.caption("Same decoder, conditions and latent noise; own context versus the training average and all six other test-context fingerprints. All 12 BH-corrected contrasts favour own context; this does not establish cognitive-strategy semantics.")
     st.markdown("### Matched-procedure minimum-jerk fidelity")
@@ -585,7 +609,7 @@ def protocol_tab(manifest: dict, comparison: pd.DataFrame) -> None:
         ("Timing", "Withheld from the encoder; initiation and movement time decoded separately"),
         ("Outer evaluation", "Four deterministic 17/4/7 participant folds; every participant tested once"),
         ("Optimization repetitions", "Seeds 42, 43, and 44 within each fold/model cell"),
-        ("Live generator", "Fold 0, seed 42 reference checkpoints; n=2,3,4,8"),
+        ("Live generator", "Fold 0 references; neural seed 42. Available capacities depend on the selected model."),
         ("Generated validation", "All 28 held-out participants; n=3 and n=8"),
     ]
     st.dataframe(pd.DataFrame(rows, columns=["Protocol item", "Value"]), hide_index=True, width="stretch")
@@ -596,11 +620,14 @@ def protocol_tab(manifest: dict, comparison: pd.DataFrame) -> None:
         "text/csv",
     )
     downloads = st.columns(3)
+    current_report = ROOT / 'production/Interception_Movements_Methods_Reconstruction_Review.pdf'
+    if current_report.exists():
+        st.download_button('Download current manuscript draft', current_report.read_bytes(), current_report.name, 'application/pdf')
     st.download_button("Download behavioural probe CSV",
         (ASSETS / "behavioral_probe_summary.csv").read_bytes(),"behavioral_probe_summary.csv","text/csv")
     if REPORT.exists():
         downloads[0].download_button(
-            "Download scientific report", REPORT.read_bytes(), REPORT.name, "application/pdf"
+            "Download September 5 report", REPORT.read_bytes(), REPORT.name, "application/pdf"
         )
     if GUIDE.exists():
         downloads[1].download_button(
@@ -634,6 +661,12 @@ def main() -> None:
     empirical = read_csv(str(ASSETS / "empirical_query_features.csv"))
     generated = read_csv(str(ASSETS / "generated_validation.csv"))
     comparison = read_csv(str(ASSETS / "model_comparison.csv"))
+    multi = read_json(str(MULTI_ASSETS / 'manifest.json')) if (MULTI_ASSETS / 'manifest.json').exists() else None
+    if multi:
+        latent_stats = read_json(str(MULTI_ASSETS / 'latent_stats.json'))
+        fingerprints = read_csv(str(MULTI_ASSETS / 'subject_fingerprints.csv'))
+        empirical = read_csv(str(MULTI_ASSETS / 'empirical_features.csv'))
+        generated = read_csv(str(MULTI_ASSETS / 'generated_features.csv'))
     speed_ranges = read_csv(str(ASSETS / "condition_speed_ranges.csv"))
     condition_summary = read_csv(str(ASSETS / "condition_trajectory_summary.csv"))
     timing = read_csv(str(ASSETS / "timing_outlier_audit.csv"))
@@ -644,27 +677,44 @@ def main() -> None:
     st.caption("Frozen strategy-window confirmatory study | out-of-fold participant evaluation")
 
     st.sidebar.header("Reference model")
-    latent_dimensions = [int(value) for value in manifest["latent_dimensions"]]
+    families = list(multi['models']) if multi else ['cvae']
+    family = st.sidebar.selectbox('Model', families, index=families.index(multi['default_model']) if multi else 0,
+                                  format_func=lambda value: MODEL_LABELS[value])
+    latent_dimensions = multi['models'][family] if multi else [int(value) for value in manifest['latent_dimensions']]
+    default_dim = multi['default_dim'] if multi else 3
     latent_dim = int(
-        st.sidebar.segmented_control("Latent dimension", latent_dimensions, default=3) or 3
+        st.sidebar.segmented_control("Latent dimension", latent_dimensions, default=default_dim, key=f'dimension_{family}') or default_dim
     )
-    name = run_name(latent_dim)
-    model, norm = load_model(latent_dim)
+    name = reference_name(family, latent_dim)
+    model, norm = load_selected_model(family, latent_dim) if multi else load_model(latent_dim)
+    if multi:
+        st.sidebar.caption('Default: VAE n=8, the lowest average KS, energy and MMD² distances in the tested study. Other endpoints have different winners.')
+    else:
+        st.sidebar.info('The September 5 bundle contains CVAE only. Restore the multi-model bundle for the other references.')
+    st.caption(f'Live reference: {MODEL_LABELS[family]}, n={latent_dim}, fold 0' + ('' if family == 'spline_pca' else ', training seed 42'))
 
     st.sidebar.header("Task condition")
+    unconditional = family == 'unconditional_vae'
     sp = int(st.sidebar.selectbox(
         "Start/speed category", [1, 2, 3], index=1,
+        disabled=unconditional,
         format_func=lambda value: {
             1: "1: 120 / slow", 2: "2: 140 / medium", 3: "3: 160 / fast"
         }[value],
     ))
-    side = 1 if st.sidebar.radio("Starting side", ["Left", "Right"], horizontal=True) == "Left" else 2
+    side = 1 if st.sidebar.radio("Starting side", ["Left", "Right"], horizontal=True, disabled=unconditional) == "Left" else 2
     speed_row = speed_ranges[speed_ranges.sp == sp].iloc[0]
     target_speed = st.sidebar.slider(
         "Executed target speed",
         float(speed_row.speed_min), float(speed_row.speed_max), float(speed_row.speed_median),
+        disabled=unconditional,
     )
-    st.sidebar.warning("Task-condition responses are exploratory; causal effects of these sliders were not validated.")
+    if unconditional:
+        st.sidebar.caption('VAE models the mixture of task conditions. These controls do not affect its output.')
+    elif family == 'spline_pca':
+        st.sidebar.caption('For spline + PCA, conditions affect predicted timing only; spatial shape depends on the latent code.')
+    else:
+        st.sidebar.caption('Condition responses are exploratory; condition-specific fidelity has not been established.')
 
     sections = [
         "Generate", "Held-out validation", "Benchmarks", "Latent associations",
@@ -680,7 +730,7 @@ def main() -> None:
             sp, side, target_speed,
         )
     elif section == "Held-out validation":
-        validation_tab(latent_dim, empirical, generated, comparison)
+        validation_tab(latent_dim, empirical, generated, comparison, family)
     elif section == "Benchmarks":
         benchmark_tab(comparison)
     elif section == "Latent associations":
@@ -689,6 +739,11 @@ def main() -> None:
         diagnostics_tab(condition_summary, timing, min_jerk, sensitivity)
     else:
         protocol_tab(manifest, comparison)
+        if multi:
+            st.markdown('### Available live models')
+            st.dataframe(pd.DataFrame([{'Model':MODEL_LABELS[k], 'Dimensions':', '.join(map(str,v))} for k,v in multi['models'].items()]),hide_index=True)
+            st.caption(multi['default_reason'])
+    plt.close('all')
 
 
 if __name__ == "__main__":

@@ -18,6 +18,7 @@ SOURCE_FILES = [
     ROOT / ".streamlit" / "config.toml",
     ROOT / "src" / "__init__.py",
     ROOT / "src" / "confirmatory_dashboard.py",
+    ROOT / "src" / "dashboard_models.py",
     ROOT / "src" / "features.py",
     ROOT / "src" / "preprocessing.py",
     ROOT / "src" / "submovements.py",

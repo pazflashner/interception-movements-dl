@@ -1,0 +1,332 @@
+[
+  {
+    "path": "src/__init__.py",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  {
+    "path": "src/baseline_kmeans.py",
+    "sha256": "e6844ed8dd32858727c5058f07f0ef3e7a6e259244775a9cc091b958dc4105a1",
+    "bytes": 6557
+  },
+  {
+    "path": "src/baseline_spline.py",
+    "sha256": "26bfbe6f6aeddfca8ec00d01e3a6f062d983dd9cd689ba7d745409150b46a85b",
+    "bytes": 12394
+  },
+  {
+    "path": "src/condition_effects.py",
+    "sha256": "d89fb99594da3fb015af548704193cb442f0c0c266de5404f96948c9f117cfb1",
+    "bytes": 8423
+  },
+  {
+    "path": "src/confirmatory_controls.py",
+    "sha256": "9e507f6f91faf776228a12e8abf9f3749b2d1f48308f1b93cc377a508467f2e0",
+    "bytes": 9608
+  },
+  {
+    "path": "src/confirmatory_dashboard.py",
+    "sha256": "4f8520a686fb6567c7f879bd621252b20ff4d9ad8b3452e1a44edea417daada1",
+    "bytes": 31461
+  },
+  {
+    "path": "src/confirmatory_evaluation.py",
+    "sha256": "ff68371faf2b5ffeba9118666374f638d6c8a4f8d7e6d6e23d0f1be22b222ff0",
+    "bytes": 2822
+  },
+  {
+    "path": "src/confirmatory_protocol.py",
+    "sha256": "33a761d705941f37cea2a053057b6630164a9676539c5c144ec825d1efa24b8a",
+    "bytes": 6432
+  },
+  {
+    "path": "src/confirmatory_spline.py",
+    "sha256": "c03f6f77c40c187098cd5f5bbe9d691c8c4f909c6468acc743ed89c4a3209265",
+    "bytes": 10652
+  },
+  {
+    "path": "src/context_query.py",
+    "sha256": "78ffbfd6cff20ac1d0a3fd86ee173d17cae6f4c8e6d0861f783395e479624d03",
+    "bytes": 10104
+  },
+  {
+    "path": "src/dashboard.py",
+    "sha256": "c53c9c01654ad4538f1b01bbca34c8bea1ecd64c556503e44b038567ea49b0d7",
+    "bytes": 30428
+  },
+  {
+    "path": "src/data_loading.py",
+    "sha256": "0ad98b4d5813842aa0594dac29285681a938280515651cb49a84cea8e14d2db7",
+    "bytes": 8468
+  },
+  {
+    "path": "src/dummy_data.py",
+    "sha256": "e1fb82dd44b460c34697a1157741610cfd774d6bc52183fb608ba536326a3b77",
+    "bytes": 6884
+  },
+  {
+    "path": "src/evaluate.py",
+    "sha256": "d6ad5c44aa24b058675a19d493ba51735560d89f6ced7ab611ad35eeb47199ca",
+    "bytes": 28819
+  },
+  {
+    "path": "src/features.py",
+    "sha256": "1b2d4287d809ef13a63ca885434e79d42aef0e267e288a9e2175f1a2e508afa8",
+    "bytes": 8496
+  },
+  {
+    "path": "src/hierarchical_vae.py",
+    "sha256": "34262ffba85a7bb897956ba435af644d3272892183f39938a693c0accb2235f7",
+    "bytes": 9572
+  },
+  {
+    "path": "src/preprocessing.py",
+    "sha256": "ae984b05265cc199c188eca31dfff74010862590d9677444975f2ba7abc7ad76",
+    "bytes": 13888
+  },
+  {
+    "path": "src/report_kmeans.py",
+    "sha256": "95260885fcafd870273a300011c414496e48171e54d25a6e65628a81b9b0aa41",
+    "bytes": 22703
+  },
+  {
+    "path": "src/run_config.py",
+    "sha256": "2f8acb9c4c0e5180e47adcaca1966c3e7ee7e0eb7b8dcac280f0cada756c21a2",
+    "bytes": 12523
+  },
+  {
+    "path": "src/statistical_tests.py",
+    "sha256": "5eb69cde0a08308002a8554a7d1c4628858d780b5df8f30c7e236464621225b9",
+    "bytes": 1200
+  },
+  {
+    "path": "src/strategy_dashboard.py",
+    "sha256": "e63f588d409f5003bbce684244f35a646e78832e47e6be93f26572938d48e5b8",
+    "bytes": 22932
+  },
+  {
+    "path": "src/submovements.py",
+    "sha256": "937a525dee158b6b7fa1c98e0047d1251fa52b6e93d283f10792297704ee6758",
+    "bytes": 11908
+  },
+  {
+    "path": "src/train.py",
+    "sha256": "da567f7e0bf16fa183f1f5486ddd0789a1d4198179009b0dc8a44d132364744e",
+    "bytes": 17669
+  },
+  {
+    "path": "src/trajectory_view.py",
+    "sha256": "36458871b88cc42b70d6bb1087b4bf51b8cea86f1d9444c7ae8a316f48b4c451",
+    "bytes": 2323
+  },
+  {
+    "path": "src/vae_model.py",
+    "sha256": "1829d62397c12a53914b069d911e5bfa27c2b15a65612fa09b995f9499a13db7",
+    "bytes": 20407
+  },
+  {
+    "path": "scripts/analyze_behavioral_probes.py",
+    "sha256": "3987d04f1be0dab4c6b6ce15a34811b25ccea5b83c36924ee5f020fc3905ff7b",
+    "bytes": 3529
+  },
+  {
+    "path": "scripts/analyze_condition_effects.py",
+    "sha256": "4c64d72af025e0a51df039c4a1db2b7900ef2bf438fab141d6c2c59845ffcc98",
+    "bytes": 12412
+  },
+  {
+    "path": "scripts/analyze_confirmatory_results.py",
+    "sha256": "8597859d511f568e021f09e1b46e19d380459a07e5dddbbdaae4ff9906d1c98d",
+    "bytes": 16540
+  },
+  {
+    "path": "scripts/analyze_confirmatory_submovements.py",
+    "sha256": "a9bb87d9444df69b047ba3a6a4027373ed414c752dae93d52ff66c449577b662",
+    "bytes": 7605
+  },
+  {
+    "path": "scripts/analyze_latent_submovements.py",
+    "sha256": "181cb3061036a268ec697a861cb566681f00c40534cfc8a0e4f1b4712c024426",
+    "bytes": 8646
+  },
+  {
+    "path": "scripts/analyze_review_controls.py",
+    "sha256": "aa82499d2b0d68e06e8d37a6582cd17c5e55fcfd02895cffb21f3edcc8093953",
+    "bytes": 10173
+  },
+  {
+    "path": "scripts/analyze_timing_fairness.py",
+    "sha256": "4cc8bb186e78045c4e51dadbba140cb93249b09942f34565e8cb2264103f095a",
+    "bytes": 10223
+  },
+  {
+    "path": "scripts/audit_pre_go_motion.py",
+    "sha256": "ce61f3ebca946cf9de519b3d126bd94607a17e913817b33e9b81201fd937fe28",
+    "bytes": 5484
+  },
+  {
+    "path": "scripts/audit_submovement_assumptions.py",
+    "sha256": "ee5987866ed429044fef7a265129cee2463681af6cccbe3d5a9c261899625e4a",
+    "bytes": 4836
+  },
+  {
+    "path": "scripts/audit_submovement_stability.py",
+    "sha256": "cc6efefccf190e90b54b54c3559c2ade4e1970af1fa1757cb1af86ce0cd13bef",
+    "bytes": 2635
+  },
+  {
+    "path": "scripts/audit_trial_completion.py",
+    "sha256": "d476ace6e7999cb556b2f1da757cf4601c1a6ca04b54bcb063444c9ce00eabd8",
+    "bytes": 8609
+  },
+  {
+    "path": "scripts/augment_stimulus_conditions.py",
+    "sha256": "3acf07156320ffb73a4392e334a7992863a488895af60bfe556745789ecd08ac",
+    "bytes": 5717
+  },
+  {
+    "path": "scripts/baseline_report.py",
+    "sha256": "f3216e64c3d8275d9d1931fb53b84568de10b1f8175b324a9ee9e2c8c29196ee",
+    "bytes": 7333
+  },
+  {
+    "path": "scripts/build_confirmatory_dashboard_assets.py",
+    "sha256": "c08a1f9de3e8803a6f02705c7b7cf2ce5060e75251ddf7d80c306a9c8898c284",
+    "bytes": 10655
+  },
+  {
+    "path": "scripts/build_strategy_dataset.py",
+    "sha256": "072ac9e10c9f6c2d2d22aa88e9323f39b1db0ba33bd96df3d960d53bb863aec9",
+    "bytes": 3233
+  },
+  {
+    "path": "scripts/calibrate_submovement_sampling.py",
+    "sha256": "79ab7e5df78a27465879ff2236ea28403a4bb2d00b579dfacaaab05c0771bbc6",
+    "bytes": 4041
+  },
+  {
+    "path": "scripts/check_dashboard_delivery.py",
+    "sha256": "ea26c492bdc263c04cdea9e4a4747476431a7ee46a4483bc603f81579f6e068c",
+    "bytes": 1924
+  },
+  {
+    "path": "scripts/compare_representations.py",
+    "sha256": "257ad96192cbb64ddab7d289fbf1815fd1c00f332f6c91bd723a951b6e6131ee",
+    "bytes": 14226
+  },
+  {
+    "path": "scripts/create_latent_traversals.py",
+    "sha256": "a6c976198bf9d8a98b96df30393243b9704163a269eb83c866a2085c4b9c6f40",
+    "bytes": 3985
+  },
+  {
+    "path": "scripts/evaluate_final_fingerprints.py",
+    "sha256": "0b77d5a88b035efcb2fcb7b1a8aaff1146c6fe3163087fabe97a0db74e2f1862",
+    "bytes": 9280
+  },
+  {
+    "path": "scripts/evaluate_report.py",
+    "sha256": "c27745a8b76b04ee16b3a9c5ebb9ae461d599c9acd7114c0eb1dd79c69d28f41",
+    "bytes": 14028
+  },
+  {
+    "path": "scripts/extract_submovements.py",
+    "sha256": "9b87293ea750e8f4d6b9c018c05f08f7c91f960986bc2929fd0033ff82000407",
+    "bytes": 5079
+  },
+  {
+    "path": "scripts/generate_final_samples.py",
+    "sha256": "b8fc280e1973632d22dc14ad192deb8f4e26e0efaa4c503777d429e737b969dd",
+    "bytes": 11478
+  },
+  {
+    "path": "scripts/make_dataset.py",
+    "sha256": "41a9268ae9dd52f7dbfdfd2c6105d4f37751146a2e0408baa7cc0779add415cd",
+    "bytes": 14004
+  },
+  {
+    "path": "scripts/package_final_release.py",
+    "sha256": "a8109130e9ce778e4933c814e007f61627a6dc68542129e437451fcf3aad5abd",
+    "bytes": 7653
+  },
+  {
+    "path": "scripts/prepare_review_workspace.py",
+    "sha256": "2dadf12618081eca8bebbeec337ffb6ac07530130bad75ad297c7c0c3fb12799",
+    "bytes": 2531
+  },
+  {
+    "path": "scripts/reevaluate_review_corrections.py",
+    "sha256": "21ad950068094b940812ce1250378f302c336359241ba42588db153aa9a62e64",
+    "bytes": 5234
+  },
+  {
+    "path": "scripts/run_confirmatory_cvae.py",
+    "sha256": "7badcdbca6c7f7174418f3627a14851bd98aea7f9489cfb7911056ca02802c22",
+    "bytes": 8467
+  },
+  {
+    "path": "scripts/run_confirmatory_neural_ablation.py",
+    "sha256": "4e93fd94b08fc6ce61df303e7d77eb44b65480eca38850eb8d6918b4fbcb1a16",
+    "bytes": 7907
+  },
+  {
+    "path": "scripts/run_confirmatory_spline.py",
+    "sha256": "9cb26d58fd17fc327243c041f388a94858dfd7a38590f904a7f0f9fd6b6a26e2",
+    "bytes": 5742
+  },
+  {
+    "path": "scripts/run_confirmatory_submovements.py",
+    "sha256": "c5e0188f14d9794a1e862941698153e35a38f6fd8ed26de1358897601472c48f",
+    "bytes": 8735
+  },
+  {
+    "path": "scripts/run_confirmatory_task_baseline.py",
+    "sha256": "61433f21b0e87364e8781b644226edfc033cffd26986ee2aa85445f5c720f642",
+    "bytes": 4696
+  },
+  {
+    "path": "scripts/run_corrected_study.py",
+    "sha256": "313505c7852c424630a3deceaef1d7127b130a43df8a12c934d2f837afd7be02",
+    "bytes": 25119
+  },
+  {
+    "path": "scripts/run_final_baselines.py",
+    "sha256": "1e065d78565c145ac647b3100b73ee95ef3698a80ad378b9e1cb877c04d3b7c6",
+    "bytes": 2278
+  },
+  {
+    "path": "scripts/run_review_controls.py",
+    "sha256": "b0eb31c9510a24f9217f0e36059797d16854f83e11fd8e303fd759669b24f27f",
+    "bytes": 15787
+  },
+  {
+    "path": "scripts/verify_post_review_outputs.py",
+    "sha256": "ff3c89e2b27a21eba6daa9a1e5b3d92cb1d35a66e3cefba64a5f720762214540",
+    "bytes": 6683
+  },
+  {
+    "path": "scripts/verify_review_handoff.py",
+    "sha256": "6edb0f8d0bd92183af14869192a1a33d3719d3ff77b2c86e4f3a9c6415d2117d",
+    "bytes": 3753
+  },
+  {
+    "path": "config.py",
+    "sha256": "38ad9d896ca2cc63701293f417a8f533c9a57c6e35681b11736b41aa71411ddb",
+    "bytes": 12273
+  },
+  {
+    "path": "reports/concise_article.py",
+    "sha256": "8ee810649b20ff7301217b8ba04b421ac08809bb88794d903362c597be1d7fa6",
+    "bytes": 45899
+  },
+  {
+    "path": "SIMAAN_MONI_REPORT_HANDOFF_2026-09-08.md",
+    "sha256": "c0f886cc19765ab50a69e651a46901bdbe91dce64d27ef2d1ba4cc2903745661",
+    "bytes": 31649
+  },
+  {
+    "path": "studies/strategy_window_comparison/data/canonical_trials.pkl",
+    "sha256": "5acc626f7a86ee0dc8e76ce4119f73bc76978513d8da6f3935cc342ed7481367",
+    "bytes": 94176656
+  }
+]

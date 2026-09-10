@@ -35,7 +35,7 @@ def lowpass_filter(
     order: int = config.LOWPASS_ORDER,
 ) -> np.ndarray:
     """Apply zero-phase Butterworth low-pass filter along axis 0."""
-    if len(signal) < 3 * (order + 1):
+    if len(signal) <= 3 * (order + 1):
         return signal  # too short to filter
     b, a = _butter_lowpass(cutoff, fs, order)
     return filtfilt(b, a, signal, axis=0)
@@ -247,7 +247,7 @@ def preprocess_trial(
     pos_go_to_arrival_norm = normalise_spatial(normalise_temporal(go_to_arrival))
     pos_norm = pos_movement_norm
 
-    # Velocity on the normalised trajectory: mm per *normalised frame*, not mm/s —
+    # Velocity here is tracker units per normalised frame, not units/second;
     # its physical scale depends on the movement duration, which resampling
     # removed. move_start_idx / move_end_idx / go_signal_idx restore it; see
     # features.compute_trial_features and vae_model.encode_timing, the single

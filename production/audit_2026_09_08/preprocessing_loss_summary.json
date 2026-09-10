@@ -1,0 +1,12 @@
+{
+  "cached_trials_checked": 4732,
+  "raw_csv_sample_checked": 112,
+  "raw_csv_sample_seed": 20260908,
+  "errors": [],
+  "independent_loss_formula_passed": true,
+  "min_cached_length": 112,
+  "dormant_defects": {
+    "cnn_constructor_rejects_trainer_flags": "ConvCVAE.__init__() got an unexpected keyword argument 'variational'",
+    "filter_length15_boundary": "The length of the input vector x must be greater than padlen, which is 15."
+  }
+}

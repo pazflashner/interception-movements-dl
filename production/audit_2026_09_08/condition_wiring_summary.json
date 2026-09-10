@@ -1,0 +1,17 @@
+{
+  "conditional_ae": {
+    "checkpoints": 24,
+    "min_encoder_swap_change": 0.1327615976333618,
+    "min_decoder_swap_change": 0.1924953460693359
+  },
+  "cvae": {
+    "checkpoints": 48,
+    "min_encoder_swap_change": 0.0507630705833435,
+    "min_decoder_swap_change": 0.1816771030426025
+  },
+  "unconditional_vae": {
+    "checkpoints": 24,
+    "min_encoder_swap_change": 0.0,
+    "min_decoder_swap_change": 0.0
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "checks": 83,
+  "failed": 0,
+  "recomputed_pooled_probe_scores": 560,
+  "mislabel": "condition trajectory correction is Bonferroni, not Holm",
+  "decisions_changed": 0
+}

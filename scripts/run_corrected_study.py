@@ -46,7 +46,7 @@ from src.features import (
 from src.hierarchical_vae import HierarchicalCVAE, HierarchicalNorm, train_hierarchical
 from src.run_config import RunConfig, set_seed
 from src.train import split_subjects, train_vae
-from src.vae_model import ConditionalVAE, NormStats, encode_condition, encode_trial_condition
+from src.vae_model import ConditionalVAE, ConvCVAE, NormStats, encode_condition, encode_trial_condition
 
 
 def save_json(path: Path, obj):
@@ -198,11 +198,17 @@ def load_per_trial_checkpoint(path, device):
     model_cfg = cfg.get("model", cfg)
     input_dim = int(ckpt.get("input_dim", len(ckpt["train_mean"])))
     condition_dim = int(ckpt.get("condition_dim", 4))
-    model = ConditionalVAE(
+    architecture = model_cfg.get("architecture", "mlp")
+    if architecture not in {"mlp", "cnn"}:
+        raise ValueError(f"unsupported checkpoint architecture: {architecture}")
+    model_class = ConvCVAE if architecture == "cnn" else ConditionalVAE
+    extra = {"seq_len": 100, "channels": int(ckpt.get("trajectory_channels", input_dim // 100))} if architecture == "cnn" else {}
+    model = model_class(
         input_dim=input_dim, condition_dim=condition_dim, latent_dim=ckpt["latent_dim"], hidden_dim=model_cfg["hidden_dim"], timing_dim=ckpt["timing_dim"],
         encoder_uses_timing=ckpt.get("encoder_uses_timing", True),
         variational=ckpt.get("variational", model_cfg.get("variational", True)),
         use_condition=ckpt.get("use_condition", model_cfg.get("use_condition", True)),
+        **extra,
     ).to(device)
     model.load_state_dict(ckpt["model_state"])
     return model, NormStats.from_checkpoint(ckpt)

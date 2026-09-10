@@ -239,12 +239,19 @@ class ConvCVAE(nn.Module):
         encoder_uses_timing: bool = True,
         seq_len: int = config.NORMALISED_LENGTH,
         channels: int = 3,
+        variational: bool = True,
+        use_condition: bool = True,
     ):
         super().__init__()
+        if seq_len != 100 or input_dim != seq_len * channels:
+            raise ValueError("ConvCVAE requires 100 samples and input_dim == 100 * channels")
         self.input_dim = input_dim
+        self.condition_dim = condition_dim
         self.latent_dim = latent_dim
         self.timing_dim = timing_dim
         self.encoder_uses_timing = encoder_uses_timing
+        self.variational = variational
+        self.use_condition = use_condition
         self.seq_len = seq_len
         self.channels = channels
         self.enc_len = 13  # 100 -> 50 -> 25 -> 13 under three stride-2 convs
@@ -285,20 +292,25 @@ class ConvCVAE(nn.Module):
             if timing is None:
                 raise ValueError("ConvCVAE has timing_dim>0; encode() needs a timing tensor")
             parts.append(timing)
-        parts.append(c)
+        parts.append(c if self.use_condition else torch.zeros_like(c))
         h = self.enc_fc(torch.cat(parts, dim=-1))
-        return self.fc_mu(h), self.fc_logvar(h)
+        mu = self.fc_mu(h)
+        return mu, self.fc_logvar(h) if self.variational else torch.full_like(mu, -30.0)
 
     def reparameterize(self, mu, logvar):
+        if not self.variational:
+            return mu
         std = torch.exp(0.5 * logvar)
         return mu + torch.randn_like(std) * std
 
     def decode(self, z, c):
         b = z.size(0)
-        h = self.dec_fc(torch.cat([z, c], dim=-1)).view(b, 128, self.enc_len)
+        condition = c if self.use_condition else torch.zeros_like(c)
+        decoder_input = torch.cat([z, condition], dim=-1)
+        h = self.dec_fc(decoder_input).view(b, 128, self.enc_len)
         xt = self.dec_conv(h)                                   # (b, 3, 100)
         traj = xt.permute(0, 2, 1).reshape(b, self.input_dim)   # (b, 300)
-        timing = self.timing_head(torch.cat([z, c], dim=-1)) if self.timing_head is not None else None
+        timing = self.timing_head(decoder_input) if self.timing_head is not None else None
         return traj, timing
 
     def forward(self, x, c, timing=None):

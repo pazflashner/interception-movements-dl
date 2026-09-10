@@ -1,7 +1,11 @@
 # Historical work
 
 Archived work is preserved for context, not presented as current evidence.
-Start with `../REVIEW_HANDOFF.md` and the final strategy study instead.
+Start with `../production/README.md` for the current report work.
+
+- `review_cleanup_2026-09-08/`: earlier handoffs and local review scratch folders,
+  moved during the new manuscript pass. Historical paths inside these notes are
+  relative to the original repository root and are retained as provenance.
 
 - `movement_only_2026-08-10/`: older movement-only snapshot; local artifacts are
   ignored by Git and its original README explains provenance.

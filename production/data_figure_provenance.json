@@ -1,0 +1,9 @@
+{
+  "subject": "subject01",
+  "trials_shown": 180,
+  "trial_id": "subject01_li_2_2_1_26",
+  "selection": "First participant in identifier order; lower median trial duration, ties ordered by trial ID; no model-error selection.",
+  "original_window_samples": 112,
+  "resampled_points": 100,
+  "task_image": "D:\\DropBox\\Dropbox\\stimuli\\instructions2.jpg"
+}

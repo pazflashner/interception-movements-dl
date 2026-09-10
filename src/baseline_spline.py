@@ -127,22 +127,19 @@ def _spline_basis(T: int, n_knots: int, degree: int, n_coef: int) -> np.ndarray:
 
 class SplinePCARepresentation:
     """
-    The spline analogue of the CVAE, built to be evaluated by the same battery.
+    Cubic-spline coefficients compressed with training-fitted PCA.
 
-    Encodes each trial as ``n_components`` numbers over the joint space of
-    [spline coefficients, standardised timing], fitted on training subjects
-    only. That mirrors the CVAE exactly: one low-dimensional code per trial
-    carrying both shape and timing, decoded by a map shared across subjects.
+    The final runner sets ``include_timing=False``: each 100 x 2 trajectory
+    becomes 18 coefficients (five fixed interior knots, cubic degree), then
+    ``n_components`` PCA scores. A separate TimingRidge in confirmatory_spline
+    predicts durations from these scores and conditions. The timing-inclusive
+    default is retained only for older callers; runner settings define the study.
 
-    ``encode`` plays the role of the encoder's μ, ``decode`` of the decoder, and
-    ``sample_subject`` of drawing from a subject's aggregated posterior — so
-    reconstruction, fingerprints, probing and generative fidelity can all be run
-    on this representation without special-casing anything.
-
-    The difference from the CVAE is what is being tested: this map is linear and
-    has ~10^2 parameters against ~10^5, and its latent has no prior pulling it
-    anywhere. If the CVAE's extra machinery buys something, it has to show up
-    against this.
+    Coefficient standardization is chosen using validation reconstruction error.
+    PCA optimizes variance in coefficient space, not trajectory-space MSE.
+    The final generator uses a context-code mean and shared training-derived
+    within-person covariance; the legacy ``sample_subject`` helper is not that
+    final generation protocol.
     """
 
     def __init__(

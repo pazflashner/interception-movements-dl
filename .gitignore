@@ -80,3 +80,21 @@ Thumbs.db
 
 # Jupyter
 .ipynb_checkpoints/
+
+# Production keeps manuscript builders, PDFs and compact evidence in Git.
+# Large audit intermediates and rendered QA images remain reproducible locally.
+production/assets/
+production/verification_*/
+production/*.log
+production/audit_*/*.log
+production/audit_*/*_log.txt
+production/audit_*/*.pkl
+production/audit_*/generation_audit/
+production/audit_*/condition_shuffle_raw.csv
+production/audit_*/ridge_precision_generated_threads*.csv
+production/archive/
+archive/review_cleanup_2026-09-08/review/
+archive/review_cleanup_2026-09-08/review_second_pass/
+archive/review_cleanup_2026-09-08/review_fresh_2026_09_05/
+archive/review_cleanup_2026-09-08/runtime_scratch/
+archive/review_cleanup_2026-09-08/correction_inputs/

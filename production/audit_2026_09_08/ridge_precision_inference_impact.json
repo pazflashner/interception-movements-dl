@@ -1,0 +1,9 @@
+{
+  "n_tests": 140,
+  "changed_raw_p_values": 0,
+  "max_q_change": 1.1102230246251565e-16,
+  "changed_bh_decisions": 0,
+  "one_thread_max_classical_metric_difference": 0.0002053671436401,
+  "affected_participant_runs": 1,
+  "resolved_by": "The single flagged Ridge row reproduces exactly with 2,4,8,16 numerical threads; see ridge_precision_diagnostic.csv."
+}

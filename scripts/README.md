@@ -1,7 +1,7 @@
 # Script navigation
 
 Run commands from the repository root. This index distinguishes the current
-four-fold study from earlier fixed-split work. Read `../PAZ_REVIEW_HANDOFF.md` before
+four-fold study from earlier fixed-split work. Read `../production/README.md` before
 reviewing results. This is a code map, not an instruction to rerun the pipeline.
 
 ## Current study entry points
@@ -9,7 +9,8 @@ reviewing results. This is a code map, not an instruction to rerun the pipeline.
 Post-review outputs are under `studies/review_corrected_evaluation/`. The report
 and dashboard builders read this version and reuse original neural checkpoints.
 The commands below train the original matrix; do not rerun training just to
-rebuild a PDF. See `../REVIEW_CORRECTIONS.md` for the evaluated correction sequence.
+rebuild a PDF. See `../production/FIXES_AND_CLEANUP.md` for current fixes and
+`../archive/review_cleanup_2026-09-08/REVIEW_CORRECTIONS.md` for the earlier sequence.
 
 | Stage | Script |
 |---|---|
@@ -25,8 +26,10 @@ rebuild a PDF. See `../REVIEW_CORRECTIONS.md` for the evaluated correction seque
 | Generate and fit confirmatory submovements | `run_confirmatory_submovements.py` |
 | Aggregate submovement results | `analyze_confirmatory_submovements.py` |
 | Submovement assumption sensitivity | `audit_submovement_assumptions.py` |
-| Current dashboard assets | `build_confirmatory_dashboard_assets.py` |
-| Current standalone package | `package_final_release.py` |
+| Shared dashboard assets and historical diagnostics | `build_confirmatory_dashboard_assets.py` |
+| Multi-model references and verified generation exports | `build_multimodel_dashboard_assets.py` |
+| Current standalone multi-model package | `package_multimodel_dashboard.py` |
+| Historical standalone package builder | `package_final_release.py` |
 | Frozen-checkpoint reevaluation | `reevaluate_review_corrections.py` |
 | Full pre-go/event audit | `audit_pre_go_motion.py` |
 | All saved behavioural probes | `analyze_behavioral_probes.py` |
@@ -39,8 +42,10 @@ rebuild a PDF. See `../REVIEW_CORRECTIONS.md` for the evaluated correction seque
 | Restore bundled evidence/checkpoints in a fresh clone | `prepare_review_workspace.py` |
 | Verify delivered summary arithmetic and PDF hashes | `verify_review_handoff.py` |
 
-The report builder is `../reports/build_final_reports.py` and the app is
-`../src/confirmatory_dashboard.py`. Inspect CLI arguments before running anything;
+The current manuscript builder is `../production/build_methods_reconstruction.py`.
+`../reports/build_final_reports.py` rebuilds the earlier complete-report layout;
+`verify_review_handoff.py` verifies the September 5 delivery, not the new draft.
+The current app is `../src/confirmatory_dashboard.py`. Inspect CLI arguments before running anything;
 generation, decomposition, training, and report commands can overwrite outputs.
 
 ## Shared and historical code retained in place

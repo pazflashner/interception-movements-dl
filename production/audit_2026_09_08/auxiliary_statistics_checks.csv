@@ -1,0 +1,84 @@
+name,passed,max_difference
+fingerprint 3/population/mean_ks,True,1.1102230246251565e-16
+fingerprint 3/population/energy_distance,True,2.7484525072507537e-17
+fingerprint 3/population/mmd_rbf,True,8.326672684688674e-17
+fingerprint 3/wrong/mean_ks,True,1.1102230246251565e-16
+fingerprint 3/wrong/energy_distance,True,0.0
+fingerprint 3/wrong/mmd_rbf,True,8.326672684688674e-17
+fingerprint 8/population/mean_ks,True,5.551115123125783e-17
+fingerprint 8/population/energy_distance,True,1.1102230246251565e-16
+fingerprint 8/population/mmd_rbf,True,5.551115123125783e-17
+fingerprint 8/wrong/mean_ks,True,1.1102230246251565e-16
+fingerprint 8/wrong/energy_distance,True,2.220446049250313e-16
+fingerprint 8/wrong/mmd_rbf,True,5.551115123125783e-17
+fingerprint BH12,True,2.7701365507004638e-17
+matched components ks_mj_fit_error,True,6.938893903907228e-17
+matched components ks_mj_first_duration_s,True,5.551115123125783e-17
+matched components ks_mj_first_amplitude,True,6.938893903907228e-17
+matched components ks_mj_secondary_amplitude_fraction,True,1.1102230246251565e-16
+matched components ks_mj_mean_overlap_pct,True,5.551115123125783e-17
+matched components count_total_variation,True,8.326672684688674e-17
+matched components count_jsd,True,5.551115123125783e-17
+matched components count_total_variation_bic,True,5.551115123125783e-17
+matched components count_jsd_bic,True,4.163336342344337e-17
+matched components BH9,True,5.551115123125783e-17
+timing common_mlp3initiation,True,1.1275702593849246e-17
+timing common_mlp3movement,True,0.0
+timing common_mlp8initiation,True,5.551115123125783e-17
+timing common_mlp8movement,True,0.0
+timing validation_calibrated_original3initiation,True,7.105427357601002e-15
+timing validation_calibrated_original3movement,True,1.6940658945086007e-21
+timing validation_calibrated_original8initiation,True,7.105427357601002e-15
+timing validation_calibrated_original8movement,True,7.105427357601002e-15
+timing BH8,True,7.632783294297951e-17
+condition 3curvature_indexstandardized_median_abs_error,True,8.326672684688674e-17
+condition 3curvature_indexks_statistic,True,8.326672684688674e-17
+condition 3end_xstandardized_median_abs_error,True,5.551115123125783e-17
+condition 3end_xks_statistic,True,5.551115123125783e-17
+condition 3end_ystandardized_median_abs_error,True,5.551115123125783e-17
+condition 3end_yks_statistic,True,0.0
+condition 3initiation_time_sstandardized_median_abs_error,True,0.0
+condition 3initiation_time_sks_statistic,True,5.551115123125783e-17
+condition 3max_lateral_deviationstandardized_median_abs_error,True,5.551115123125783e-17
+condition 3max_lateral_deviationks_statistic,True,5.551115123125783e-17
+condition 3movement_time_sstandardized_median_abs_error,True,0.0
+condition 3movement_time_sks_statistic,True,0.0
+condition 3n_submovementsstandardized_median_abs_error,True,0.0
+condition 3n_submovementsks_statistic,True,6.245004513516506e-17
+condition 3path_lengthstandardized_median_abs_error,True,8.326672684688674e-17
+condition 3path_lengthks_statistic,True,0.0
+condition 3peak_speed_tracker_units_sstandardized_median_abs_error,True,5.551115123125783e-17
+condition 3peak_speed_tracker_units_sks_statistic,True,5.551115123125783e-17
+condition 3straight_line_diststandardized_median_abs_error,True,5.551115123125783e-17
+condition 3straight_line_distks_statistic,True,5.551115123125783e-17
+condition 3time_to_peak_speedstandardized_median_abs_error,True,5.551115123125783e-17
+condition 3time_to_peak_speedks_statistic,True,5.551115123125783e-17
+condition 8curvature_indexstandardized_median_abs_error,True,6.938893903907228e-17
+condition 8curvature_indexks_statistic,True,5.551115123125783e-17
+condition 8end_xstandardized_median_abs_error,True,8.326672684688674e-17
+condition 8end_xks_statistic,True,0.0
+condition 8end_ystandardized_median_abs_error,True,5.551115123125783e-17
+condition 8end_yks_statistic,True,5.551115123125783e-17
+condition 8initiation_time_sstandardized_median_abs_error,True,8.326672684688674e-17
+condition 8initiation_time_sks_statistic,True,5.551115123125783e-17
+condition 8max_lateral_deviationstandardized_median_abs_error,True,5.551115123125783e-17
+condition 8max_lateral_deviationks_statistic,True,5.551115123125783e-17
+condition 8movement_time_sstandardized_median_abs_error,True,8.326672684688674e-17
+condition 8movement_time_sks_statistic,True,5.551115123125783e-17
+condition 8n_submovementsstandardized_median_abs_error,True,0.0
+condition 8n_submovementsks_statistic,True,9.80118763926896e-17
+condition 8path_lengthstandardized_median_abs_error,True,8.326672684688674e-17
+condition 8path_lengthks_statistic,True,0.0
+condition 8peak_speed_tracker_units_sstandardized_median_abs_error,True,5.551115123125783e-17
+condition 8peak_speed_tracker_units_sks_statistic,True,2.7755575615628914e-17
+condition 8straight_line_diststandardized_median_abs_error,True,5.551115123125783e-17
+condition 8straight_line_distks_statistic,True,5.551115123125783e-17
+condition 8time_to_peak_speedstandardized_median_abs_error,True,5.551115123125783e-17
+condition 8time_to_peak_speedks_statistic,True,8.326672684688674e-17
+condition feature BH44,True,2.220446049250313e-16
+condition trajectory raw p 3.0,True,0.0
+condition trajectory raw p 8.0,True,1.3877787807814457e-17
+existing column actually Bonferroni,True,2.7755575615628914e-17
+pooled probe r2_oof_pooled,True,2.914335439641036e-16
+pooled probe mae_model,True,1.7763568394002505e-15
+pooled probe mae_train_mean_baseline,True,9.020562075079397e-17

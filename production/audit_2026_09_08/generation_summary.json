@@ -1,0 +1,9 @@
+{
+  "runs": 96,
+  "participant_runs": 672,
+  "generated_samples": 80640,
+  "max_metric_difference": 4.440892098500626e-16,
+  "movement_floor_count": 0,
+  "initiation_floor_count": 1828,
+  "crop_cap_count": 0
+}

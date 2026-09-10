@@ -1,0 +1,9 @@
+{
+  "date": "2026-09-08",
+  "scope": "Read-only audit of frozen final and corrected studies; all new files in this directory.",
+  "gate": "Verify data conditions, participant separation, all 96 neural checkpoints, classical reconstructions, reported participant metrics and 56 primary paired tests before new model comparisons. Any substantive failure must be investigated before proceeding.",
+  "phase_two": "Exploratory, post-review all-pairs comparisons at matched latent dimensions 3 and 8: five model families, seven existing loss metrics, 140 two-sided paired Pratt Wilcoxon tests, seed averages within participants, differences rounded to 12 decimal places, one BH family of 140; also Holm sensitivity. No selection of favorable seeds or folds.",
+  "candidate_controls": "After the gate, evaluate unconditional VAE n=8 (all four folds and three seeds) using the existing CVAE own/population/wrong fingerprint protocol and matched minimum-jerk protocol, reporting every fit and convergence status. Use the existing recorded matched fits if input equality is verified. These are exploratory follow-ups, not independent confirmation of a model selected on the same participants.",
+  "candidate_inference_families": "Six fingerprint paired tests (two controls by three metrics) adjusted together with BH; nine matched-component comparisons of UVAE8 with CVAE8 adjusted together with BH. Fixed optimizer sensitivity subset: first two samples per participant from seed42, four restarts and 700 evaluations. All follow-ups exploratory.",
+  "limits": "An audit cannot prove absence of every defect. No neural retraining in this audit. Numerical reproduction does not validate physiological assumptions or causal interpretations. CV folds share training participants. Reconstruction, marginal generation, and task-controllable generation are distinct endpoints."
+}

@@ -20,17 +20,23 @@ secondary, model-order-sensitive kinematic analysis.
 
 ## Navigation
 
-- **Start here for Paz's review: [PAZ_REVIEW_HANDOFF.md](PAZ_REVIEW_HANDOFF.md).**
-  The current delivery has an eight-page main paper, a separate evidence appendix,
-  and the student guide. Same-decoder fingerprint controls and matched component
-  refits extend the evaluation without retraining the neural models.
+- **New readers:** use the setup instructions below, then follow the
+  [source map](src/README.md) and [script map](scripts/README.md).
+- **Current manuscript review: [production/README.md](production/README.md).**
+  Start with the Methods-and-reconstruction PDF. The complete eight-page paper
+  and appendix are being revised one section at a time.
+- **For Paz: [PAZ_REVIEW_HANDOFF.md](PAZ_REVIEW_HANDOFF.md).**
+- **Meeting context: [SIMAAN_MONI_REPORT_HANDOFF_2026-09-08.md](SIMAAN_MONI_REPORT_HANDOFF_2026-09-08.md).**
 
-- **Current correction record: [REVIEW_CORRECTIONS.md](REVIEW_CORRECTIONS.md)**.
-  The PDFs and dashboard now consume `studies/review_corrected_evaluation/`.
+- **Audit follow-up fixes: [production/FIXES_AND_CLEANUP.md](production/FIXES_AND_CLEANUP.md).**
+  [The earlier correction record](archive/review_cleanup_2026-09-08/REVIEW_CORRECTIONS.md)
+  remains archived for provenance.
+  The dashboard and September 5 report builders consume
+  `studies/review_corrected_evaluation/`; the current manuscript also uses the
+  independent audit tables in `production/audit_2026_09_08/`.
   Original checkpoints and historical submovement/condition analyses remain in
   the frozen training study; neither raw data nor main neural weights changed.
-- **Historical independent review: [REVIEW_HANDOFF.md](REVIEW_HANDOFF.md)** records
-  the earlier snapshot; use Paz's handoff above for the current testing workflow.
+- **Historical reviews:** [archive/review_cleanup_2026-09-08/](archive/review_cleanup_2026-09-08/).
 - `studies/final_strategy_evaluation/`: frozen confirmatory protocols, runs, and
   original result tables (not the current multivariate distance evaluation).
 - `studies/review_corrected_evaluation/`: corrected evaluations, additional
@@ -38,20 +44,65 @@ secondary, model-order-sensitive kinematic analysis.
 - `src/`: shared code; [source map](src/README.md).
 - `scripts/`: [current entry points and dependency notes](scripts/README.md).
 - `reports/`: scientific-report and interpretation-guide builders.
-- `output/pdf/`: eight-page scientific report, supplementary appendix and results guide.
-- `output/release/`: standalone dashboard bundle and email-ready ZIP.
+- `production/`: current manuscript draft, reproducible builder and new audit evidence.
+- `output/pdf/`: frozen September 5 paper, supplementary appendix and results guide.
+- `output/release/`: current multi-model dashboard ZIP and frozen September 5 advisor ZIP.
 - `tests/`: protocol and model checks.
 - `archive/`: [historical snapshots and superseded entry points](archive/README.md).
 
 The canonical data and a few shared diagnostics remain under
 `studies/strategy_window_comparison/`; the final study still reads them. Do not
 archive that entire directory. Most run/checkpoint/result files are local and
-Git-ignored, so a GitHub clone is not the full evidence set. The current PDFs and
-compact advisor ZIP are tracked; do not mistake the ZIP for a complete run archive.
+Git-ignored, so a GitHub clone is not the full evidence set. The September 5 PDFs
+and compact advisor ZIP are tracked; the ZIP is not a complete run archive.
 
-## Final outputs
+## Set up and explore
 
-Build the report PDFs:
+Use Python 3.11 or newer. Local verification used Python 3.13 on Windows.
+Run these commands from the repository root in PowerShell:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python -m pip install -r requirements.txt
+.\.venv\Scripts\python scripts\prepare_review_workspace.py
+.\.venv\Scripts\python -m pytest -q
+.\.venv\Scripts\python -m streamlit run src\confirmatory_dashboard.py
+```
+
+Preparation restores the newest available bundled dashboard evidence: eight
+neural checkpoints and four spline references from the multi-model ZIP. It requires no private
+recordings and refuses to overwrite differing existing artifacts. These commands
+are intended for a fresh clone; an existing research workspace may already have
+newer results. The dashboard supports CVAE and spline + PCA at n=2,3,4,8,
+and VAE and CAE at n=3,8. VAE n=8 defaults to the lowest cohort-average
+generation distances; reconstruction has a different ranking. If the new ZIP
+is absent, preparation falls back to the historical CVAE-only bundle.
+
+Reading the manuscript PDF needs no Python setup. Rebuilding the new manuscript
+figures additionally requires the canonical processed cache, audit tables and
+the additional saved checkpoints listed in [production/README.md](production/README.md).
+The bundled dashboard assets alone are insufficient. Training from raw recordings
+requires access to the private CSV/MAT data and local path configuration in
+`config.py` (`DATA_RAW_DIR` and `STIMULI_DIR`).
+
+To follow the implementation, read loading and preprocessing first, then the
+participant split, model and training code, evaluation, and dashboard. The
+[source map](src/README.md) identifies the files at each stage; the
+[script map](scripts/README.md) identifies the runnable entry points.
+
+## Build and verify
+
+The commands below assume the required local research artifacts are present and
+`python` refers to the configured environment. In PowerShell, you can substitute
+`.\.venv\Scripts\python` for `python`.
+
+Build the current manuscript section:
+
+```powershell
+python production\build_methods_reconstruction.py
+```
+
+Rebuild the earlier complete-paper layout (not the new manuscript section):
 
 ```powershell
 python reports\build_final_reports.py
@@ -61,13 +112,14 @@ Build dashboard assets and launch the confirmatory dashboard:
 
 ```powershell
 python scripts\build_confirmatory_dashboard_assets.py
+python scripts\build_multimodel_dashboard_assets.py
 python -m streamlit run src\confirmatory_dashboard.py
 ```
 
-Build the standalone advisor package:
+Build the current standalone dashboard package (preserves the historical ZIP):
 
 ```powershell
-python scripts\package_final_release.py
+python scripts\package_multimodel_dashboard.py
 ```
 
 Run verification:
