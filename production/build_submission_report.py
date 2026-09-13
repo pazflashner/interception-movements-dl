@@ -160,9 +160,7 @@ T_COMPONENTS = [
 
 
 FOOTNOTE = (
-    "<super>1</super> Σ<sub>train</sub> = Cov<sub>train</sub>(μ<sub>i</sub> − "
-    "μ<sub>s(i)</sub>) + diag(E<sub>train</sub>[σ<sub>i</sub><super>2</super>]) "
-    "+ 10<super>−6</super>I"
+    "<super>1</super> Neural families: Σ<sub>train</sub> = Cov<sub>train</sub>(μ<sub>i</sub> − μ<sub>s(i)</sub>) + diag(E<sub>train</sub>[σ<sub>i</sub><super>2</super>]) + 10<super>−6</super>I. Spline + PCA: Σ<sub>train</sub> = Cov<sub>train</sub>(z<sub>i</sub> − z<sub>s(i)</sub>) + 10<super>−6</super>I, where z are PCA scores."
 )
 
 _footnote_page = {}
@@ -285,7 +283,7 @@ def _compose() -> Article:
     a.h("3.2 Participant-held-out protocol", True)
     a.p(
         "Four fixed folds use 17 training, 4 validation and 7 test participants; every participant is tested once. For each participant fold, neural models are trained across seeds 42, 43, and 44 to evaluate different weight initializations and optimization randomness under identical data splits. " 
-        "Each test participant's trials are split into disjoint context and query halves, stratified by start category and side. The fingerprint is the mean encoder posterior over context trials. Around this fingerprint, 120 trajectories are generated using a shared training covariance Σ<sub>train</sub><super>1</super>, which combines within-subject trial dispersion and mean encoder uncertainty. These trajectories are conditioned on task parameters drawn from query trials and compared against the query feature distributions. Query shapes and timings never enter the fingerprint. "
+        "Each test participant's trials are split into disjoint context and query halves, stratified by start category and side. The fingerprint is the mean code over a participant's context trials: the mean encoder posterior mean for the neural families, the mean PCA score for Spline + PCA. Around this fingerprint, 120 trajectories are generated using a shared training covariance Σ<sub>train</sub><super>1</super>, which combines within-participant trial dispersion with mean encoder posterior variance; for Spline + PCA the posterior term is absent, since PCA scores are deterministic. These trajectories are conditioned on task parameters drawn from query trials and compared against the query feature distributions. Query shapes and timings never enter the fingerprint. "
         "Paired two-sided Wilcoxon tests are conducted using one seed-averaged value per participant with Pratt zero handling and Benjamini-Hochberg correction <link href='#ref4' color='#1A4C8B'>[4]</link> within each declared family."
     )
     a.story.append(FootnoteMarker())
