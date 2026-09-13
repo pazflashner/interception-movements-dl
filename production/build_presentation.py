@@ -29,6 +29,9 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 FIGURES = ROOT / "production" / "figures_extracted"
+# Tracked images that are not derived from the laboratory draft.
+# Not production/assets/, which .gitignore reserves for QA intermediates.
+ASSETS = ROOT / "production" / "presentation_assets"
 OUTPUT = ROOT / "production" / "10_min_presentation.pdf"
 
 W, H = 338.7 * mm, 190.5 * mm          # 16:9
@@ -39,14 +42,15 @@ GRAY = (0.365, 0.408, 0.447)           # #5D6872
 PAPER = (0.992, 0.992, 0.988)
 
 SLIDE_SECONDS = {
-    "Title": 10,
-    "The question": 50,
-    "Five models, one protocol": 50,
-    "Can it redraw a movement?": 60,
-    "What does matching a person mean?": 65,
-    "Can it invent new movements?": 50,
+    "Title": 8,
+    "The question": 45,
+    "How each model compresses a trial": 40,
+    "What we compare": 45,
+    "Can it redraw a movement?": 52,
+    "What does matching a person mean?": 55,
+    "Can it invent new movements?": 45,
     "Does the right fingerprint matter?": 90,
-    "What holds, what does not": 45,
+    "What holds, what does not": 40,
     "Demo": 180,
 }
 
@@ -98,12 +102,16 @@ class Deck:
         self.c.drawRightString(W - 24 * mm, 10 * mm, str(self.n))
 
     def bullets(self, items: list[str], x=24 * mm, y=H - 56 * mm, size=15, gap=11 * mm) -> None:
+        """Draw bulleted lines. Prefix an item with "^" to continue the previous
+        bullet's paragraph: no dot, text aligned with the line above."""
         for item in items:
-            self.c.setFillColorRGB(*BLUE)
-            self.c.circle(x + 1.6 * mm, y + 1.6 * mm, 1.4 * mm, stroke=0, fill=1)
+            continuation = item.startswith("^")
+            if not continuation:
+                self.c.setFillColorRGB(*BLUE)
+                self.c.circle(x + 1.6 * mm, y + 1.6 * mm, 1.4 * mm, stroke=0, fill=1)
             self.c.setFillColorRGB(*INK)
             self.c.setFont("Helvetica", size)
-            self.c.drawString(x + 7 * mm, y, item)
+            self.c.drawString(x + 7 * mm, y, item.lstrip("^"))
             y -= gap
 
     def note(self, text: str, x=24 * mm, y=18 * mm, size=11, color=GRAY) -> None:
@@ -113,6 +121,8 @@ class Deck:
 
     def figure(self, name: str, x, y, max_w, max_h) -> None:
         path = FIGURES / name
+        if not path.exists():
+            path = ASSETS / name
         if not path.exists():
             self.c.setFillColorRGB(*GRAY)
             self.c.setFont("Helvetica-Oblique", 11)
@@ -155,6 +165,36 @@ class Deck:
                 self.c.line(x, y - 2.5 * mm, cx - 4 * mm, y - 2.5 * mm)
             y -= gap
 
+    def box(self, x, y, w, h, title, lines, accent=GRAY, fill=False, title_size=13) -> None:
+        """A labelled model box. accent colours the border and title."""
+        if fill:
+            self.c.setFillColorRGB(0.937, 0.957, 0.965)
+            self.c.rect(x, y, w, h, stroke=0, fill=1)
+        self.c.setStrokeColorRGB(*accent)
+        self.c.setLineWidth(1.4 if fill else 0.8)
+        self.c.rect(x, y, w, h, stroke=1, fill=0)
+        self.c.setFillColorRGB(*accent)
+        self.c.setFont("Helvetica-Bold", title_size)
+        self.c.drawString(x + 5 * mm, y + h - 9 * mm, title)
+        self.c.setFillColorRGB(*INK)
+        self.c.setFont("Helvetica", 9.5)
+        ty = y + h - 16 * mm
+        for line in lines:
+            self.c.drawString(x + 5 * mm, ty, line)
+            ty -= 5 * mm
+
+    def arrow(self, x, y0, y1, label="") -> None:
+        self.c.setStrokeColorRGB(*GRAY)
+        self.c.setLineWidth(0.9)
+        self.c.line(x, y0, x, y1)
+        self.c.setFillColorRGB(*GRAY)
+        self.c.setFont("Helvetica-Oblique", 8.5)
+        if label:
+            self.c.drawString(x + 2 * mm, (y0 + y1) / 2 - 1 * mm, label)
+        p = self.c.beginPath()
+        p.moveTo(x - 1.3 * mm, y1 + 2.2 * mm); p.lineTo(x + 1.3 * mm, y1 + 2.2 * mm); p.lineTo(x, y1)
+        self.c.drawPath(p, stroke=0, fill=1)
+
     def save(self) -> None:
         self.c.showPage()
         self.c.save()
@@ -171,29 +211,107 @@ def build() -> Path:
     d.bullets(["Seman Libbiss  |  Paz Flashner",
                "Supervision: Prof. Jason Friedman  |  Advisor: Moni Shahar"],
               y=H - 78 * mm, size=14)
-    d.figure("p02_1.png", 150 * mm, 22 * mm, 165 * mm, 78 * mm)
+    # Draft Figure 2 stretches the lateral axis ~5x, which exaggerates curvature -
+    # exactly what Jason asked us to avoid. The task schematic reads instantly instead.
+    d.figure("task_schematic.png", 176 * mm, 46 * mm, 136 * mm, 104 * mm)
 
     # 2 ─────────────────────────────────────────────────────────────────────
     d.slide("Everyone moves differently. Can we compress that?", "The question")
     d.bullets([
-        "Task: intercept a moving target. Fast, ballistic, under one second.",
-        "28 participants, 4,732 trials, finger position at 240 Hz.",
-        "Everyone solves it, but no two people move the same way.",
-    ], y=H - 58 * mm)
+        "Slide a finger from a start square to a fixed target square.",
+        "^Arrive exactly as a moving circle passes through it - under one second.",
+        "28 participants, 4,732 trials, finger tracked in 3D at 240 Hz.",
+    ], y=H - 58 * mm, size=14)
     d.headline("3", "numbers per person?", 24 * mm, 62 * mm)
-    d.note("Target is a distribution of movements, not one trajectory - perception and movement are stochastic.")
-    d.figure("p03_0.png", 150 * mm, 30 * mm, 165 * mm, 90 * mm)
+    d.note("Target is a distribution of movements, not one trajectory - perception and movement "
+           "are stochastic.", size=13)
+    d.figure("real_trajectories.png", 186 * mm, 40 * mm, 126 * mm, 88 * mm)
+    d.note("One participant, every trial. Equal x and y scale.", x=195 * mm, y=34 * mm, size=10)
 
     # 3 ─────────────────────────────────────────────────────────────────────
-    d.slide("Five models, one protocol", "Approach")
-    d.bullets([
-        "Every trial compressed to n numbers, then decoded back.",
-        "Spline + PCA (linear, ~10² parameters)  vs  VAE (neural, ~10⁵).",
-        "Plus a conditional VAE, a conditional autoencoder, and a task-only floor.",
-        "4 folds x 17 train / 4 validation / 7 test participants.",
-        "Each participant held out exactly once. Nothing is tested on its own training data.",
-    ], y=H - 56 * mm, size=14, gap=10 * mm)
-    d.figure("p04_0.png", 24 * mm, 22 * mm, 290 * mm, 62 * mm)
+    d.slide("How each model compresses a trial", "The ideas")
+
+    def stage(y, name, flow, idea, accent=GRAY):
+        d.c.setFillColorRGB(*accent)
+        d.c.setFont("Helvetica-Bold", 14)
+        d.c.drawString(24 * mm, y, name)
+        d.c.setFillColorRGB(*INK)
+        d.c.setFont("Courier-Bold", 11)
+        d.c.drawString(66 * mm, y, flow)
+        d.c.setFillColorRGB(*GRAY)
+        d.c.setFont("Helvetica", 11)
+        d.c.drawString(66 * mm, y - 7 * mm, idea)
+
+    stage(H - 55 * mm, "Spline + PCA",
+          "x  ->  18 spline coefficients  ->  PCA  ->  z",
+          "Fit a smooth curve, keep its coefficients, then keep the n directions that vary most "
+          "across training trials. Linear throughout.", BLUE)
+    stage(H - 74 * mm, "AE",
+          "x  ->  encoder  ->  z  ->  decoder  ->  x_hat",
+          "Squeeze a trial through n numbers and rebuild it. Nothing shapes the latent space.")
+    stage(H - 93 * mm, "VAE",
+          "x  ->  q(z|x)  ->  z  ->  decoder  ->  x_hat",
+          "The code becomes a distribution. A KL term pulls it toward N(0, I), so the space is "
+          "continuous and samplable.")
+    stage(H - 112 * mm, "CVAE",
+          "x, c  ->  q(z|x,c)  ->  z, c  ->  decoder  ->  x_hat",
+          "The task condition c goes to both halves, so the latent need not spend capacity on "
+          "task-driven variation.", TEAL)
+
+    d.c.setStrokeColorRGB(*GRAY)
+    d.c.setLineWidth(0.6)
+    d.c.line(24 * mm, 52 * mm, W - 24 * mm, 52 * mm)
+    d.c.setFillColorRGB(*INK)
+    d.c.setFont("Helvetica-Bold", 12)
+    d.c.drawString(24 * mm, 42 * mm, "What we actually minimise")
+    # Helvetica renders middot, squared, beta and minus; double-vertical-line does not,
+    # so KL keeps the plain "||" separator and the norms are written as MSE(.) instead.
+    terms = [("L  =  MSE( trajectory )", "the 100 × 2 shape"),
+             ("+  20 · MSE( log durations )", "initiation and movement time"),
+             ("+  β · KL( q(z | x, c)  ||  N(0, I) )", "β ramps 0 → 1 over 50 epochs")]
+    tx = 24 * mm
+    for formula, caption in terms:
+        d.c.setFillColorRGB(*INK)
+        d.c.setFont("Helvetica-Bold", 14)
+        d.c.drawString(tx, 32 * mm, formula)
+        width = d.c.stringWidth(formula, "Helvetica-Bold", 14)
+        d.c.setFillColorRGB(*GRAY)
+        d.c.setFont("Helvetica-Oblique", 9.5)
+        d.c.drawString(tx, 24 * mm, caption)
+        tx += max(width, d.c.stringWidth(caption, "Helvetica-Oblique", 9.5)) + 9 * mm
+    d.note("Timing is never an encoder input - it is only a target. The weight 20 was a documented "
+           "compromise, not tuned.", y=15 * mm, size=10)
+
+    d.slide("What we compare", "Approach")
+
+    d.box(24 * mm, 92 * mm, 140 * mm, 46 * mm, "Spline + PCA   -   linear baseline",
+          ["Cubic spline, five fixed knots  ->  18 coefficients.",
+           "PCA on training participants compresses to n.",
+           "Timing from a separate Ridge on the scores.",
+           "About 10^2 parameters. No learned nonlinearity."], BLUE, fill=True)
+
+    d.box(176 * mm, 92 * mm, 140 * mm, 46 * mm, "VAE   -   best neural result",
+          ["Encoder  ->  Gaussian latent (n)  ->  decoder.",
+           "Conditions zeroed: it never sees the task.",
+           "Decodes shape plus two log-durations.",
+           "About 10^5 parameters."], TEAL, fill=True)
+
+    d.arrow(200 * mm, 92 * mm, 80 * mm)
+    d.arrow(272 * mm, 92 * mm, 80 * mm)
+    d.c.setFillColorRGB(*GRAY)
+    d.c.setFont("Helvetica-Bold", 9.5)
+    d.c.drawString(186 * mm, 84 * mm, "Two ablations - each changes one design choice")
+
+    d.box(176 * mm, 38 * mm, 66 * mm, 38 * mm, "CVAE",
+          ["Conditions switched", "on, for both encoder", "and decoder.", "The model we set out", "to build."])
+    d.box(250 * mm, 38 * mm, 66 * mm, 38 * mm, "Conditional AE",
+          ["Conditions on, but", "no stochastic", "bottleneck: the latent", "is a point."])
+    d.box(24 * mm, 38 * mm, 140 * mm, 38 * mm, "Condition-only Ridge   -   the floor",
+          ["Task conditions only, no person information.",
+           "Answers: how much needs a fingerprint at all?"])
+
+    d.note("Latent sizes n = 2, 3, 4, 8.   Four folds x 17 train / 4 validation / 7 test participants; "
+           "every participant held out exactly once.", y=22 * mm, size=11)
 
     # 4 ─────────────────────────────────────────────────────────────────────
     d.slide("Can it redraw a movement it just saw?", "Task 1  |  Reconstruction")
@@ -203,10 +321,15 @@ def build() -> Path:
             ["Condition-only Ridge", "1.234", "1.234"]],
            24 * mm, H - 58 * mm, [62 * mm, 30 * mm, 30 * mm], emphasis=1)
     d.note("Participant-balanced MSE, tracker units squared. Lower is better.", y=H - 92 * mm, size=10)
-    d.bullets(["The linear baseline wins - and that is expected.",
-               "PCA is optimal for squared error; the VAE trades accuracy for a samplable space."],
-              y=H - 108 * mm, size=13, gap=9 * mm)
-    d.figure("p07_0.png", 168 * mm, 26 * mm, 148 * mm, 100 * mm)
+    d.bullets(["The linear baseline wins.",
+               "^PCA is optimal for squared error; the VAE",
+               "^trades accuracy for a samplable space."],
+              y=H - 105 * mm, size=13, gap=8 * mm)
+    d.figure("p07_0.png", 24 * mm, 24 * mm, 124 * mm, 46 * mm)
+    d.note("Per participant, log axis.", x=30 * mm, y=18 * mm, size=9)
+    d.figure("p08_0.png", 162 * mm, 24 * mm, 152 * mm, 104 * mm)
+    d.note("Recorded input vs decoded output, seed 42. Note: VAE at n=3, CAE at n=8, and the "
+           "lateral axis is expanded.", x=162 * mm, y=17 * mm, size=8.5)
 
     # 5 ─────────────────────────────────────────────────────────────────────
     d.slide("What does 'matching a person' actually mean?", "How we measure it")
@@ -222,9 +345,10 @@ def build() -> Path:
         "speed-peak count  .  endpoint x  .  endpoint y",
     ]):
         d.c.drawString(31 * mm, H - 84 * mm - i * 7 * mm, line)
-    d.bullets(["Then: KS per feature, plus energy distance and MMD across all 11 jointly."],
-              y=H - 115 * mm, size=13)
-    d.figure("p13_0.png", 168 * mm, 20 * mm, 148 * mm, 112 * mm)
+    d.bullets(["Then: KS per feature, plus energy distance",
+               "^and MMD across all 11 jointly."],
+              y=H - 113 * mm, size=13, gap=8 * mm)
+    d.figure("p13_0.png", 176 * mm, 20 * mm, 140 * mm, 108 * mm)
 
     # 6 ─────────────────────────────────────────────────────────────────────
     d.slide("Can it invent new movements for a person?", "Task 2  |  Generation")
