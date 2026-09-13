@@ -1,27 +1,36 @@
 # Current manuscript work
 
-The **31-page laboratory PDF is frozen pending Jason's feedback**. Paz's separate
-course drafts are `8_pages_draft.pdf` and `10_min_presentation.pdf`. Read the
-[September 13 progress review](PAZ_DRAFT_REVIEW_2026-09-13.md) for their relationship
-to the agreed main-paper/appendix plan; those drafts were not edited in this review.
+The **31-page laboratory PDF is frozen pending Jason's feedback**. The current
+course delivery, revised September 14 from Paz's drafts, is:
+
+- `8_pages_draft.pdf`: exactly eight pages, including abstract and references.
+- `Course_Report_Appendix.pdf`: ten pages of methods, statistics and supporting results.
+- `Interception_Movements_Course_Presentation.pptx`: editable slides with speaker notes.
+- `10_min_presentation.pdf`: matching 25-slide PDF; slides 1–10 are the timed talk,
+  slides 11–25 are question backups.
+- `Course_Presentation_Speaker_Notes.md`: the notes in a readable text format.
+
+Read [COURSE_DELIVERY.md](COURSE_DELIVERY.md) for scope, rebuild commands and sources.
+The [September 13 progress review](PAZ_DRAFT_REVIEW_2026-09-13.md) remains historical.
 
 The new [full-trajectory distribution analysis](trajectory_distribution_2026_09_13/README.md)
-is separate follow-up evidence, with CSVs, figures, protocol and checks. It has
-not been inserted into either PDF or changed the dashboard's default.
+has CSVs, figures, protocol and checks. Both dimensions (3 and 8) are included in
+the course paper and slides. The dashboard already defaults to VAE n=8.
 
-**Read `Interception_Movements_Methods_Reconstruction_Review.pdf` first.**
-This is the detailed laboratory-review draft, not the condensed submission.
+**For the extended laboratory investigation, read
+`Interception_Movements_Methods_Reconstruction_Review.pdf`.**
+This is the frozen detailed laboratory-review draft.
 It covers data, model pipelines, reconstruction, generation, personal fingerprint
 controls, timing, enrollment, behavioural probes, conditioning, minimum-jerk
 analysis, event timing and the dashboard deliverable.
 
 Revision 4 has 31 working pages, 18 figures, 19 tables, 19 typeset equations and
 15 red bracketed questions for Jason. The main-paper/appendix selection will be
-agreed with Paz and the advisors. No results have been discarded to fit a page limit.
+reviewed with Paz and the advisors. All extended evidence remains in that report.
 
-For the course submission, the abstract and coherent introduction/discussion
-still need to be developed around the selected main experiments.
-The final target remains an eight-page main paper plus supplementary material.
+The separate course version now has an abstract, introduction, focused methods
+and results, discussion and references. Jason's open experimental questions are
+retained in red in its appendix.
 
 ## Page guide
 

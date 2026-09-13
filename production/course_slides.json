@@ -1,0 +1,701 @@
+[
+  {
+    "title": "Modeling interception movement distributions",
+    "body": "Seman Libbiss and Paz Flashner\nWorkshop on Deep Learning, Tel Aviv University\nJason Friedman and Moni Shahar",
+    "table": null,
+    "image": null,
+    "caption": "A compact personal representation for stochastic movement generation",
+    "notes": "Our goal is to model the variability of interception movements using a compact representation of a participant. We compare neural models with spline plus PCA and implement them in a dashboard. The principal result concerns generation at eight dimensions. Three numbers were our original compact target, so we keep that comparison visible. Say distribution, rather than promising an exact prediction of the next trial. Sources: course report Abstract and Introduction.",
+    "seconds": 25,
+    "equation": null,
+    "backup": false
+  },
+  {
+    "title": "The task and the evaluation split",
+    "body": "4,732 trials from 28 participants\nFree eye movement; target approaches from either side\nFour rotations: 17 train, 4 validation, 7 test participants",
+    "table": null,
+    "image": "production/presentation_assets/task_schematic.png",
+    "caption": "Each participant enters the test set once. Median retained trials: 179.5.",
+    "notes": "The participant moves a finger from the lower starting region to the upper interception region as the target arrives. There are three starting categories on each side, with a related speed range. We excluded four trials without an arrival and 27 very late arrivals. The two low-count participants mostly had fewer files available, not extensive exclusions. Population training excludes the seven test people. We then use some recordings from each test person as context and reserve the other recordings as query. Source: course report section 2; src/data_loading.py, src/preprocessing.py; production/cohort_trial_counts.csv. Task image: production/presentation_assets/task_schematic.png, inherited from Paz’s supplied presentation.",
+    "seconds": 50,
+    "equation": null,
+    "backup": false
+  },
+  {
+    "title": "The compression pipelines",
+    "body": "Every trajectory becomes 100 x 2 positions on normalized time.",
+    "table": [
+      [
+        "Stage",
+        "Spline + PCA",
+        "Neural models"
+      ],
+      [
+        "Input",
+        "100 x 2 positions",
+        "200 standardized coordinates"
+      ],
+      [
+        "Encoder",
+        "9 coefficients per axis; PCA on N x 18 matrix",
+        "Two 256-unit layers; n-value code"
+      ],
+      [
+        "Decoder",
+        "Inverse PCA; two spline basis products",
+        "Two 256-unit layers; 200 coordinates"
+      ],
+      [
+        "Timing output",
+        "Ridge on code + 5 conditions",
+        "Separate two-duration head"
+      ]
+    ],
+    "image": null,
+    "caption": "CVAE and CAE use five task conditions. VAE masks them to zero. Matched n = 3 and 8.",
+    "notes": "First we resample a filtered go-to-end recording onto 100 equally spaced phases. This keeps relative waiting but removes seconds from the coordinate input. In spline plus PCA, one trial gives nine x and nine y spline coefficients. We stack training trials as rows, giving N by 18, and fit PCA on that matrix. The neural model receives the 200 coordinate values directly after training-derived standardization. CVAE and VAE have mean and variance heads and a KL penalty. CAE is deterministic and has no KL penalty. CVAE/CAE receive conditions at encoder and decoder; VAE zeros them. The timing targets are never encoder inputs. Backup slides explain the actual objective and inverse matrices. Sources: src/baseline_spline.py, src/confirmatory_spline.py, src/vae_model.py, src/train.py.",
+    "seconds": 65,
+    "equation": null,
+    "backup": false
+  },
+  {
+    "title": "Reconstruction favors spline + PCA",
+    "body": "The encoder receives the observed test trajectory.",
+    "table": [
+      [
+        "Model",
+        "n = 3 MSE",
+        "n = 8 MSE"
+      ],
+      [
+        "Spline + PCA",
+        "0.097255",
+        "0.022772"
+      ],
+      [
+        "CAE",
+        "0.169661",
+        "0.025968"
+      ],
+      [
+        "CVAE",
+        "0.176981",
+        "0.032481"
+      ],
+      [
+        "VAE",
+        "0.148299",
+        "0.033487"
+      ]
+    ],
+    "image": null,
+    "caption": "Lower is better. Spline beats each neural model under BH-140. Spline vs CAE n=8 does not survive Holm. Neural leaders: VAE n=3 and CAE n=8.",
+    "notes": "Reconstruction means compressing and decoding the same observed trajectory. We compare the resulting 200 coordinates with the original and average squared errors. Thus it measures information retained by the representation; it is not a prediction without seeing the trial. Scores first average within person and across neural seeds, then equally across 28 people. Spline has the lowest mean at both capacities. The six spline-versus-neural comparisons pass BH, but the spline-versus-CAE eight-dimensional difference has Holm p=0.106. The other five survive Holm. VAE wins the neural reconstruction comparison at three dimensions under BH; CAE is best at eight. Source: production/audit_2026_09_08/all_model_means.csv and all_pairs_140.csv.",
+    "seconds": 45,
+    "equation": null,
+    "backup": false
+  },
+  {
+    "title": "Generation uses separate context trials",
+    "body": "Context trials establish a personal latent center.\n120 latent draws use that center and a shared training covariance.\nThe decoder produces new paths and durations.",
+    "table": null,
+    "image": null,
+    "caption": "Query trajectories and query timing labels are withheld. Task-condition metadata supplies a matched mixture where the model uses it.",
+    "notes": "A fingerprint is the average of the encoded context means. We then add training-derived latent noise to that center and decode 120 movements. All participants share the covariance, but their centers differ. VAE generation here is not simply drawing from the standard-normal training prior. For CVAE the query-condition mixture supplies conditions, but the decoder never receives the actual query paths or their durations. The comparison is between two sets of trials, so there is no correct one-to-one pairing of a generated path with an observed trial. Source: src/context_query.py, src/confirmatory_spline.py, scripts/run_review_controls.py; appendix A4.",
+    "seconds": 60,
+    "equation": "production/assets/course_2026_09_14/equation_fingerprint.png",
+    "backup": false
+  },
+  {
+    "title": "Generated kinematic-feature distributions",
+    "body": "Eleven features cover timing, speed, geometry, endpoints and speed peaks.",
+    "table": [
+      [
+        "Model",
+        "n",
+        "Mean KS",
+        "Energy",
+        "MMD²"
+      ],
+      [
+        "Spline + PCA",
+        "3",
+        "0.3251",
+        "0.9774",
+        "0.1815"
+      ],
+      [
+        "CAE",
+        "3",
+        "0.2876",
+        "0.8015",
+        "0.1414"
+      ],
+      [
+        "CVAE",
+        "3",
+        "0.2778",
+        "0.7454",
+        "0.1309"
+      ],
+      [
+        "VAE",
+        "3",
+        "0.2846",
+        "0.7476",
+        "0.1303"
+      ],
+      [
+        "Spline + PCA",
+        "8",
+        "0.2548",
+        "0.7347",
+        "0.1153"
+      ],
+      [
+        "CAE",
+        "8",
+        "0.2587",
+        "0.6202",
+        "0.1111"
+      ],
+      [
+        "CVAE",
+        "8",
+        "0.2194",
+        "0.4305",
+        "0.0675"
+      ],
+      [
+        "VAE",
+        "8",
+        "0.2151",
+        "0.4110",
+        "0.0639"
+      ]
+    ],
+    "image": null,
+    "caption": "Lower is better. VAE and CVAE beat spline on all three metrics at both dimensions under BH and Holm (140 tests). VAE n=8 has the lowest means, without a uniform significant advantage over CVAE.",
+    "notes": "KS measures the largest gap between empirical cumulative curves for one feature. We average eleven KS statistics, not eleven p-values. Energy and MMD instead compare the joint eleven-feature vectors after training standardization. VAE eight has mean KS 0.2151, energy 0.4110 and MMD squared 0.0639. CVAE is close. VAE versus CVAE eight has BH q=.0257 for energy, .137 for KS and .0518 for MMD; none survives Holm. We can select VAE as a practical default but cannot claim it significantly wins every endpoint. Features depend on predicted durations as well as shape. Sources: course report Table 2; audited means and 140-test CSV.",
+    "seconds": 55,
+    "equation": null,
+    "backup": false
+  },
+  {
+    "title": "Full-trajectory generation supports VAE and CVAE",
+    "body": "The new test preserves all 100 ordered positions.",
+    "table": [
+      [
+        "Model",
+        "n",
+        "Path energy",
+        "Path MMD²"
+      ],
+      [
+        "Spline + PCA",
+        "3",
+        "0.1068",
+        "0.0777"
+      ],
+      [
+        "CAE",
+        "3",
+        "0.1272",
+        "0.0818"
+      ],
+      [
+        "CVAE",
+        "3",
+        "0.1024",
+        "0.0578"
+      ],
+      [
+        "VAE",
+        "3",
+        "0.1005",
+        "0.0572"
+      ],
+      [
+        "Spline + PCA",
+        "8",
+        "0.0981",
+        "0.0705"
+      ],
+      [
+        "CAE",
+        "8",
+        "0.0947",
+        "0.0652"
+      ],
+      [
+        "CVAE",
+        "8",
+        "0.0549",
+        "0.0244"
+      ],
+      [
+        "VAE",
+        "8",
+        "0.0548",
+        "0.0238"
+      ]
+    ],
+    "image": null,
+    "caption": "At n=8, VAE/CVAE beat spline on both metrics under BH and Holm-80, also with balanced axes. VAE vs CVAE: q=.672 (energy), 1.000 (MMD). At n=3, evidence depends on metric and scaling.",
+    "notes": "This is our new central analysis. We flatten each whole phase-normalized path and divide by square root of 200. Euclidean distance then means RMS coordinate difference. Energy and MMD compare the generated set with the held-out set and also account for within-set variation. At eight dimensions both variational models improve on spline, and this survives both multiple-testing corrections and equalizing the training variation of the two axes. Their difference from each other is not significant. At three dimensions, raw MMD favors them over spline, but raw energy does not, and balanced-axis MMD no longer passes BH. This is why the eight-dimensional conclusion is stronger. These are phase-path results, not a validation of physical timing. Source: production/trajectory_distribution_2026_09_13/summary.csv, paired_comparisons.csv and protocol.json.",
+    "seconds": 70,
+    "equation": null,
+    "backup": false
+  },
+  {
+    "title": "The participant’s own center improves generation",
+    "body": "We change the center while holding decoder, noise and task draws fixed.",
+    "table": [
+      [
+        "Model",
+        "Own center",
+        "Population center",
+        "Other participants"
+      ],
+      [
+        "CVAE n=3",
+        "0.2778",
+        "0.3110",
+        "0.3380"
+      ],
+      [
+        "CVAE n=8",
+        "0.2194",
+        "0.2896",
+        "0.3172"
+      ],
+      [
+        "VAE n=8",
+        "0.2151",
+        "0.2841",
+        "0.3144"
+      ]
+    ],
+    "image": null,
+    "caption": "Mean feature KS; lower is better. All VAE control comparisons: BH q < 1.6×10⁻⁶ (6 tests). All CVAE comparisons: q < .000382 (12 tests).",
+    "notes": "This is the direct check that the personal center helps the generator. Replacing it by a population center or another person’s center makes the feature distributions worse. We keep random draws and other inputs fixed, so the center is what changes. This supports useful information about this participant’s session. It does not give a name to each latent axis or show the same fingerprint would remain stable on another day. The control uses feature endpoints; we have not repeated it on the new full-trajectory endpoints. Source: frozen laboratory report section on personal fingerprints; course report Figure 3 and appendix A4.",
+    "seconds": 45,
+    "equation": null,
+    "backup": false
+  },
+  {
+    "title": "What the compact model achieves",
+    "body": "VAE n=8 is the dashboard default; CVAE remains a comparable alternative.\nSpline + PCA retains the strongest reconstruction.\nStored context resampling achieves lower mean path discrepancy than compact models.",
+    "table": [
+      [
+        "Raw path reference",
+        "Energy",
+        "MMD²"
+      ],
+      [
+        "VAE n=8",
+        "0.0548",
+        "0.0238"
+      ],
+      [
+        "Resample stored context",
+        "0.0328",
+        "0.0054"
+      ],
+      [
+        "Repeat context mean",
+        "0.4621",
+        "0.2452"
+      ]
+    ],
+    "image": null,
+    "caption": "Reference differences are descriptive. Resampling retains whole paths; the mean-only reference collapses variation. Latent summary probes also leave information unrecovered.",
+    "notes": "Our main conclusion is useful compact generation, not that deep learning beats every possible baseline. Keeping the entire context paths and resampling them yields lower mean discrepancies. That uses more participant memory and cannot be summarized as an eight-number fingerprint. Repeating only the context mean is much worse as a distribution despite having a good mean-path error. Direct context behavioral summaries also beat our latent linear probes. These observations describe what compression loses and motivate a richer model. Default selection used this cohort and needs independent confirmation. Sources: full-path summary CSV; production/all_models_direct_context_summary.csv; course Discussion.",
+    "seconds": 45,
+    "equation": null,
+    "backup": false
+  },
+  {
+    "title": "Dashboard demonstration",
+    "body": "Default: VAE, n = 8\nCompare n = 3, CVAE and spline + PCA\nReturn to the benchmark view for cohort results",
+    "table": null,
+    "image": "production/assets/course_2026_09_14/generated_paths.png",
+    "caption": "This backup example is subject01, n=8, fold 2, seed 42. Live dashboard references use fold 0, seed 42. Equal x/y scale.",
+    "notes": "Open the dashboard already running in a browser. Explain that generated curves are samples, not predictions paired with particular recorded trials. Show the VAE eight default, then three dimensions and an alternative model. Do not interpret a single chosen plot as the significance test. VAE does not respond to condition controls because it ignores conditions. Spline condition changes affect only timing; CVAE/CAE use conditions for shape and timing. Finish with Benchmarks. If live launch fails, the slide contains recorded and generated examples from a fixed subject, chosen by identifier. Launch from the repository: python -m streamlit run src/confirmatory_dashboard.py --server.port 8510 --server.address 127.0.0.1 --browser.gatherUsageStats false. Open http://127.0.0.1:8510. Ctrl+C stops the terminal server. Source: production/MULTIMODEL_UPDATE.md; src/confirmatory_dashboard.py; generated-array figure provenance in course_figures.py.",
+    "seconds": 80,
+    "equation": null,
+    "backup": false
+  },
+  {
+    "title": "Backup: resampling and the two time windows",
+    "body": "Model input: target motion to final tracker sample.\nFeature input: detected finger onset to end.\nA phase of 0.5 means half the selected time interval, not half the path length.",
+    "table": null,
+    "image": null,
+    "caption": "100 samples are a common representation, not 100 independent observations.",
+    "notes": "We start with a regularized 240 Hz grid, smooth using a fourth-order 10 Hz forward-backward Butterworth filter and select the modeled window. We fit a cubic interpolant through the existing filtered points and evaluate it at j/99. This interpolation is different from fitting the later five-knot compression model. Subtracting the first position aligns starts, but does not scale amplitude or rotate paths. We retain initiation and movement seconds as separate targets. Early movement after target motion remains; the earlier appearance interval is outside the modeled window. Source: src/preprocessing.py, src/trajectory_view.py; appendix A1.",
+    "seconds": 0,
+    "equation": "production/assets/course_2026_09_14/equation_resample.png",
+    "backup": true
+  },
+  {
+    "title": "Backup: what becomes the PCA matrix?",
+    "body": "",
+    "table": [
+      [
+        "Object",
+        "Dimensions",
+        "One row / one column means"
+      ],
+      [
+        "Sampled trial",
+        "100 x 2",
+        "Time point / x or y"
+      ],
+      [
+        "Spline basis B",
+        "100 x 9",
+        "Time point / basis function"
+      ],
+      [
+        "Trial coefficient vector",
+        "18",
+        "Nine x coefficients followed by nine y"
+      ],
+      [
+        "Training coefficient matrix",
+        "N training x 18",
+        "Trial / coefficient"
+      ],
+      [
+        "PCA directions V",
+        "18 x n",
+        "Coefficient / retained component"
+      ],
+      [
+        "Training latent codes",
+        "N training x n",
+        "Trial / latent coordinate"
+      ]
+    ],
+    "image": null,
+    "caption": "Five interior knots + degree 3 + 1 = nine coefficients per axis.",
+    "notes": "Moni asked what we feed into PCA. It is a matrix where each row is one trial’s eighteen spline coefficients. We first fit a spline separately to x and y of each trial. Nine x and nine y coefficients give eighteen numbers. We stack training trials and PCA learns n directions in that eighteen-dimensional space. Neither test trials nor validation trials train those PCA directions. The number of knots and the number of latent coordinates are different controls. Source: src/baseline_spline.py, CompactSplineRepresentation; appendix A2.",
+    "seconds": 0,
+    "equation": null,
+    "backup": true
+  },
+  {
+    "title": "Backup: fitting and decoding spline + PCA",
+    "body": "Fit the two coordinate coefficient vectors by least squares.\nValidation selects raw or standardized coefficients.\nInverse PCA gives coefficients; multiplying by B restores the path.",
+    "table": null,
+    "image": null,
+    "caption": "m and d combine centering/scaling; V contains retained PCA directions. Raw PCA uses d = 1.",
+    "notes": "There are two compression steps: sampled path into smooth coefficients, then coefficients into a smaller PCA code. Fit B c_x to x and B c_y to y. The code z is obtained by centering/scaling the coefficient vector and projecting onto retained axes. To decode, apply inverse PCA and inverse scaling, split the eighteen coefficients into two blocks and multiply both by the basis B. Raw PCA still centers columns. PCA optimizes variance in coefficient space and does not guarantee the best trajectory MSE against all methods. Sources: src/baseline_spline.py; appendix A2. The on-slide equation matches the effective forward and inverse transformations.",
+    "seconds": 0,
+    "equation": "production/assets/course_2026_09_14/equation_pca.png",
+    "backup": true
+  },
+  {
+    "title": "Backup: predicting physical timing",
+    "body": "",
+    "table": [
+      [
+        "Stage",
+        "Spline + PCA",
+        "Neural models"
+      ],
+      [
+        "Predictors",
+        "n PCA scores + 5 conditions",
+        "Latent code + conditions where enabled"
+      ],
+      [
+        "Targets",
+        "Two standardized log(t + .001) values",
+        "Same two standardized targets"
+      ],
+      [
+        "Predictor",
+        "Ridge, alpha selected on validation",
+        "Separate decoder output head"
+      ],
+      [
+        "Inverse",
+        "Undo scaling, exponentiate, subtract .001",
+        "Same inverse transform"
+      ]
+    ],
+    "image": null,
+    "caption": "Observed timing never enters the trajectory encoder. Reconstruction-time timing prediction sees the observed shape.",
+    "notes": "The coordinate path is on normalized phase, so the model must predict seconds separately. Initiation is time from target motion to finger onset, movement time is onset to end. We take log(t+.001) to accommodate zeros, standardize training targets, and reverse these transformations after prediction. Spline Ridge receives the code and five conditions, with training input standardization and alpha from .01, .1, 1, 10, 100 selected using validation error on standardized log targets. Neural models have a two-value timing head. Huge positive timing errors were not upper-clipped out of the main scores. Source: src/confirmatory_spline.py, TimingRidge; src/vae_model.py; appendix A3.",
+    "seconds": 0,
+    "equation": null,
+    "backup": true
+  },
+  {
+    "title": "Backup: the neural training objective",
+    "body": "Coordinate error sums 200 squared differences.\nTiming error sums two squared differences and receives weight 20.\nKL sums across latent dimensions; the batch averages the total.",
+    "table": null,
+    "image": null,
+    "caption": "Replacing both summed terms by separate MSE means would change the effective timing weight.",
+    "notes": "The actual code uses reduction=none, then sum across output coordinates and mean across trials. We must not simply write MSE plus 20 MSE because one output has two hundred coordinates and the other has two. KL measures how far the encoder’s Gaussian posterior is from the standard normal. Beta warms from zero to one over fifty epochs, while checkpoint validation uses the final beta-one objective. Adam learning rate .001, batch size 64, gradient norm clipping at five, patience 25, maximum 150 epochs, three seeds. Source: src/vae_model.py vae_loss; src/train.py; appendix A3.",
+    "seconds": 0,
+    "equation": "production/assets/course_2026_09_14/equation_loss.png",
+    "backup": true
+  },
+  {
+    "title": "Backup: VAE, CVAE and CAE",
+    "body": "",
+    "table": [
+      [
+        "Property",
+        "VAE",
+        "CVAE",
+        "CAE"
+      ],
+      [
+        "Trajectory encoder",
+        "Two hidden layers",
+        "Two hidden layers",
+        "Two hidden layers"
+      ],
+      [
+        "Task inputs",
+        "Masked to zero",
+        "Encoder and decoder",
+        "Encoder and decoder"
+      ],
+      [
+        "Latent training code",
+        "Gaussian sample",
+        "Gaussian sample",
+        "Deterministic"
+      ],
+      [
+        "KL penalty",
+        "Yes",
+        "Yes",
+        "No"
+      ],
+      [
+        "Reconstruction code",
+        "Posterior mean",
+        "Posterior mean",
+        "Deterministic code"
+      ]
+    ],
+    "image": null,
+    "caption": "A nonsignificant conditional-model advantage does not mean the experimental conditions are irrelevant.",
+    "notes": "Our VAE is an unconditional ablation in the same code framework. It does not receive meaningful conditions because we zero them at both ends. CVAE uses actual conditions. CAE uses actual conditions but suppresses probabilistic sampling and KL. The condition vector is three one-hot category entries, a side value (left zero, right one), and normalized executed speed. We checked input routes and shuffled conditions. The routes are active, but these results cannot settle whether another architecture or training regime would use conditions better. Source: src/vae_model.py encode_condition/encode_trial_condition; src/train.py; audit records.",
+    "seconds": 0,
+    "equation": null,
+    "backup": true
+  },
+  {
+    "title": "Backup: where the generated variation comes from",
+    "body": "The personal center averages context codes.\nTraining residuals estimate within-person latent variation.\nVariational models also add average posterior variance.",
+    "table": null,
+    "image": null,
+    "caption": "One shared covariance for every participant; 120 draws around each personal center.",
+    "notes": "For each training person, subtract that person’s mean code from each trial code. Pool these residuals and estimate their covariance. Add the mean encoder posterior variance on the diagonal for VAE/CVAE and add a tiny identity regularizer for numerical stability. CAE and spline have no posterior variance term. We do not fit a separate covariance to a new participant’s context trials. Generation draws a multivariate normal around their context center and uses the shared decoder. A nonlinear decoder can still produce different visible spread at different centers. Source: src/context_query.py and src/confirmatory_spline.py; appendix A4.",
+    "seconds": 0,
+    "equation": "production/assets/course_2026_09_14/equation_covariance.png",
+    "backup": true
+  },
+  {
+    "title": "Backup: leakage and held-out evaluation",
+    "body": "",
+    "table": [
+      [
+        "Information",
+        "Training",
+        "Validation",
+        "Test context",
+        "Test query"
+      ],
+      [
+        "Fit network/PCA/scalers",
+        "Yes",
+        "No",
+        "No",
+        "No"
+      ],
+      [
+        "Select checkpoint/settings",
+        "No",
+        "Yes",
+        "No",
+        "No"
+      ],
+      [
+        "Personal center",
+        "No",
+        "No",
+        "Yes",
+        "No"
+      ],
+      [
+        "Reconstruction input",
+        "No",
+        "No",
+        "No",
+        "Observed path"
+      ],
+      [
+        "Generation task mixture",
+        "No",
+        "No",
+        "No",
+        "Metadata only"
+      ],
+      [
+        "Generation scoring",
+        "No",
+        "No",
+        "No",
+        "Paths and timings"
+      ]
+    ],
+    "image": null,
+    "caption": "Population model fitting and participant enrollment are separate stages.",
+    "notes": "A test person is new to model fitting, but provides context recordings. Query recordings only provide the targets for generation scores, with task metadata allowed for a matched-condition mixture. Reconstruction deliberately reads the query path because that task is compression. None of the test data changes fitted PCA axes, learned neural parameters, training covariance or normalization. This prevents a common misunderstanding: test context is not retraining. Model selection for the final dashboard still used the evaluated cohort, so independent post-selection validation remains future work. Source: participant_folds.json, context_query.py; appendices A1/A4.",
+    "seconds": 0,
+    "equation": null,
+    "backup": true
+  },
+  {
+    "title": "Backup: what the eleven features measure",
+    "body": "",
+    "table": [
+      [
+        "Group",
+        "Features"
+      ],
+      [
+        "Timing",
+        "Initiation time; movement time; relative time to peak speed"
+      ],
+      [
+        "Speed",
+        "Peak speed; heuristic speed-peak count"
+      ],
+      [
+        "Geometry",
+        "Path length; straight-line distance; curvature ratio; maximum lateral deviation"
+      ],
+      [
+        "Endpoint",
+        "Final x; final y"
+      ]
+    ],
+    "image": null,
+    "caption": "Generated feature computation uses predicted timing and an onset-based movement crop.",
+    "notes": "For observed data we use the onset-to-end movement segment. For generated data we use the predicted initiation fraction to crop the go-to-end path, capped at .98, and floor movement duration at one millisecond. Both movement segments become one hundred phase points and are filtered with cutoff min(10 Hz, .45 times sample rate). Sample rate is 99 over movement seconds. Gradients give speed. Peak count uses prominence ten percent of maximum and roughly fifty milliseconds separation, with at least one reported peak. This is distinct from minimum-jerk component fitting. Source: src/features.py; appendix A5.",
+    "seconds": 0,
+    "equation": null,
+    "backup": true
+  },
+  {
+    "title": "Backup: KS and joint distribution distances",
+    "body": "KS: largest gap between two empirical cumulative curves.\nMean KS: average of eleven feature statistics.\nEnergy and MMD: compare whole vectors and account for joint structure.",
+    "table": null,
+    "image": null,
+    "caption": "KS statistics are not p-values. Correlated features can affect joint geometry.",
+    "notes": "If a recorded feature has seventy percent of trials below a value and the generated feature has forty percent, the empirical CDF gap there is .3. KS takes the largest gap over all thresholds. Its output is a discrepancy. We average discrepancies across features, not significance tests. Energy and MMD use complete feature vectors and can notice dependence between features that separate marginal KS statistics may miss. Standardization comes from training. Correlated features do not mean we should remove whichever feature makes a p-value improve; removal defines a new endpoint. Sources: src/context_query.py; appendix A5/A6; Gretton et al. JMLR 2012.",
+    "seconds": 0,
+    "equation": "production/assets/course_2026_09_14/equation_ks.png",
+    "backup": true
+  },
+  {
+    "title": "Backup: energy discrepancy and mean collapse",
+    "body": "Energy compares cross-set distances with within-set distances.\nA generator needs plausible variation as well as a good center.",
+    "table": [
+      [
+        "Example reference",
+        "Mean-path RMSE",
+        "Path energy"
+      ],
+      [
+        "VAE n=8",
+        "0.1604",
+        "0.0548"
+      ],
+      [
+        "Repeated context mean",
+        "0.1146",
+        "0.4621"
+      ]
+    ],
+    "image": null,
+    "caption": "Lower is better. The mean-only output has a closer mean but a much worse distribution.",
+    "notes": "Average error against all recorded paths can favor a collapsed output near the center. Energy subtracts within-generated and within-recorded distances from twice the cross average, addressing the distributions rather than only their centers. Our energy estimator includes within-sample diagonal zeros and is not square-rooted afterward. The mean-only reference is actual analysis output, not a hypothetical numerical illustration. Source: src/trajectory_distribution.py; trajectory_distribution summary CSV; Szekely and Rizzo 2013; appendix A6/A8.",
+    "seconds": 0,
+    "equation": "production/assets/course_2026_09_14/equation_energy.png",
+    "backup": true
+  },
+  {
+    "title": "Backup: Gaussian-kernel MMD",
+    "body": "Kernel: exp(−gamma × squared Euclidean distance).\nGamma comes from the median positive training pair distance.\nWithin-set diagonals are excluded in the unbiased estimator.",
+    "table": null,
+    "image": null,
+    "caption": "Finite-sample unbiased MMD squared may be slightly negative. It is not an accuracy percentage.",
+    "notes": "The kernel gives high similarity to close vectors and low similarity to distant vectors. MMD compares average within-recorded and within-generated similarity with cross similarity. The within terms omit identical-element pairs and divide by m(m−1) or r(r−1); cross divides by mr. We estimate gamma once from at most 512 deterministic training trials in each representation and use it for all models in the rotation. Whole paths and feature vectors have different units and scales, so their absolute MMD values are not interchangeable. Source: src/trajectory_distribution.py; src/context_query.py; Gretton et al., A Kernel Two-Sample Test, JMLR 13 (2012).",
+    "seconds": 0,
+    "equation": "production/assets/course_2026_09_14/equation_mmd.png",
+    "backup": true
+  },
+  {
+    "title": "Backup: 28 paired scores, not thousands of independent trials",
+    "body": "First average neural seeds within each participant.\nThen compare paired participant scores using two-sided Pratt Wilcoxon.\nRound differences to 12 decimals before ranking.",
+    "table": [
+      [
+        "Correction family",
+        "Tests"
+      ],
+      [
+        "Original seven endpoints × ten pairs × two dimensions",
+        "140"
+      ],
+      [
+        "New two path endpoints × ten pairs × two dimensions × two geometries",
+        "80"
+      ],
+      [
+        "VAE replacement controls",
+        "6"
+      ],
+      [
+        "CVAE replacement controls",
+        "12"
+      ]
+    ],
+    "image": null,
+    "caption": "BH controls false discoveries under its assumptions. Holm is a familywise-error sensitivity. Nonsignificance is not equivalence.",
+    "notes": "Each participant supplies one score per model for the paired comparison. Three seeds are repeated model fits, not three independent people. Wilcoxon ranks the absolute paired differences and uses their signs. Pratt keeps zeros in ranking but omits their signed contribution. The usual location interpretation assumes a symmetric difference distribution. BH adjusts the complete declared family, not only the comparisons we liked. We additionally show Holm. Training folds overlap, so these remain exploratory comparisons, and a fresh cohort is still needed for replication. No formal three-versus-eight or resampling-reference test was added. Source: src/statistical_tests.py, all_pairs_140.csv, paired_comparisons.csv; appendix A6.",
+    "seconds": 0,
+    "equation": null,
+    "backup": true
+  },
+  {
+    "title": "Backup: the boundaries of the conclusion",
+    "body": "Useful same-session personal centers do not establish stable traits.\nDirect context summaries beat latent linear probes on all 14 tested targets.\nCondition routes work, but their value depends on the task and model.\nMinimum-jerk decomposition remains a separate investigation.",
+    "table": null,
+    "image": null,
+    "caption": "The 31-page laboratory report retains the extended results and Jason’s open questions.",
+    "notes": "We should volunteer the relevant limitation instead of defending every result as a success. Direct context means and standard deviations were more accurate than our latent linear probes, and many probe R-squared values were negative. Matched minimum-jerk component comparisons did not establish corrected model differences. Timing and event assumptions remain important, including the tracker endpoint arriving on average 26 ms before the MATLAB arrival marker. More data might help, but we did not run a learning curve that proves sample count caused the failures. Source: frozen report pp.16–28, production/all_models_direct_context_summary.csv; course Discussion and appendix A10.",
+    "seconds": 0,
+    "equation": null,
+    "backup": true
+  },
+  {
+    "title": "Backup: launch and source navigation",
+    "body": "Repository terminal:\npython -m streamlit run src/confirmatory_dashboard.py --server.port 8510\n\nBrowser: http://127.0.0.1:8510\nStop: Ctrl+C in that terminal",
+    "table": null,
+    "image": null,
+    "caption": "The standalone dashboard archive contains launch instructions for use without the full research checkout.",
+    "notes": "Full PowerShell path: cd \"D:\\oneDrive_Main\\OneDrive\\Desktop_onedrive\\uni2024\\Third Year\\semester B\\Workshop in AI\\interception-movements-dl\". Then use the command shown, adding --server.address 127.0.0.1 --browser.gatherUsageStats false if desired. On the authoring computer Python is C:\\Python313\\python.exe. Source navigation: src/vae_model.py and src/train.py for neural models; src/baseline_spline.py and src/confirmatory_spline.py for spline/PCA/Ridge; src/context_query.py and src/features.py for generation/metrics; src/trajectory_distribution.py for full paths; production/audit_2026_09_08 for original result CSVs; production/trajectory_distribution_2026_09_13 for new results. Keep the terminal running during the demo.",
+    "seconds": 0,
+    "equation": null,
+    "backup": true
+  }
+]

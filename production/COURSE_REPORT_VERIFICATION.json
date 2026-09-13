@@ -1,0 +1,30 @@
+{
+  "8_pages_draft.pdf": {
+    "pages": 8,
+    "page_text_lengths": [
+      4025,
+      3064,
+      3090,
+      3602,
+      3362,
+      2515,
+      2619,
+      4060
+    ]
+  },
+  "Course_Report_Appendix.pdf": {
+    "pages": 10,
+    "page_text_lengths": [
+      3158,
+      2712,
+      2814,
+      2997,
+      2769,
+      3216,
+      1866,
+      2088,
+      2482,
+      3122
+    ]
+  }
+}

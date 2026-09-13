@@ -22,15 +22,18 @@ secondary, model-order-sensitive kinematic analysis.
 
 - **September 13 trajectory follow-up:** [results and methods](production/trajectory_distribution_2026_09_13/README.md).
   Complete normalized-path generation, evaluated separately from the existing
-  feature scores. The laboratory PDF and Paz's drafts are unchanged.
-- **Paz's course drafts:** `production/8_pages_draft.pdf` and
-  `production/10_min_presentation.pdf`; see the separate
-  [progress review](production/PAZ_DRAFT_REVIEW_2026-09-13.md).
+  feature scores and now included in the course report and presentation.
+- **September 14 course delivery:** [eight-page paper](production/8_pages_draft.pdf),
+  [methods appendix](production/Course_Report_Appendix.pdf),
+  [editable presentation](production/Interception_Movements_Course_Presentation.pptx)
+  and [presentation PDF](production/10_min_presentation.pdf).
+  The deck has 10 main slides and 15 question backups. Read the
+  [delivery and rebuild guide](production/COURSE_DELIVERY.md).
 - **New readers:** use the setup instructions below, then follow the
   [source map](src/README.md) and [script map](scripts/README.md).
 - **Current manuscript review: [production/README.md](production/README.md).**
-  Start with the detailed methods/results PDF and its page guide. The eight-page
-  main paper, appendix selection, introduction and discussion will follow review.
+  Start with the eight-page course paper. The 31-page laboratory report remains
+  frozen for Jason's review; its page guide is separate.
 - **For Paz: [PAZ_REVIEW_HANDOFF.md](PAZ_REVIEW_HANDOFF.md).**
 - **Meeting context: [SIMAAN_MONI_REPORT_HANDOFF_2026-09-08.md](SIMAAN_MONI_REPORT_HANDOFF_2026-09-08.md).**
 
