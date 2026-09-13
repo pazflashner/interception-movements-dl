@@ -1,0 +1,82 @@
+[
+  {
+    "fold": 0,
+    "n_train_trials": 2774,
+    "geometry": "raw_rms",
+    "axis_scale": [
+      1.0,
+      1.0
+    ],
+    "rbf_gamma": 0.8241518109128285
+  },
+  {
+    "fold": 0,
+    "n_train_trials": 2774,
+    "geometry": "axis_balanced",
+    "axis_scale": [
+      0.5843043482517666,
+      1.5012716379375286
+    ],
+    "rbf_gamma": 0.7920482026694524
+  },
+  {
+    "fold": 1,
+    "n_train_trials": 3032,
+    "geometry": "raw_rms",
+    "axis_scale": [
+      1.0,
+      1.0
+    ],
+    "rbf_gamma": 1.1884307835388594
+  },
+  {
+    "fold": 1,
+    "n_train_trials": 3032,
+    "geometry": "axis_balanced",
+    "axis_scale": [
+      0.45803301642884614,
+      1.3117025943719223
+    ],
+    "rbf_gamma": 0.8386050621109129
+  },
+  {
+    "fold": 2,
+    "n_train_trials": 2757,
+    "geometry": "raw_rms",
+    "axis_scale": [
+      1.0,
+      1.0
+    ],
+    "rbf_gamma": 0.8820837337243397
+  },
+  {
+    "fold": 2,
+    "n_train_trials": 2757,
+    "geometry": "axis_balanced",
+    "axis_scale": [
+      0.5671868403575595,
+      1.4339249280815058
+    ],
+    "rbf_gamma": 0.8384456678222345
+  },
+  {
+    "fold": 3,
+    "n_train_trials": 2885,
+    "geometry": "raw_rms",
+    "axis_scale": [
+      1.0,
+      1.0
+    ],
+    "rbf_gamma": 1.1619368618472985
+  },
+  {
+    "fold": 3,
+    "n_train_trials": 2885,
+    "geometry": "axis_balanced",
+    "axis_scale": [
+      0.4901383640324014,
+      1.4486416927869392
+    ],
+    "rbf_gamma": 0.8738960934758498
+  }
+]

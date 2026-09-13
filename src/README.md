@@ -10,6 +10,7 @@
 | Frozen participant folds and context/query partition | `confirmatory_protocol.py` |
 | Reconstruction/timing prediction tables and aggregation | `evaluate.py`, `confirmatory_evaluation.py` |
 | Context fingerprints, distribution distances, enrollment, tests | `context_query.py` |
+| Separate full-path distribution follow-up: RMS geometry, energy and MMD | `trajectory_distribution.py` |
 | Shared paired Wilcoxon and Holm adjustment | `statistical_tests.py` |
 | Spline+PCA representation and matched timing/generation | `baseline_spline.py`, `confirmatory_spline.py` |
 | Condition-only baseline | `confirmatory_controls.py` |

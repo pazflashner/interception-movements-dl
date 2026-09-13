@@ -1,0 +1,12 @@
+{
+  "independent_decoded_array_cases": 184,
+  "maximum_distance_difference": 8.881784197001252e-16,
+  "paired_tests_rechecked": 80,
+  "rows_verified": 1512,
+  "context_query_trial_ids_verified": 4732,
+  "protected_files_currently_unchanged": 101,
+  "subsequently_updated_pdfs_verified_against_source_revision": [
+    "production\\10_min_presentation.pdf"
+  ],
+  "test_suite": "9 tests passed: new trajectory metric tests and existing condition-control tests"
+}

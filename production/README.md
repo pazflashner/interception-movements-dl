@@ -1,5 +1,14 @@
 # Current manuscript work
 
+The **31-page laboratory PDF is frozen pending Jason's feedback**. Paz's separate
+course drafts are `8_pages_draft.pdf` and `10_min_presentation.pdf`. Read the
+[September 13 progress review](PAZ_DRAFT_REVIEW_2026-09-13.md) for their relationship
+to the agreed main-paper/appendix plan; those drafts were not edited in this review.
+
+The new [full-trajectory distribution analysis](trajectory_distribution_2026_09_13/README.md)
+is separate follow-up evidence, with CSVs, figures, protocol and checks. It has
+not been inserted into either PDF or changed the dashboard's default.
+
 **Read `Interception_Movements_Methods_Reconstruction_Review.pdf` first.**
 This is the detailed laboratory-review draft, not the condensed submission.
 It covers data, model pipelines, reconstruction, generation, personal fingerprint
@@ -10,7 +19,8 @@ Revision 4 has 31 working pages, 18 figures, 19 tables, 19 typeset equations and
 15 red bracketed questions for Jason. The main-paper/appendix selection will be
 agreed with Paz and the advisors. No results have been discarded to fit a page limit.
 
-The abstract, introduction and discussion will follow the agreed scientific story.
+For the course submission, the abstract and coherent introduction/discussion
+still need to be developed around the selected main experiments.
 The final target remains an eight-page main paper plus supplementary material.
 
 ## Page guide

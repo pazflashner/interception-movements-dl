@@ -20,6 +20,12 @@ secondary, model-order-sensitive kinematic analysis.
 
 ## Navigation
 
+- **September 13 trajectory follow-up:** [results and methods](production/trajectory_distribution_2026_09_13/README.md).
+  Complete normalized-path generation, evaluated separately from the existing
+  feature scores. The laboratory PDF and Paz's drafts are unchanged.
+- **Paz's course drafts:** `production/8_pages_draft.pdf` and
+  `production/10_min_presentation.pdf`; see the separate
+  [progress review](production/PAZ_DRAFT_REVIEW_2026-09-13.md).
 - **New readers:** use the setup instructions below, then follow the
   [source map](src/README.md) and [script map](scripts/README.md).
 - **Current manuscript review: [production/README.md](production/README.md).**

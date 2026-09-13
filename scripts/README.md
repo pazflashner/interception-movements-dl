@@ -43,6 +43,11 @@ rebuild a PDF. See `../production/FIXES_AND_CLEANUP.md` for current fixes and
 | Verify delivered summary arithmetic and PDF hashes | `verify_review_handoff.py` |
 
 The current manuscript builder is `../production/build_methods_reconstruction.py`.
+The separate September 13 full-path generation follow-up is run with
+`analyze_trajectory_distributions.py`, checked by `verify_trajectory_distributions.py`
+and plotted by `plot_trajectory_distributions.py`. It uses the local canonical
+cache and frozen models and writes only to its new evidence/cache directories.
+Read `../production/trajectory_distribution_2026_09_13/README.md` before rerunning.
 Its detailed continuation reads `../production/remaining_evidence.py`; numerical
 and PDF-inventory checks are in `../production/verify_detailed_report.py`.
 `../reports/build_final_reports.py` rebuilds the earlier complete-report layout;

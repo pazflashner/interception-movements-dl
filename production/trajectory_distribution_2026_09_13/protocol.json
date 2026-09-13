@@ -1,0 +1,49 @@
+{
+  "written_utc": "2026-09-13T16:50:51.774490+00:00",
+  "protocol": {
+    "version": "trajectory-distribution-followup-v1",
+    "status": "exploratory follow-up defined before calculating these endpoints; not preregistered research",
+    "target": "complete 100x2 phase-normalized target-motion-onset to last-tracker-sample paths; original translations retained; no recropping, filtering or dynamic time warping",
+    "primary_geometry": "Euclidean distance after flattening ordered paths and dividing by sqrt(200), equivalent to root mean coordinate squared difference; common tracker units retained",
+    "sensitivity_geometry": "divide each axis by its training RMS deviation from the training mean path, shared across 100 points; then divide flattened vector by sqrt(200)",
+    "energy": "2 mean cross Euclidean distance minus within-recorded and within-generated means, including diagonal zeros; not square-rooted",
+    "mmd2": "unbiased RBF MMD squared, within-sample diagonals excluded; gamma=1/median positive training squared distance among up to 512 deterministic training trials",
+    "diagnostics": "biased MMD squared, mean-path RMSE, all-pairs MSE and generated/recorded total sample-variance ratio; none is a substitute for the primary distribution endpoints",
+    "dimensions": [
+      3,
+      8
+    ],
+    "families": [
+      "spline_pca",
+      "cvae",
+      "conditional_ae",
+      "unconditional_vae",
+      "condition_ridge"
+    ],
+    "folds": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "neural_seeds": [
+      42,
+      43,
+      44
+    ],
+    "condition_ridge_generation_seeds": [
+      42,
+      43,
+      44
+    ],
+    "spline_sampling": "one historical deterministic fit and frozen sampling realization per fold/dimension",
+    "samples_per_participant": 120,
+    "context_query_seed": 2026,
+    "sampling": "exact historical context centroid, covariance, query-condition mixture and RNG; each model generation must reproduce its existing feature scores",
+    "references": "resample 120 own context trajectories with replacement, using three stable SHA-derived seeds; repeat the context mean path 120 times as a collapse diagnostic. Neither is a compact model or population null reference.",
+    "aggregation": "average seeds within participant then give all 28 participants equal weight; record fold and per-seed results",
+    "inference": "80 exploratory paired two-sided Pratt Wilcoxon comparisons, 10 pairs among 5 model families x 2 dimensions x 2 distribution endpoints x 2 geometries; BH and Holm over all 80 together. Condition Ridge is reused at both dimensions. No tests on diagnostic references.",
+    "limits": "no physical-time fidelity claim; same-session context/query; overlapping training folds; inherited char-sum RNG collisions; no independent validation of model selection; finite-sample distances are not accuracy percentages",
+    "new_neural_training": false
+  }
+}
