@@ -51,6 +51,26 @@ SLIDE_SECONDS = {
 }
 
 
+
+def ensure_cropped_panel() -> None:
+    """Crop draft Figure 11 to its VAE n=8 panel.
+
+    The published figure places CVAE n=3 beside VAE n=8. Jason asked that
+    comparisons hold the latent size fixed, so the slide shows one panel only.
+    Derived here rather than committed, since figures_extracted/ is git-ignored.
+    """
+    source, target = FIGURES / "p15_0.png", FIGURES / "p15_0_vae.png"
+    if target.exists() or not source.exists():
+        return
+    try:
+        from PIL import Image
+    except ImportError:
+        return
+    with Image.open(source) as im:
+        width, height = im.size
+        im.crop((int(width * 0.545), 0, width, height)).save(target)
+
+
 class Deck:
     def __init__(self, path: Path):
         self.c = canvas.Canvas(str(path), pagesize=(W, H))
@@ -186,7 +206,7 @@ def build() -> Path:
     d.bullets(["The linear baseline wins - and that is expected.",
                "PCA is optimal for squared error; the VAE trades accuracy for a samplable space."],
               y=H - 108 * mm, size=13, gap=9 * mm)
-    d.figure("p08_0.png", 168 * mm, 22 * mm, 148 * mm, 108 * mm)
+    d.figure("p07_0.png", 168 * mm, 26 * mm, 148 * mm, 100 * mm)
 
     # 5 ─────────────────────────────────────────────────────────────────────
     d.slide("What does 'matching a person' actually mean?", "How we measure it")
@@ -233,7 +253,7 @@ def build() -> Path:
            24 * mm, H - 86 * mm, [60 * mm, 26 * mm, 26 * mm, 26 * mm], emphasis=1)
     d.headline("27 / 28", "participants improve with their own fingerprint;  all 6 contrasts p < 1.5e-06",
                24 * mm, 30 * mm, TEAL)
-    d.figure("p15_0.png", 176 * mm, 26 * mm, 140 * mm, 96 * mm)
+    d.figure("p15_0_vae.png", 186 * mm, 26 * mm, 126 * mm, 96 * mm)
 
     # 8 ─────────────────────────────────────────────────────────────────────
     d.slide("What holds, and what does not", "Honest summary")
@@ -242,7 +262,7 @@ def build() -> Path:
     d.c.drawString(24 * mm, H - 58 * mm, "Holds")
     d.bullets([
         "Personal information really is in the fingerprint - under a strict control.",
-        "Neural models generate closer feature distributions than the linear baseline.",
+        "The VAE generates closer feature distributions than the baseline.",
     ], y=H - 70 * mm, size=13, gap=9 * mm)
     d.c.setFillColorRGB(*BLUE)
     d.c.setFont("Helvetica-Bold", 15)
@@ -250,11 +270,24 @@ def build() -> Path:
     d.bullets([
         "Spline + PCA reconstructs better.",
         "The best generator ignores the task entirely.",
-        "Averaging a person's own trials beats the",
-        "     latent code on all 14 behavioural targets.",
+        "A simple average beats it on all 14 targets.",
     ], x=176 * mm, y=H - 70 * mm, size=13, gap=9 * mm)
-    d.note("A useful conditioning signal for a generator - not yet a validated low-dimensional "
-           "account of individual strategy.", y=30 * mm, size=12, color=INK)
+    d.c.setStrokeColorRGB(*GRAY)
+    d.c.setLineWidth(0.6)
+    d.c.line(24 * mm, 44 * mm, W - 24 * mm, 44 * mm)
+    d.c.setFillColorRGB(*BLUE)
+    d.c.setFont("Helvetica-Bold", 15)
+    d.c.drawString(24 * mm, 33 * mm, "If you are building this today:")
+    d.c.setFillColorRGB(*INK)
+    d.c.setFont("Helvetica", 14)
+    d.c.drawString(24 * mm, 24 * mm,
+                   "reconstruct with Spline + PCA;  generate with the VAE.  Use n=8 - n=3 is worse "
+                   "on almost every endpoint.")
+    d.c.setFillColorRGB(*GRAY)
+    d.c.setFont("Helvetica-Oblique", 10)
+    d.c.drawString(24 * mm, 16 * mm,
+                   "Caveat: n was matched for comparability, not chosen by a variance or elbow "
+                   "criterion. That criterion is the next step.")
 
     # 9 ─────────────────────────────────────────────────────────────────────
     d.slide("See it work", "Demo")
@@ -272,6 +305,7 @@ def build() -> Path:
 def main() -> None:
     if not FIGURES.exists():
         print(f"warning: {FIGURES} missing - run build_submission_report.py first.")
+    ensure_cropped_panel()
     path = build()
     total = sum(SLIDE_SECONDS.values())
     print(f"{path}\n  {len(SLIDE_SECONDS)} slides\n")
