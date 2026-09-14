@@ -1,3 +1,11 @@
+Current talk: ten slides, split after feature generation (slide 7). Full-path
+generation, personal-center validation and dashboard occupy slides 8-10.
+The conceptual opening and feature overview follow Paz's presentation style.
+Cumulative feature plots are restored. Significance labels come directly from
+saved adjusted paired tests; no error bars, enrollment slide or separate
+empirical-reference slide are included. The last remains in the report.
+The suggested nine-minute timing leaves one minute for transitions.
+
 September 14 editorial update: the course presentation now follows Paz's navy
 cover, blue/teal/violet rule and white content-slide design, retaining our ten
 main slides. Confirmed cm units, response-time terminology, data-collection

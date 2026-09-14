@@ -1,11 +1,33 @@
+## Presentation handoff after the Paz meeting
+
+The course deck borrows Paz's conceptual opening and feature overview as well
+as her design. Slides 1-7 are Paz's section; slides 8-10 cover full-path
+generation, personal-center validation and the dashboard. Enrollment and the
+standalone empirical-reference slide are omitted from the talk. The report
+retains its empirical-reference comparison. Original cumulative feature curves
+are restored in both paper and slides.
+
+Charts show the existing participant-balanced means. Markers compare each model
+with spline at the same dimension: `*` passes BH and Holm, `†` passes BH only,
+and `ns` passes neither at .05. The personal-center chart instead compares each
+control with own context using its original BH family. No error bars or new
+confidence intervals are included. The markers use the saved corrected tests.
+
+The build uses the existing artifact-tool pipeline and Microsoft PowerPoint's
+Windows file renderer (`render_course_powerpoint.ps1`) to check the final PPTX.
+It opens the file without a presentation window and preserves other open decks.
+For teaching, paste [LEARNING_CHAT_PROMPT.md](LEARNING_CHAT_PROMPT.md) into a new
+Codex chat with this project accessible. The prompt requires code-backed,
+step-by-step explanations and honest handling of undocumented fixed choices.
+
 ## September 14 course update
 
 Use `Interception_Movements_Course_Presentation.pptx` for the ten-slide talk and
 `8_pages_draft.pdf` for the eight-page paper. The course deck uses Paz's navy,
 blue and white design with the course narrative and figures. Her styled source
 files remain separate and unchanged. The course figures use cm and cm/s;
-reconstruction MSE is cm². The main feature figure now uses density histograms
-from the existing saved samples; cohort scores and tests are unchanged.
+reconstruction MSE is cm². The earlier density revision has been superseded by restored cumulative
+curves; cohort scores and tests are unchanged.
 No model retraining, preprocessing change or revision of the frozen 31-page
 laboratory PDF is included. Methods explanations remain a separate PDF.
 

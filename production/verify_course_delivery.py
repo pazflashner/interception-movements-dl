@@ -106,6 +106,25 @@ def main():
                     for k,(ser,source) in enumerate(zip(series,data['series'])):
                         numbers=[float(v.text) for v in ser.findall('.//c:val//c:pt/c:v',ns)]
                         ok(f'chart values {i}/{j}/{k}',np.allclose(numbers,source['values'],rtol=0,atol=1e-12))
+                        ok(f'no error bars {i}/{j}/{k}',ser.find('c:errBars',ns) is None)
+                        labels={int(d.find('c:idx',ns).get('val')):''.join(d.findall('.//a:t',ns)[0].itertext()).strip() if d.findall('.//a:t',ns) else '' for d in ser.findall('c:dLbls/c:dLbl',ns)}
+                        for point,(mark,test) in enumerate(zip(source['marks'],source['tests'])):
+                            ok(f'significance label {i}/{j}/{k}/{point}',labels.get(point,'')==mark)
+                            if test is None:continue
+                            q=test['q_bh'];h=test.get('p_holm')
+                            if test['reference']=='spline_pca':
+                                r=comparison('spline_pca',test['model'],test['n'],test['metric'],test['geometry'])
+                                q=float(r['q_bh_80' if test['geometry'] else 'q_bh_140'])
+                                h=float(r['p_holm_80' if test['geometry'] else 'p_holm_140'])
+                            else:
+                                source_csv=OUT/'audit_2026_09_08/uvae8_fingerprint_paired.csv' if test['model']=='unconditional_vae' else ROOT/'studies/review_corrected_evaluation/results/review_controls/fingerprint_paired.csv'
+                                rows=pd.read_csv(source_csv)
+                                if test['model']=='cvae':rows=rows[rows.latent_dim==test['n']]
+                                r=rows[(rows.control==test['control'])&(rows.metric==test['metric'])].iloc[0]
+                                q=float(r['q_bh_6' if test['model']=='unconditional_vae' else 'p_fdr_bh'])
+                            expected_mark=('*' if q<.05 else 'ns') if h is None else ('*' if q<.05 and h<.05 else '†' if q<.05 else 'ns')
+                            ok(f'saved paired test marker {i}/{j}/{k}/{point}',mark==expected_mark and abs(q-test['q_bh'])<1e-14)
+
                     ok(f'editable workbook {i}/{j}',chart.find('c:externalData',ns) is not None);chart_count+=1
     outputs={}
     for file,count in [('8_pages_draft.pdf',8),('Course_Report_Appendix.pdf',14),('10_min_presentation.pdf',10),('Course_Methods_Explanations.pdf',16)]:

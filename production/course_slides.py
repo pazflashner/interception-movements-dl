@@ -50,7 +50,7 @@ def make_slides():
     assert sum(s['seconds'] for s in slides)==540
     (OUT/'course_slides.json').write_text(json.dumps(slides,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
     notes=['# Presentation notes\n','Slides 1–10 form a nine-minute planned talk including an 80-second demo. One minute remains for transitions. Detailed question explanations are in Course_Methods_Explanations.pdf, separate from the PPTX.\n']
-    for i,s in enumerate(slides,1):notes.extend([f'## {i}. {s["title"]}\n',f'Planned time: {s["seconds"]} seconds.\n' if not s['backup'] else 'Backup only.\n',s['notes']+'\n'])
+    for i,s in enumerate(slides,1):notes.extend([f'## {i}. {s["title"]}\n',f'Presenter: {s["presenter"]}. Planned time: {s["seconds"]} seconds.\n' if not s['backup'] else 'Backup only.\n',s['notes']+'\n'])
     (OUT/'Course_Presentation_Speaker_Notes.md').write_text('\n'.join(notes),encoding='utf-8')
     return slides
 

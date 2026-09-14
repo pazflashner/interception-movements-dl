@@ -1,6 +1,7 @@
 // Run using the bundled artifact-tool runtime; see production/README.md.
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import {execFileSync} from 'node:child_process';
 import {pathToFileURL} from 'node:url';
 
 const root=process.env.COURSE_REPO;
@@ -26,7 +27,8 @@ async function pic(s,file,x,y,w,h,alt){
 const owners=[],chartOwners=[];
 function chart(s,d,x,y,w,h){
   text(s,d.title,x,y,w,32,23,true);
-  const c=s.charts.add('bar',{position:{left:x,top:y+40,width:w,height:h-40},categories:d.categories,series:d.series,
+  text(s,d.annotation_key,x,y+29,w,21,14,false,'#737E8B');
+  const c=s.charts.add('bar',{position:{left:x,top:y+56,width:w,height:h-56},categories:d.categories,series:d.series.map(({marks,tests,...a})=>({...a,dataLabelOverrides:marks.map((label,idx)=>({idx,text:label||' ',position:'outEnd',showValue:false,showSeriesName:false,showCategoryName:false,textStyle:{typeface:font,fontSize:18,fill:'#161E2E'}}))})),
     barOptions:{direction:'column',grouping:'clustered',gapWidth:85},hasLegend:true,
     legend:{position:'bottom',textStyle:{fontSize:18,fill:'#161E2E'}},
     xAxis:{textStyle:{fontSize:18,fill:'#161E2E'}},
@@ -44,7 +46,21 @@ for(let i=0;i<content.length;i++){
   let y=164;
   if(i===0){text(s,d.body,58,310,1100,165,27,false,'#A3B2C6');text(s,d.caption,58,530,1110,90,29,true,'#3EB1EC');}
   else {
-    if(d.layout==='wide_image'){
+    if(d.layout==='question'){
+      text(s,d.body,58,163,1160,70,29);
+      for(let j=0;j<2;j++){
+        const x=58+j*600;
+        s.shapes.add({geometry:'rect',position:{left:x,top:267,width:560,height:285},fill:j?'#EAF7EE':'#EFF5FC',line:{fill:'none',width:0}});
+        text(s,d.columns[j].title,x+24,285,510,48,32,true,j?'#1D7A3E':'#1B6FEA');
+        text(s,d.columns[j].text,x+24,350,510,185,26);
+      }
+    }else if(d.layout==='data_features'){
+      text(s,d.body,58,161,1160,65,25);
+      await pic(s,d.image,58,245,620,325,'Experimental task and recorded movements');
+      text(s,'The eleven kinematic features',720,237,498,35,27,true);
+      let yy=284;
+      for(const [title,detail] of d.features){text(s,title,720,yy,490,28,21,true,'#1B6FEA');text(s,detail,720,yy+28,490,55,21);yy+=77;}
+    }else if(d.layout==='wide_image'){
       text(s,d.body,58,161,1160,65,25);await pic(s,d.image,58,238,1160,354,'Recorded movement examples and model outputs');
     }else if(d.layout==='image_chart'){
       text(s,d.body,58,161,1160,60,25);await pic(s,d.image,58,230,720,352,'Recorded and modeled trajectories or feature distributions');
@@ -70,7 +86,7 @@ for(let i=0;i<content.length;i++){
         const rh=rows>8?35:rows>6?44:52;
         const h=rows*rh;
         if(y+h>585) y=Math.min(y,585-h);
-        const weights=[2,13].includes(i)?[.18,.41,.41]:i===18?[.22,.78]:cols===2?[.69,.31]:cols===3?[.46,.27,.27]:cols===4?[.30,.17,.265,.265]:[.30,...Array(cols-1).fill(.70/(cols-1))];
+        const weights=(d.table[0][0]==='Stage'||[13].includes(i))?[.18,.41,.41]:i===18?[.22,.78]:cols===2?[.69,.31]:cols===3?[.46,.27,.27]:cols===4?[.30,.17,.265,.265]:[.30,...Array(cols-1).fill(.70/(cols-1))];
         const t=s.tables.add({rows,columns:cols,left:58,top:y,width:1160,height:h,columnWidths:weights.map(w=>w*1160),values:d.table});
         t.cells.block({row:0,column:0,rowCount:rows,columnCount:cols}).assign({textStyle:{typeface:font,fontSize:rows>8?23:22,color:'#161E2E'},margins:{left:12,right:10,top:rows>8?4:7,bottom:rows>8?4:6},anchor:'center'});
         for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
@@ -85,7 +101,7 @@ for(let i=0;i<content.length;i++){
     text(s,d.caption,72,609,1136,62,19,false,'#3D4756');
   }
   text(s,`${i+1} / ${content.length}`,1160,690,70,20,14,false,i===0?'#A3B2C6':'#737E8B');
-  s.speakerNotes.textFrame.setText(d.notes+`\nSuggested duration: ${d.seconds} seconds. Design reference: Paz Flashner's production/presentation_styled.pdf. Content: course report and evidence tables.`);
+  s.speakerNotes.textFrame.setText(`Presenter: ${d.presenter}.\n`+d.notes+`\nSuggested duration: ${d.seconds} seconds. Design reference: Paz Flashner's production/presentation_styled.pdf. Content: course report and evidence tables.`);
 }
 const candidate=path.join(stage,'candidate.pptx');
 await(await PresentationFile.exportPptx(p)).save(candidate);
@@ -96,11 +112,6 @@ await finalizePresentation({workspaceDir:stage,candidatePath:candidate,finalPath
  layoutArgs:['--expected-slide-size-emu','12192000,6858000','--validate-heading-fit','--validate-bullet-geometry',...owners.flatMap(n=>['--require-native-table-slide',String(n)])],
  requiredNativeTableOwnerSlides:owners,requiredNativeChartOwnerSlides:chartOwners,fontPolicy:{basis:'design',families:[font]},verifyArtifactToolImport:true,receiptPath:path.join(stage,path.basename(final)+'.validation.json')});
 
-for(let i=0;i<p.slides.items.length;i++){
- const slide=p.slides.items[i];
- const img=await p.export({slide,format:'png',scale:1});
- await fs.writeFile(path.join(stage,`slide-${String(i+1).padStart(2,'0')}.png`),new Uint8Array(await img.arrayBuffer()));
- console.log(`Rendered ${i+1}/${content.length}`);
-}
+execFileSync('powershell.exe',['-NoProfile','-ExecutionPolicy','Bypass','-File',path.join(root,'production/render_course_powerpoint.ps1'),'-DeckPath',final,'-RenderDirectory',stage],{stdio:'inherit'});
 await fs.copyFile(final,path.join(root,'production/Interception_Movements_Course_Presentation.pptx'));
 console.log('Editable presentation exported and finalized.');
