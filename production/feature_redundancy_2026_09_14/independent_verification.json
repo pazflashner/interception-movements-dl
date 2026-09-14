@@ -1,0 +1,9 @@
+{
+  "paired_tests_recomputed": 72,
+  "correlation_pairs_recomputed": 220,
+  "training_splits_checked": 4,
+  "decoded_feature_cases": 16,
+  "max_correlation_difference": 3.3306690738754696e-16,
+  "max_score_difference": 1.3877787807814457e-16,
+  "claims_verified": true
+}

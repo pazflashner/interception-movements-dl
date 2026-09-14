@@ -1,0 +1,454 @@
+[
+  {
+    "fold": 0,
+    "train_subjects": [
+      "subject01",
+      "subject02",
+      "subject04",
+      "subject08",
+      "subject11",
+      "subject15",
+      "subject18",
+      "subject21",
+      "subject22",
+      "subject23",
+      "subject25",
+      "subject26",
+      "subject36",
+      "subject37",
+      "subject40",
+      "subject41",
+      "subject43"
+    ],
+    "n_train_trials": 2774,
+    "retained": [
+      "initiation_time_s",
+      "movement_time_s",
+      "peak_speed_tracker_units_s",
+      "time_to_peak_speed",
+      "path_length",
+      "curvature_index",
+      "max_lateral_deviation",
+      "n_submovements",
+      "end_x"
+    ],
+    "decisions": [
+      {
+        "feature": "initiation_time_s",
+        "retained": true,
+        "representative": null,
+        "pooled_rho": null,
+        "median_within_rho": null
+      },
+      {
+        "feature": "movement_time_s",
+        "retained": true,
+        "representative": null,
+        "pooled_rho": null,
+        "median_within_rho": null
+      },
+      {
+        "feature": "peak_speed_tracker_units_s",
+        "retained": true,
+        "representative": null,
+        "pooled_rho": null,
+        "median_within_rho": null
+      },
+      {
+        "feature": "time_to_peak_speed",
+        "retained": true,
+        "representative": null,
+        "pooled_rho": null,
+        "median_within_rho": null
+      },
+      {
+        "feature": "path_length",
+        "retained": true,
+        "representative": null,
+        "pooled_rho": null,
+        "median_within_rho": null
+      },
+      {
+        "feature": "curvature_index",
+        "retained": true,
+        "representative": null,
+        "pooled_rho": null,
+        "median_within_rho": null
+      },
+      {
+        "feature": "max_lateral_deviation",
+        "retained": true,
+        "representative": null,
+        "pooled_rho": null,
+        "median_within_rho": null
+      },
+      {
+        "feature": "n_submovements",
+        "retained": true,
+        "representative": null,
+        "pooled_rho": null,
+        "median_within_rho": null
+      },
+      {
+        "feature": "end_x",
+        "retained": true,
+        "representative": null,
+        "pooled_rho": null,
+        "median_within_rho": null
+      },
+      {
+        "feature": "straight_line_dist",
+        "retained": false,
+        "representative": "path_length",
+        "pooled_rho": 0.9397884684813045,
+        "median_within_rho": 0.9576303795384631
+      },
+      {
+        "feature": "end_y",
+        "retained": false,
+        "representative": "path_length",
+        "pooled_rho": 0.9421704300277398,
+        "median_within_rho": 0.9592799030565075
+      }
+    ]
+  },
+  {
+    "fold": 1,
+    "train_subjects": [
+      "subject01",
+      "subject04",
+      "subject05",
+      "subject11",
+      "subject12",
+      "subject13",
+      "subject15",
+      "subject19",
+      "subject22",
+      "subject24",
+      "subject27",
+      "subject30",
+      "subject33",
+      "subject34",
+      "subject35",
+      "subject37",
+      "subject40"
+    ],
+    "n_train_trials": 3032,
+    "retained": [
+      "initiation_time_s",
+      "movement_time_s",
+      "peak_speed_tracker_units_s",
+      "time_to_peak_speed",
+      "path_length",
+      "curvature_index",
+      "max_lateral_deviation",
+      "n_submovements",
+      "end_x"
+    ],
+    "decisions": [
+      {
+        "feature": "initiation_time_s",
+        "retained": true,
+        "representative": null,
+        "pooled_rho": null,
+        "median_within_rho": null
+      },
+      {
+        "feature": "movement_time_s",
+        "retained": true,
+        "representative": null,
+        "pooled_rho": null,
+        "median_within_rho": null
+      },
+      {
+        "feature": "peak_speed_tracker_units_s",
+        "retained": true,
+        "representative": null,
+        "pooled_rho": null,
+        "median_within_rho": null
+      },
+      {
+        "feature": "time_to_peak_speed",
+        "retained": true,
+        "representative": null,
+        "pooled_rho": null,
+        "median_within_rho": null
+      },
+      {
+        "feature": "path_length",
+        "retained": true,
+        "representative": null,
+        "pooled_rho": null,
+        "median_within_rho": null
+      },
+      {
+        "feature": "curvature_index",
+        "retained": true,
+        "representative": null,
+        "pooled_rho": null,
+        "median_within_rho": null
+      },
+      {
+        "feature": "max_lateral_deviation",
+        "retained": true,
+        "representative": null,
+        "pooled_rho": null,
+        "median_within_rho": null
+      },
+      {
+        "feature": "n_submovements",
+        "retained": true,
+        "representative": null,
+        "pooled_rho": null,
+        "median_within_rho": null
+      },
+      {
+        "feature": "end_x",
+        "retained": true,
+        "representative": null,
+        "pooled_rho": null,
+        "median_within_rho": null
+      },
+      {
+        "feature": "straight_line_dist",
+        "retained": false,
+        "representative": "path_length",
+        "pooled_rho": 0.9705092390105708,
+        "median_within_rho": 0.9775151053478991
+      },
+      {
+        "feature": "end_y",
+        "retained": false,
+        "representative": "path_length",
+        "pooled_rho": 0.9686421341712954,
+        "median_within_rho": 0.982057530167414
+      }
+    ]
+  },
+  {
+    "fold": 2,
+    "train_subjects": [
+      "subject02",
+      "subject05",
+      "subject08",
+      "subject11",
+      "subject18",
+      "subject19",
+      "subject22",
+      "subject24",
+      "subject25",
+      "subject26",
+      "subject27",
+      "subject30",
+      "subject33",
+      "subject35",
+      "subject40",
+      "subject41",
+      "subject43"
+    ],
+    "n_train_trials": 2757,
+    "retained": [
+      "initiation_time_s",
+      "movement_time_s",
+      "peak_speed_tracker_units_s",
+      "time_to_peak_speed",
+      "path_length",
+      "curvature_index",
+      "max_lateral_deviation",
+      "n_submovements",
+      "end_x"
+    ],
+    "decisions": [
+      {
+        "feature": "initiation_time_s",
+        "retained": true,
+        "representative": null,
+        "pooled_rho": null,
+        "median_within_rho": null
+      },
+      {
+        "feature": "movement_time_s",
+        "retained": true,
+        "representative": null,
+        "pooled_rho": null,
+        "median_within_rho": null
+      },
+      {
+        "feature": "peak_speed_tracker_units_s",
+        "retained": true,
+        "representative": null,
+        "pooled_rho": null,
+        "median_within_rho": null
+      },
+      {
+        "feature": "time_to_peak_speed",
+        "retained": true,
+        "representative": null,
+        "pooled_rho": null,
+        "median_within_rho": null
+      },
+      {
+        "feature": "path_length",
+        "retained": true,
+        "representative": null,
+        "pooled_rho": null,
+        "median_within_rho": null
+      },
+      {
+        "feature": "curvature_index",
+        "retained": true,
+        "representative": null,
+        "pooled_rho": null,
+        "median_within_rho": null
+      },
+      {
+        "feature": "max_lateral_deviation",
+        "retained": true,
+        "representative": null,
+        "pooled_rho": null,
+        "median_within_rho": null
+      },
+      {
+        "feature": "n_submovements",
+        "retained": true,
+        "representative": null,
+        "pooled_rho": null,
+        "median_within_rho": null
+      },
+      {
+        "feature": "end_x",
+        "retained": true,
+        "representative": null,
+        "pooled_rho": null,
+        "median_within_rho": null
+      },
+      {
+        "feature": "straight_line_dist",
+        "retained": false,
+        "representative": "path_length",
+        "pooled_rho": 0.9326895096988911,
+        "median_within_rho": 0.952928297755884
+      },
+      {
+        "feature": "end_y",
+        "retained": false,
+        "representative": "path_length",
+        "pooled_rho": 0.9343833291625743,
+        "median_within_rho": 0.9562123700054734
+      }
+    ]
+  },
+  {
+    "fold": 3,
+    "train_subjects": [
+      "subject04",
+      "subject05",
+      "subject12",
+      "subject13",
+      "subject18",
+      "subject19",
+      "subject21",
+      "subject23",
+      "subject24",
+      "subject25",
+      "subject26",
+      "subject27",
+      "subject34",
+      "subject35",
+      "subject36",
+      "subject41",
+      "subject43"
+    ],
+    "n_train_trials": 2885,
+    "retained": [
+      "initiation_time_s",
+      "movement_time_s",
+      "peak_speed_tracker_units_s",
+      "time_to_peak_speed",
+      "path_length",
+      "curvature_index",
+      "max_lateral_deviation",
+      "n_submovements",
+      "end_x"
+    ],
+    "decisions": [
+      {
+        "feature": "initiation_time_s",
+        "retained": true,
+        "representative": null,
+        "pooled_rho": null,
+        "median_within_rho": null
+      },
+      {
+        "feature": "movement_time_s",
+        "retained": true,
+        "representative": null,
+        "pooled_rho": null,
+        "median_within_rho": null
+      },
+      {
+        "feature": "peak_speed_tracker_units_s",
+        "retained": true,
+        "representative": null,
+        "pooled_rho": null,
+        "median_within_rho": null
+      },
+      {
+        "feature": "time_to_peak_speed",
+        "retained": true,
+        "representative": null,
+        "pooled_rho": null,
+        "median_within_rho": null
+      },
+      {
+        "feature": "path_length",
+        "retained": true,
+        "representative": null,
+        "pooled_rho": null,
+        "median_within_rho": null
+      },
+      {
+        "feature": "curvature_index",
+        "retained": true,
+        "representative": null,
+        "pooled_rho": null,
+        "median_within_rho": null
+      },
+      {
+        "feature": "max_lateral_deviation",
+        "retained": true,
+        "representative": null,
+        "pooled_rho": null,
+        "median_within_rho": null
+      },
+      {
+        "feature": "n_submovements",
+        "retained": true,
+        "representative": null,
+        "pooled_rho": null,
+        "median_within_rho": null
+      },
+      {
+        "feature": "end_x",
+        "retained": true,
+        "representative": null,
+        "pooled_rho": null,
+        "median_within_rho": null
+      },
+      {
+        "feature": "straight_line_dist",
+        "retained": false,
+        "representative": "path_length",
+        "pooled_rho": 0.9625651182683708,
+        "median_within_rho": 0.9655314390767813
+      },
+      {
+        "feature": "end_y",
+        "retained": false,
+        "representative": "path_length",
+        "pooled_rho": 0.9627421595502227,
+        "median_within_rho": 0.9638845061701469
+      }
+    ]
+  }
+]

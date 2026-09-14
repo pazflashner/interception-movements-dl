@@ -74,3 +74,10 @@ generation, decomposition, training, and report commands can overwrite outputs.
 Superseded standalone training/report/dashboard packaging entry points were
 moved unchanged to `../archive/pre_confirmatory_2026-09-02/`. Their historical
 root-relative paths are not maintained as runnable commands in the archive.
+
+### Feature redundancy sensitivity
+
+`analyze_feature_redundancy.py` screens correlations only on training participants
+and repeats frozen-generation scoring with nine features. It retains the
+original eleven-feature results and corrects all 72 sensitivity comparisons
+together. See `production/feature_redundancy_2026_09_14/README.md`.

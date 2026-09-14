@@ -18,3 +18,26 @@ These are plotted measurements/model outputs, not generated illustrations.
 The original task illustration is retained separately in `presentation_assets/`.
 Typeset equations are regenerated from `report_equations.py` in the ignored
 assets directory and embedded in the report and presentation.
+
+## Visual revision
+
+`python -m production.course_visuals` regenerates these measured-data figures
+using the original local trials, frozen checkpoints and generation caches:
+
+- `task_and_recordings.png`: supplied task illustration and all 180 subject01 paths.
+- `reconstruction_examples.png`: all four models, both dimensions, one trial
+  selected by identifier and median modeled duration before inspecting errors.
+- `reconstruction_phase.png`: the same trial versus normalized time for spline/VAE.
+- `generation_both_dimensions.png`: recorded query and generated clouds for n=3/8.
+- `features_selected_n3.png`, `features_selected_n8.png`: four ECDFs selected by
+  scientific meaning (timing, speed, curvature), not by model performance.
+- `features_all_n3.png`, `features_all_n8.png`: all eleven feature ECDFs.
+- `reconstruction_slide.png`: larger slide view of spline and VAE at both capacities;
+  the adjacent native chart compares all four models.
+- `generation_slide_n8.png`: larger one-row slide view of all four models at n=8.
+- `visual_examples_provenance.json`: trial identifiers, selection and per-example MSE.
+
+Generated and recorded clouds show the first 30 stored paths, with means over
+all 120 generated or 90 query paths. Examples use subject01, fold2 and neural
+seed42. All x-y panels use equal spatial scale. Numerical tables and tests use
+all participants and seeds; the plotted example does not determine significance.

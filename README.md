@@ -27,7 +27,8 @@ secondary, model-order-sensitive kinematic analysis.
   [methods appendix](production/Course_Report_Appendix.pdf),
   [editable presentation](production/Interception_Movements_Course_Presentation.pptx)
   and [presentation PDF](production/10_min_presentation.pdf).
-  The deck has 10 main slides and 15 question backups. Read the
+  The deck contains only 10 main slides. Detailed Q&A is in the separate
+  [methods explanation PDF](production/Course_Methods_Explanations.pdf). Read the
   [delivery and rebuild guide](production/COURSE_DELIVERY.md).
 - **New readers:** use the setup instructions below, then follow the
   [source map](src/README.md) and [script map](scripts/README.md).

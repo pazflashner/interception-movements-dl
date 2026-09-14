@@ -11,7 +11,8 @@ from pypdf import PdfReader
 from reports.article_layout import Article
 from production.course_evidence import *
 from production.course_figures import prepare_figures
-from production.course_manuscript import write_main,write_appendix
+from production.course_main_visual import write_main
+from production.course_manuscript import write_appendix
 
 def build():
     check_frozen()
@@ -19,7 +20,7 @@ def build():
     records={}
     for filename,title,writer,expected in [
         ('8_pages_draft.pdf','Compact Generative Models of Human Interception Movements',write_main,8),
-        ('Course_Report_Appendix.pdf','Supplementary Methods and Results',write_appendix,10)]:
+        ('Course_Report_Appendix.pdf','Supplementary Methods and Results',write_appendix,14)]:
         a=Article(OUT/filename,title,'Seman Libbiss and Paz Flashner<br/>Workshop on Deep Learning, Tel Aviv University<br/>Research supervision: Jason Friedman; course advisor: Moni Shahar')
         a.styles['body'].fontSize=10.2;a.styles['body'].leading=12.5;a.styles['body'].spaceAfter=5
         a.styles['heading'].spaceBefore=9;a.styles['heading'].spaceAfter=5

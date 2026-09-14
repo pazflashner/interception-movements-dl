@@ -1,0 +1,18 @@
+{
+  "version": "training-feature-redundancy-v1",
+  "status": "Exploratory sensitivity specified before calculating feature correlations and reduced-feature scores; not a preregistered study",
+  "selection_data": "Only the 17 training participants in each original rotation; no validation or test outcomes and no model scores",
+  "correlation": "Spearman correlation pooled over training trials, plus median signed Spearman correlation calculated separately within each training participant",
+  "rule": "Greedy selection in the fixed feature order below. Drop a feature if an already retained feature has absolute pooled and absolute median within-participant rho both at least 0.90, with the same sign. Nonfinite correlations do not establish redundancy.",
+  "priority": ["initiation_time_s", "movement_time_s", "peak_speed_tracker_units_s", "time_to_peak_speed", "path_length", "curvature_index", "max_lateral_deviation", "n_submovements", "end_x", "straight_line_dist", "end_y"],
+  "priority_reason": "Retain timing, speed and distinct shape summaries before potentially overlapping displacement/end-y measures; use path length as the preferred overall extent measure. Priority is a transparent design choice, not a finding about which feature is scientifically dispensable.",
+  "models": ["spline_pca", "conditional_ae", "cvae", "unconditional_vae"],
+  "dimensions": [3, 8],
+  "folds": [0, 1, 2, 3],
+  "neural_seeds": [42, 43, 44],
+  "generation": "Reproduce frozen 120-per-person generations and original eleven-feature distances; no retraining, no change to timing or path processing",
+  "endpoints": ["mean_ks", "energy_distance", "mmd_rbf"],
+  "geometry": "For the retained feature list in each rotation, refit only the original training feature scales and training median-distance bandwidth",
+  "inference": "Average seeds within each of 28 participants. Two-sided Pratt Wilcoxon with 12-decimal differences. BH and Holm across 72 tests together: 6 compact-model pairs x 2 capacities x 3 metrics x 2 feature views (original and reduced). No test of which feature view produces smaller absolute distances.",
+  "limits": "Correlation does not prove interchangeability or lack of scientific information. Distances from different feature sets have different geometry and must not be interpreted as accuracy improvements. Historical BH-140 results stay unchanged. No feature is removed from the primary report or dashboard based on this sensitivity alone."
+}

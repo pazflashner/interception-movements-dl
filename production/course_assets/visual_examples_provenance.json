@@ -1,0 +1,81 @@
+{
+  "reconstruction_selection": "First participant in identifier order; lower median trial duration, ties ordered by trial ID; no model-error selection.",
+  "reconstruction_examples": [
+    {
+      "model": "spline_pca",
+      "n": 3,
+      "subject": "subject01",
+      "fold": 2,
+      "seed": null,
+      "trial_id": "subject01_li_2_2_1_26",
+      "mse": 0.07658569189126392
+    },
+    {
+      "model": "conditional_ae",
+      "n": 3,
+      "subject": "subject01",
+      "fold": 2,
+      "seed": 42,
+      "trial_id": "subject01_li_2_2_1_26",
+      "mse": 0.16937786699757726
+    },
+    {
+      "model": "cvae",
+      "n": 3,
+      "subject": "subject01",
+      "fold": 2,
+      "seed": 42,
+      "trial_id": "subject01_li_2_2_1_26",
+      "mse": 0.13723830331428347
+    },
+    {
+      "model": "unconditional_vae",
+      "n": 3,
+      "subject": "subject01",
+      "fold": 2,
+      "seed": 42,
+      "trial_id": "subject01_li_2_2_1_26",
+      "mse": 0.19154192468874412
+    },
+    {
+      "model": "spline_pca",
+      "n": 8,
+      "subject": "subject01",
+      "fold": 2,
+      "seed": null,
+      "trial_id": "subject01_li_2_2_1_26",
+      "mse": 0.012699633481718485
+    },
+    {
+      "model": "conditional_ae",
+      "n": 8,
+      "subject": "subject01",
+      "fold": 2,
+      "seed": 42,
+      "trial_id": "subject01_li_2_2_1_26",
+      "mse": 0.028628706409793092
+    },
+    {
+      "model": "cvae",
+      "n": 8,
+      "subject": "subject01",
+      "fold": 2,
+      "seed": 42,
+      "trial_id": "subject01_li_2_2_1_26",
+      "mse": 0.038391938280634405
+    },
+    {
+      "model": "unconditional_vae",
+      "n": 8,
+      "subject": "subject01",
+      "fold": 2,
+      "seed": 42,
+      "trial_id": "subject01_li_2_2_1_26",
+      "mse": 0.038960339219224246
+    }
+  ],
+  "generation_subject": "subject01",
+  "generation_selection": "First 30 stored draws and query paths; identifier-selected participant; no ranking of generation error",
+  "feature_panels": "Timing, peak speed and curvature selected for distinct scientific meanings, not goodness of fit",
+  "equal_xy_axes": true
+}

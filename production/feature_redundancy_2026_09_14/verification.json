@@ -1,0 +1,15 @@
+{
+  "unchanged_checkpoints": 96,
+  "neural_training": false,
+  "model_person_seed_evaluations": 560,
+  "feature_view_evaluations": 1120,
+  "max_original_score_reproduction_error": 4.440892098500626e-16,
+  "paired_tests": 72,
+  "training_only_feature_selection": true,
+  "retained_counts": [
+    9,
+    9,
+    9,
+    9
+  ]
+}

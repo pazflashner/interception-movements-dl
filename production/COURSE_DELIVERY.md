@@ -7,14 +7,16 @@ controls, dashboard and discussion. **Course_Report_Appendix.pdf** supplies the
 matrix dimensions, loss, sampling covariance, feature definitions, statistical
 estimators, corrected comparisons, secondary findings and red questions for Jason.
 
-**Interception_Movements_Course_Presentation.pptx** is editable. Tables and text
-are native PowerPoint objects; typeset equations and scientific path plots are
-images. Speaker notes explain the code and inference in plain language.
+**Interception_Movements_Course_Presentation.pptx** is editable. Tables, text and five charts
+are native PowerPoint objects. Each chart includes an editable data workbook;
+chart display data are rounded to six decimals while research CSVs retain full
+precision. Scientific trajectories and feature curves are measured-data images. Speaker notes explain the code and inference in plain language.
 **10_min_presentation.pdf** contains the exact rendered slide views.
 
 Slides 1–10 have a planned nine-minute duration, including an 80-second dashboard
-demonstration. The remaining minute allows transitions. Slides 11–25 are backups
-for questions, not additional material to rush through during the talk.
+demonstration. The remaining minute allows transitions. There are no backup slides in the PPTX.
+**Course_Methods_Explanations.pdf** holds all 15 former backup topics plus the
+feature-redundancy explanation, separately from the ten-slide presentation.
 **Course_Presentation_Speaker_Notes.md** contains the same notes without requiring
 PowerPoint. Practice is still needed to check the actual timing.
 
@@ -34,8 +36,8 @@ PowerPoint. Practice is still needed to check the actual timing.
 
 The 31-page laboratory PDF is unchanged (SHA-256
 `a1461d66e8034810342be4b89d9ed8e759e79db31c9f2a65d385f51c54b3ba2a`).
-No training code, model checkpoints or analysis score tables were changed for
-this delivery. Paz's prior drafts remain in Git at d03beb2, and a local copy is
+No training code, model checkpoints or historical analysis score tables changed.
+A new training-only feature-redundancy sensitivity is saved separately. Paz's prior drafts remain in Git at d03beb2, and a local copy is
 in the ignored `production/archive/course_before_2026_09_14/` directory.
 
 ## Rebuild
@@ -51,8 +53,11 @@ The first command builds the paper and appendix using Python, reportlab,
 matplotlib, pandas, numpy, Pillow and pypdf. Scientific figures are retained in
 `course_assets/`, so a fresh checkout does not need the private decoded arrays
 merely to rebuild the paper. To regenerate those path figures from actual
-decoded arrays, run `python -m production.course_figures`; it requires the local
-`assets/trajectory_distribution_2026_09_13/` cache from the analysis.
+decoded arrays, run `python -m production.course_figures` for the original
+figures or `python -m production.course_visuals` for the visual revision. The
+latter requires original trials, frozen checkpoints, and both local generation
+caches under `assets/trajectory_distribution_2026_09_13/` and
+`assets/feature_redundancy_2026_09_14/`.
 
 The presentation builder uses the Codex bundled Node artifact-tool runtime and
 its validators, plus Python for the slide PDF. Defaults locate the installed
@@ -63,15 +68,22 @@ builder, which describes the previous report scope.
 
 Authoring files:
 
-- `course_manuscript.py`: report and appendix prose.
+- `course_main_visual.py`: eight-page main report prose.
+- `course_manuscript.py`: detailed appendix A1-A10.
+- `course_visual_appendix.py`: redundancy analysis and additional visual examples.
 - `course_evidence.py`: authoritative CSV reads and matched comparison lookup.
-- `course_figures.py`: scientific figures from saved evidence.
-- `course_slides.py`: slide text, sourced tables, notes and timing.
+- `course_figures.py`: original scientific figures from saved evidence.
+- `course_visuals.py`: reconstruction overlays, generated paths and feature ECDFs.
+- `course_slides.py`: base text, sourced tables, notes and timing.
+- `course_visual_slides.py`: visual main talk and separate explanation PDF.
+- `course_explanations.json`: detailed Q&A excluded from the actual deck.
 - `course_slides.json`: generated portable slide content.
 - `build_course_report.py`: paper layout and eight-page assertion.
 - `build_course_slides.py` / `build_course_presentation.mjs`: PPTX and PDF export.
 - `verify_course_delivery.py`: checks headline claims, native table values,
   notes, page counts, all 80 trajectory tests and sample decoded-array metrics.
+- `verify_feature_redundancy.py`: independent checks of the 72-test sensitivity,
+  all training correlations and selected decoded-feature metrics.
   Its full audit requires local checkpoints and decoded arrays.
 
 `COURSE_DELIVERY_VERIFICATION.json` records the final numerical/artifact checks.
@@ -94,3 +106,17 @@ The equations describe this code's implementation. Method references include
 Szekely and Rizzo (2013), and Benjamini and Hochberg (1995).
 These references support the general methods; they do not establish the validity
 of our chosen personal-center heuristic or our experimental findings.
+
+## Visual revision
+
+The main paper remains eight pages with five figures. Detailed equations remain
+in the 14-page appendix, alongside all eleven feature curves at n=3 and n=8.
+The main methods retain the N-by-18 spline coefficient matrix, inverse decoding,
+neural objectives, context generation and participant-level statistical logic.
+Laboratory implementation details, including MATLAB event offsets and code
+paths, are excluded from the main submission narrative. The frozen laboratory
+report has not changed.
+
+The nine-feature sensitivity preserves VAE/CVAE over spline but no reduced
+metric significantly favors VAE over CVAE at n=8. See
+[the complete sensitivity](feature_redundancy_2026_09_14/README.md).

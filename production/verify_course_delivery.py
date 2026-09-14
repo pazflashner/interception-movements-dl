@@ -80,8 +80,12 @@ def main():
             ok(f'unchanged {name}',hashlib.sha256((ROOT/name).read_bytes()).hexdigest()==h);weights+=1
     # Exact output table cells must survive into native PPTX tables.
     slides=json.loads((OUT/'course_slides.json').read_text(encoding='utf-8'))
-    ns={'a':'http://schemas.openxmlformats.org/drawingml/2006/main'}
+    ns={'a':'http://schemas.openxmlformats.org/drawingml/2006/main','c':'http://schemas.openxmlformats.org/drawingml/2006/chart','r':'http://schemas.openxmlformats.org/officeDocument/2006/relationships'}
+    import posixpath,re
+    chart_count=0
+    ok('ten main slides only',len(slides)==10 and not any(s['backup'] for s in slides))
     with zipfile.ZipFile(OUT/'Interception_Movements_Course_Presentation.pptx') as z:
+        ok('PPTX contains exactly ten slides',len([n for n in z.namelist() if re.fullmatch(r'ppt/slides/slide\d+\.xml',n)])==10)
         for i,s in enumerate(slides,1):
             xml=ET.fromstring(z.read(f'ppt/slides/slide{i}.xml'))
             if s['table']:
@@ -90,15 +94,35 @@ def main():
                     for cell in row:ok(f'slide {i} cell {cell}',str(cell) in cells)
             notes=ET.fromstring(z.read(f'ppt/notesSlides/notesSlide{i}.xml'))
             ok(f'speaker notes slide {i}',len(''.join(notes.itertext()))>100)
+            expected=s.get('charts',[]);charts=xml.findall('.//c:chart',ns)
+            ok(f'chart count slide {i}',len(charts)==len(expected))
+            if charts:
+                rels=ET.fromstring(z.read(f'ppt/slides/_rels/slide{i}.xml.rels'))
+                targets={r.attrib['Id']:r.attrib['Target'] for r in rels}
+                for j,(node,data) in enumerate(zip(charts,expected)):
+                    target=posixpath.normpath(posixpath.join('ppt/slides',targets[node.attrib['{'+ns['r']+'}id']])).lstrip('/')
+                    chart=ET.fromstring(z.read(target));series=chart.findall('.//c:ser',ns)
+                    ok(f'chart series count {i}/{j}',len(series)==len(data['series']))
+                    for k,(ser,source) in enumerate(zip(series,data['series'])):
+                        numbers=[float(v.text) for v in ser.findall('.//c:val//c:pt/c:v',ns)]
+                        ok(f'chart values {i}/{j}/{k}',np.allclose(numbers,source['values'],rtol=0,atol=1e-12))
+                    ok(f'editable workbook {i}/{j}',chart.find('c:externalData',ns) is not None);chart_count+=1
     outputs={}
-    for file,count in [('8_pages_draft.pdf',8),('Course_Report_Appendix.pdf',10),('10_min_presentation.pdf',25)]:
+    for file,count in [('8_pages_draft.pdf',8),('Course_Report_Appendix.pdf',14),('10_min_presentation.pdf',10),('Course_Methods_Explanations.pdf',16)]:
         doc=PdfReader(OUT/file);ok(f'{file} page count',len(doc.pages)==count)
         outputs[file]={'pages':count,'sha256':hashlib.sha256((OUT/file).read_bytes()).hexdigest()}
     for f in ('8_pages_draft.pdf','Course_Report_Appendix.pdf'):
         txt='\n'.join(p.extract_text() for p in PdfReader(OUT/f).pages)
         ok(f'{f} no edit placeholders','[EDIT]' not in txt and '\u25a0' not in txt)
+    maintext='\n'.join(p.extract_text() for p in PdfReader(OUT/'8_pages_draft.pdf').pages)
+    ok('main report excludes laboratory implementation details',not any(x in maintext for x in ['MATLAB','26.2 ms','src/','checkpoint.pt']))
+    ok('main report includes feature sensitivity','nine' in maintext and 'redundancy' in maintext)
+    explanation=' '.join(p.extract_text() for p in PdfReader(OUT/'Course_Methods_Explanations.pdf').pages)
+    ok('explanation PDF preserves kernel and denominator minus signs','exp(-gamma' in explanation and 'm(m-1)' in explanation and 'r(r-1)' in explanation)
+    feature_checks=json.loads((OUT/'feature_redundancy_2026_09_14/independent_verification.json').read_text())
+    ok('new feature analysis independently verified',feature_checks['paired_tests_recomputed']==72 and feature_checks['claims_verified'])
     outputs['Interception_Movements_Course_Presentation.pptx']={'slides':len(slides),'sha256':hashlib.sha256((OUT/'Interception_Movements_Course_Presentation.pptx').read_bytes()).hexdigest()}
-    result={'checks_passed':len(checks),'outputs':outputs,'unchanged_checkpoints':weights,'frozen_lab_report_sha256':FROZEN_SHA,'new_trajectory_tests_recomputed':80,'decoded_array_cases_recomputed':array_cases,'maximum_distance_difference':maximum,'main_talk_seconds':sum(s['seconds'] for s in slides),'main_slides':10,'backup_slides':len(slides)-10,'checks':checks}
+    result={'checks_passed':len(checks),'outputs':outputs,'unchanged_checkpoints':weights,'frozen_lab_report_sha256':FROZEN_SHA,'new_trajectory_tests_recomputed':80,'decoded_array_cases_recomputed':array_cases,'maximum_distance_difference':maximum,'main_talk_seconds':sum(s['seconds'] for s in slides),'main_slides':10,'backup_slides':len(slides)-10,'native_charts_with_data_workbooks':chart_count,'feature_sensitivity_checks':feature_checks,'checks':checks}
     (OUT/'COURSE_DELIVERY_VERIFICATION.json').write_text(json.dumps(result,indent=2)+'\n')
     print(json.dumps({k:v for k,v in result.items() if k!='checks'},indent=2))
 

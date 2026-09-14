@@ -14,6 +14,7 @@ await fs.mkdir(out,{recursive:true});
 const content=JSON.parse(await fs.readFile(path.join(root,'production/course_slides.json'),'utf8'));
 const p=Presentation.create({slideSize:{width:1280,height:720}});
 const font='Arial';
+const {applyPresentationChartFont}=await import(pathToFileURL(path.join(skill,'container_tools/artifact_tool_utils.mjs')).href);
 function text(s,value,x,y,w,h,size=26,bold=false,color='#18384B'){
   const sh=s.shapes.add({geometry:'textbox',position:{left:x,top:y,width:w,height:h},fill:'none',line:{fill:'none',width:0}});
   sh.text=value;sh.text.style={typeface:font,fontSize:size,bold,color,autoFit:'none'};return sh;
@@ -22,7 +23,16 @@ async function pic(s,file,x,y,w,h,alt){
   file=path.resolve(root,file);
   s.images.add({blob:new Uint8Array(await fs.readFile(file)),contentType:'image/png',alt,fit:'contain',position:{left:x,top:y,width:w,height:h}});
 }
-const owners=[];
+const owners=[],chartOwners=[];
+function chart(s,d,x,y,w,h){
+  text(s,d.title,x,y,w,32,23,true);
+  const c=s.charts.add('bar',{position:{left:x,top:y+40,width:w,height:h-40},categories:d.categories,series:d.series,
+    barOptions:{direction:'column',grouping:'clustered',gapWidth:85},hasLegend:true,
+    legend:{position:'bottom',textStyle:{fontSize:18,fill:'#18384B'}},
+    xAxis:{textStyle:{fontSize:18,fill:'#18384B'}},
+    yAxis:{min:0,numberFormatCode:'0.00',textStyle:{fontSize:16,fill:'#18384B'}},dataLabels:{showValue:false}});
+  applyPresentationChartFont(c,{fontFamily:font});
+}
 for(let i=0;i<content.length;i++){
   const d=content[i],s=p.slides.add();s.background.fill='#FFFFFF';
   text(s,d.backup?'METHODS AND STATISTICS BACKUP':'INTERCEPTION MOVEMENT MODELING',56,26,1100,24,15,true,'#087C83');
@@ -30,7 +40,17 @@ for(let i=0;i<content.length;i++){
   let y=164;
   if(i===0){text(s,d.body,58,245,1100,180,28);text(s,d.caption,58,508,1110,100,32,true,'#087C83');}
   else {
-    if(d.image&&i===1){
+    if(d.layout==='wide_image'){
+      text(s,d.body,58,161,1160,65,25);await pic(s,d.image,58,238,1160,354,'Recorded movement examples and model outputs');
+    }else if(d.layout==='image_chart'){
+      text(s,d.body,58,161,1160,60,25);await pic(s,d.image,58,230,720,352,'Recorded and modeled trajectories or feature distributions');
+      chart(s,d.charts[0],808,231,408,352);chartOwners.push(i+1);
+    }else if(d.layout==='two_charts'){
+      text(s,d.body,58,161,1160,60,25);
+      if(d.charts.length===1)chart(s,d.charts[0],160,231,960,352);
+      else d.charts.forEach((c,j)=>chart(s,c,58+j*600,231,560,352));
+      chartOwners.push(i+1);
+    }else if(d.image&&i===1){
       text(s,d.body,58,180,630,285,30);await pic(s,d.image,760,170,435,340,'Task display illustration');
     }else if(d.image){
       text(s,d.body,58,160,1160,115,25);await pic(s,d.image,60,288,1158,288,'Recorded and generated paths at equal x/y scale');
@@ -65,15 +85,16 @@ const candidate=path.join(stage,'candidate.pptx');
 await(await PresentationFile.exportPptx(p)).save(candidate);
 const {finalizePresentation}=await import(pathToFileURL(path.join(skill,'container_tools/artifact_tool_utils.mjs')).href);
 const final=path.join(out,`presentation-${Date.now()}.pptx`);
-await finalizePresentation({workspaceDir:root,candidatePath:candidate,finalPath:final,pythonExecutable:process.env.COURSE_RUNTIME_PYTHON,
+await finalizePresentation({workspaceDir:stage,candidatePath:candidate,finalPath:final,pythonExecutable:process.env.COURSE_RUNTIME_PYTHON,materializeLiteralChartWorkbooks:true,
  integrityValidatorPath:path.join(skill,'container_tools/inspect_presentation_package_integrity.py'),layoutValidatorPath:path.join(skill,'container_tools/inspect_presentation_layout_geometry.py'),
  layoutArgs:['--expected-slide-size-emu','12192000,6858000','--validate-heading-fit','--validate-bullet-geometry',...owners.flatMap(n=>['--require-native-table-slide',String(n)])],
- requiredNativeTableOwnerSlides:owners,fontPolicy:{basis:'design',families:[font]},verifyArtifactToolImport:true,receiptPath:path.join(stage,path.basename(final)+'.validation.json')});
-await fs.copyFile(final,path.join(root,'production/Interception_Movements_Course_Presentation.pptx'));
+ requiredNativeTableOwnerSlides:owners,requiredNativeChartOwnerSlides:chartOwners,fontPolicy:{basis:'design',families:[font]},verifyArtifactToolImport:true,receiptPath:path.join(stage,path.basename(final)+'.validation.json')});
+
 for(let i=0;i<p.slides.items.length;i++){
  const slide=p.slides.items[i];
  const img=await p.export({slide,format:'png',scale:1});
  await fs.writeFile(path.join(stage,`slide-${String(i+1).padStart(2,'0')}.png`),new Uint8Array(await img.arrayBuffer()));
  console.log(`Rendered ${i+1}/${content.length}`);
 }
+await fs.copyFile(final,path.join(root,'production/Interception_Movements_Course_Presentation.pptx'));
 console.log('Editable presentation exported and finalized.');

@@ -18,6 +18,8 @@ def build():
     if not node.exists() or not skill.exists():
         raise RuntimeError('Presentation authoring needs the bundled artifact-tool runtime. Set COURSE_RUNTIME_ROOT and COURSE_SLIDE_SKILL, or edit the delivered PPTX directly in PowerPoint.')
     prepare_figures();slides=make_slides()
+    from production.course_visual_slides import build_explanations
+    build_explanations()
     env=os.environ.copy();env.update(COURSE_REPO=str(ROOT),COURSE_SLIDE_SKILL=str(skill),COURSE_RUNTIME_PYTHON=str(runtime/'python/python.exe'),RUNTIME_NODE_MODULES=str(runtime/'node/node_modules'))
     subprocess.run([str(node),str(OUT/'build_course_presentation.mjs')],env=env,cwd=ROOT,check=True)
     c=canvas.Canvas(str(OUT/'10_min_presentation.pdf'),pagesize=(960,540))
@@ -28,6 +30,6 @@ def build():
         c.drawImage(str(OUT/f'assets/course_slide_build/slide-{i:02}.png'),0,0,width=960,height=540)
         key=f'slide{i}';c.bookmarkPage(key);c.addOutlineEntry(f'{i}. {s["title"]}',key,level=0)
         c.showPage()
-    c.save();print('25-page presentation PDF exported from the same slide renders.')
+    c.save();print(f'{len(slides)}-page presentation PDF exported from the same slide renders.')
 
 if __name__=='__main__':build()
