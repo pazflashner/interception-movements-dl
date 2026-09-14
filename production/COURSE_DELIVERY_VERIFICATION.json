@@ -3,15 +3,15 @@
   "outputs": {
     "8_pages_draft.pdf": {
       "pages": 8,
-      "sha256": "18480c04b0246973d11e97ef2da10f617620307ca71acf6c1651d5652b39c60c"
+      "sha256": "cdf0bcae99ec87985fc74325663741e449c3cabc2f853dd578ebafcc69563582"
     },
     "Course_Report_Appendix.pdf": {
       "pages": 14,
-      "sha256": "93f2a184356c7e152473a68097f1d31ad34c5c76a417e96bf28c1f06124c1ac8"
+      "sha256": "f563f2acb81e20ffcdaaab0db4cc721470927c886969f3897b181fb06dc175b7"
     },
     "10_min_presentation.pdf": {
       "pages": 10,
-      "sha256": "bbdc6de988195493ffbcad47ec7b1d3021b2e87d737ec15ab5fbb865f44f2ee8"
+      "sha256": "80367f823a2c75f3520bfbe417f4434e31ba20cf81f4c6fadcf97ef1da9cad14"
     },
     "Course_Methods_Explanations.pdf": {
       "pages": 16,
@@ -19,7 +19,7 @@
     },
     "Interception_Movements_Course_Presentation.pptx": {
       "slides": 10,
-      "sha256": "cb8aa16bf6ba321cc01f7ba724e6649443ab95d7113516f4da290ae8aff09a0a"
+      "sha256": "6ca7f9eab98f02eda9804449bf2c2df3c841ebd93a4966473a45afc08433532b"
     }
   },
   "unchanged_checkpoints": 96,
@@ -338,7 +338,7 @@
     "chart values 8/0/2",
     "editable workbook 8/0",
     "slide 9 cell Raw path reference",
-    "slide 9 cell Energy",
+    "slide 9 cell Energy (cm)",
     "slide 9 cell MMD\u00b2",
     "slide 9 cell VAE n=8",
     "slide 9 cell 0.0548",

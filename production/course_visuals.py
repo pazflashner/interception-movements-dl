@@ -8,7 +8,7 @@ from production.course_evidence import *
 from production.course_figures import COLORS
 
 SAVE=OUT/'course_assets'
-FEATURE_NAMES={'initiation_time_s':'Initiation time (s)','movement_time_s':'Movement time (s)','peak_speed_tracker_units_s':'Peak speed (units/s)','time_to_peak_speed':'Relative time to peak','path_length':'Path length (units)','straight_line_dist':'Straight-line distance (units)','curvature_index':'Path / straight-line distance','max_lateral_deviation':'Maximum deviation (units)','n_submovements':'Speed-peak count','end_x':'Endpoint x (units)','end_y':'Endpoint y (units)'}
+FEATURE_NAMES={'initiation_time_s':'Response time (s)','movement_time_s':'Movement time (s)','peak_speed_tracker_units_s':'Peak speed (cm/s)','time_to_peak_speed':'Relative time to peak','path_length':'Path length (cm)','straight_line_dist':'Straight-line distance (cm)','curvature_index':'Path / straight-line distance','max_lateral_deviation':'Maximum deviation (cm)','n_submovements':'Speed-peak count','end_x':'Endpoint x (cm)','end_y':'Endpoint y (cm)'}
 
 def save(fig,name):
     fig.savefig(SAVE/name,dpi=240,bbox_inches='tight');plt.close(fig)
@@ -48,7 +48,7 @@ def main():
                 ax.plot(p[:,0],p[:,1],c=COLORS[col],ls='--',lw=1.5,label='Reconstruction')
                 ax.set_aspect('equal',adjustable='box');ax.set_title(f'{LABELS[f]}, n={n}',fontsize=10)
                 ax.set_xlim(-2.8,2.8);ax.set_xticks([-2,2])
-                ax.set_xlabel('x');ax.set_ylabel('y (units)' if col==0 else '')
+                ax.set_xlabel('x');ax.set_ylabel('y (cm)' if col==0 else '')
         fig.legend(*axs[0,0].get_legend_handles_labels(),loc='outside lower center',ncol=2,frameon=False)
         save(fig,'reconstruction_examples.png')
         fig,axs=plt.subplots(1,4,figsize=(7.6,3.5),sharex=True,sharey=True,layout='constrained')
@@ -58,7 +58,7 @@ def main():
             ax.plot(p[:,0],p[:,1],c=col,ls='--',lw=1.8,label='Reconstruction')
             ax.set_aspect('equal',adjustable='box');ax.set_xlim(-2.8,2.8);ax.set_xticks([-2,2]);ax.set_xlabel('x')
             ax.set_title(f'{LABELS[f]}\nn = {n}',fontsize=12)
-        axs[0].set_ylabel('y (tracker units)')
+        axs[0].set_ylabel('y (cm)')
         fig.legend(*axs[0].get_legend_handles_labels(),loc='outside lower center',ncol=2,frameon=False)
         save(fig,'reconstruction_slide.png')
         fig,axs=plt.subplots(1,2,figsize=(7.8,2.6),layout='constrained')
@@ -67,7 +67,7 @@ def main():
             ax.plot(phase,real[:,axis],c='black',lw=1.8,label='Recorded')
             for n,ls in [(3,'--'),(8,'-')]:
                 for f,col in [('spline_pca',COLORS[0]),('unconditional_vae',COLORS[3])]:ax.plot(phase,recons[n,f][:,axis],c=col,ls=ls,lw=1.2,label=f'{LABELS[f]}, n={n}')
-            ax.set_xlabel('Normalized time (phase)');ax.set_ylabel(('x' if axis==0 else 'y')+' (units)')
+            ax.set_xlabel('Normalized time (phase)');ax.set_ylabel(('x' if axis==0 else 'y')+' (cm)')
         fig.legend(*axs[0].get_legend_handles_labels(),loc='outside lower center',ncol=3,frameon=False,fontsize=8)
         save(fig,'reconstruction_phase.png')
         fig,axs=plt.subplots(2,5,figsize=(8.4,4.8),sharex=True,sharey=True,layout='constrained')
@@ -82,21 +82,21 @@ def main():
                 ax.plot(paths.mean(0)[:,0],paths.mean(0)[:,1],c=col,lw=1.6)
                 ax.set_aspect('equal',adjustable='box');ax.set_title(f'{label}, n={n}' if label!='Recorded' else label,fontsize=9)
                 ax.set_xticks([-2,2]);ax.set_xlabel('x')
-            axs[row,0].set_ylabel(f'n={n}: y (units)')
+            axs[row,0].set_ylabel(f'n={n}: y (cm)')
         save(fig,'generation_both_dimensions.png')
         fig,axs=plt.subplots(1,5,figsize=(10.5,3.5),sharex=True,sharey=True,layout='constrained')
         for ax,paths,label,col in zip(axs,groups,['Recorded']+[LABELS[f] for f in FAMILIES],['black']+COLORS):
             for p in paths[:30]:ax.plot(p[:,0],p[:,1],c=col,lw=1,alpha=.30)
             mean=paths.mean(0);ax.plot(mean[:,0],mean[:,1],c=col,lw=1.8)
             ax.set_aspect('equal',adjustable='box');ax.set_title(label,fontsize=13);ax.set_xticks([-2,2]);ax.set_xlabel('x',fontsize=11)
-        axs[0].set_ylabel('y (tracker units)',fontsize=11)
+        axs[0].set_ylabel('y (cm)',fontsize=11)
         save(fig,'generation_slide_n8.png')
         fig,axs=plt.subplots(1,2,figsize=(7.5,2.8),layout='constrained')
         axs[0].imshow(plt.imread(OUT/'presentation_assets/task_schematic.png'));axs[0].axis('off');axs[0].set_title('Task display')
         for t in trials:
             if t['metadata']['subject']=='subject01':
                 p=t['pos_norm'];axs[1].plot(p[:,0],p[:,1],alpha=.2,c='#087c83',lw=.7)
-        axs[1].set_aspect('equal',adjustable='box');axs[1].set_title('subject01: 180 recorded trials');axs[1].set_xlabel('x (tracker units)');axs[1].set_ylabel('y (tracker units)')
+        axs[1].set_aspect('equal',adjustable='box');axs[1].set_title('subject01: 180 recorded trials');axs[1].set_xlabel('x (cm)');axs[1].set_ylabel('y (cm)')
         save(fig,'task_and_recordings.png')
         for n in (3,8):
             data={f:np.load(OUT/'assets/feature_redundancy_2026_09_14'/f'{f}_z{n}_{"" if f=="spline_pca" else "seed42_"}fold2_subject01.npz') for f in FAMILIES}
@@ -112,6 +112,20 @@ def main():
                 for ax in axs[:,0]:ax.set_ylabel('Cumulative proportion')
                 fig.legend(*axs[0,0].get_legend_handles_labels(),loc='outside lower center',ncol=5,frameon=False,fontsize=8)
                 save(fig,name)
-    (SAVE/'visual_examples_provenance.json').write_text(json.dumps(dict(reconstruction_selection=provenance['selection'],reconstruction_examples=manifest,generation_subject='subject01',generation_selection='First 30 stored draws and query paths; identifier-selected participant; no ranking of generation error',feature_panels='Timing, peak speed and curvature selected for distinct scientific meanings, not goodness of fit',equal_xy_axes=True),indent=2)+'\n')
+        for n in (3,8):
+            data={f:np.load(OUT/'assets/feature_redundancy_2026_09_14'/f'{f}_z{n}_{"" if f=="spline_pca" else "seed42_"}fold2_subject01.npz') for f in FAMILIES}
+            features=list(data['cvae']['features']);real=data['cvae']['recorded_features']
+            selected=['initiation_time_s','movement_time_s','peak_speed_tracker_units_s','curvature_index']
+            fig,axs=plt.subplots(2,2,figsize=(7.8,3.9),layout='constrained')
+            for ax,f in zip(axs.flat,selected):
+                j=features.index(f)
+                groups=[(real[:,j],'Recorded','black')]+[(data[k]['generated_features'][:,j],LABELS[k],COLORS[i]) for i,k in enumerate(FAMILIES)]
+                bins=np.histogram_bin_edges(np.concatenate([v for v,_,_ in groups]),bins=12)
+                for vals,label,col in groups:
+                    ax.hist(vals,bins=bins,density=True,histtype='step',label=label,color=col,lw=1.8 if label=='Recorded' else 1.2)
+                ax.set_xlabel(FEATURE_NAMES[f]);ax.set_ylabel('Density');ax.grid(alpha=.12)
+            fig.legend(*axs[0,0].get_legend_handles_labels(),loc='outside lower center',ncol=5,frameon=False,fontsize=8)
+            save(fig,f'feature_densities_n{n}.png')
+    (SAVE/'visual_examples_provenance.json').write_text(json.dumps(dict(reconstruction_selection=provenance['selection'],reconstruction_examples=manifest,generation_subject='subject01',generation_selection='First 30 stored draws and query paths; identifier-selected participant; no ranking of generation error',feature_panels='Timing, peak speed and curvature selected for distinct scientific meanings, not goodness of fit',equal_xy_axes=True,spatial_units='cm',density_histograms=dict(bins=12,edges='Common equal-width edges across recorded and generated values for each feature and capacity',normalization='Each group integrates to one',source='Unchanged saved feature arrays')),indent=2)+'\n')
 
 if __name__=='__main__':main()

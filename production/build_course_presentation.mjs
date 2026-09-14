@@ -15,7 +15,7 @@ const content=JSON.parse(await fs.readFile(path.join(root,'production/course_sli
 const p=Presentation.create({slideSize:{width:1280,height:720}});
 const font='Arial';
 const {applyPresentationChartFont}=await import(pathToFileURL(path.join(skill,'container_tools/artifact_tool_utils.mjs')).href);
-function text(s,value,x,y,w,h,size=26,bold=false,color='#18384B'){
+function text(s,value,x,y,w,h,size=26,bold=false,color='#161E2E'){
   const sh=s.shapes.add({geometry:'textbox',position:{left:x,top:y,width:w,height:h},fill:'none',line:{fill:'none',width:0}});
   sh.text=value;sh.text.style={typeface:font,fontSize:size,bold,color,autoFit:'none'};return sh;
 }
@@ -28,17 +28,21 @@ function chart(s,d,x,y,w,h){
   text(s,d.title,x,y,w,32,23,true);
   const c=s.charts.add('bar',{position:{left:x,top:y+40,width:w,height:h-40},categories:d.categories,series:d.series,
     barOptions:{direction:'column',grouping:'clustered',gapWidth:85},hasLegend:true,
-    legend:{position:'bottom',textStyle:{fontSize:18,fill:'#18384B'}},
-    xAxis:{textStyle:{fontSize:18,fill:'#18384B'}},
-    yAxis:{min:0,numberFormatCode:'0.00',textStyle:{fontSize:16,fill:'#18384B'}},dataLabels:{showValue:false}});
+    legend:{position:'bottom',textStyle:{fontSize:18,fill:'#161E2E'}},
+    xAxis:{textStyle:{fontSize:18,fill:'#161E2E'}},
+    yAxis:{min:0,numberFormatCode:'0.00',textStyle:{fontSize:16,fill:'#161E2E'}},dataLabels:{showValue:false}});
   applyPresentationChartFont(c,{fontFamily:font});
 }
 for(let i=0;i<content.length;i++){
   const d=content[i],s=p.slides.add();s.background.fill='#FFFFFF';
-  text(s,d.backup?'METHODS AND STATISTICS BACKUP':'INTERCEPTION MOVEMENT MODELING',56,26,1100,24,15,true,'#087C83');
-  text(s,d.title,56,66,1168,94,i===0?46:36,true);
+  // Paz's reference design: navy cover, blue-teal-violet top rule, white content slides.
+  if(i===0)s.background.fill='#0E1729';
+  const band=['#1B6FEA','#17A2A2','#7A5CF0'];
+  for(let b=0;b<3;b++)s.shapes.add({geometry:'rect',position:{left:b*1280/3,top:0,width:1280/3,height:7},fill:band[b],line:{fill:'none',width:0}});
+  if(i!==0)s.shapes.add({geometry:'rect',position:{left:56,top:150,width:1168,height:1},fill:'#E1E6EC',line:{fill:'none',width:0}});
+  text(s,d.title,56,i===0?130:54,1168,i===0?130:94,i===0?48:36,true,i===0?'#FFFFFF':'#161E2E');
   let y=164;
-  if(i===0){text(s,d.body,58,245,1100,180,28);text(s,d.caption,58,508,1110,100,32,true,'#087C83');}
+  if(i===0){text(s,d.body,58,310,1100,165,27,false,'#A3B2C6');text(s,d.caption,58,530,1110,90,29,true,'#3EB1EC');}
   else {
     if(d.layout==='wide_image'){
       text(s,d.body,58,161,1160,65,25);await pic(s,d.image,58,238,1160,354,'Recorded movement examples and model outputs');
@@ -68,18 +72,20 @@ for(let i=0;i<content.length;i++){
         if(y+h>585) y=Math.min(y,585-h);
         const weights=[2,13].includes(i)?[.18,.41,.41]:i===18?[.22,.78]:cols===2?[.69,.31]:cols===3?[.46,.27,.27]:cols===4?[.30,.17,.265,.265]:[.30,...Array(cols-1).fill(.70/(cols-1))];
         const t=s.tables.add({rows,columns:cols,left:58,top:y,width:1160,height:h,columnWidths:weights.map(w=>w*1160),values:d.table});
-        t.cells.block({row:0,column:0,rowCount:rows,columnCount:cols}).assign({textStyle:{typeface:font,fontSize:rows>8?23:22,color:'#18384B'},margins:{left:12,right:10,top:rows>8?4:7,bottom:rows>8?4:6},anchor:'center'});
+        t.cells.block({row:0,column:0,rowCount:rows,columnCount:cols}).assign({textStyle:{typeface:font,fontSize:rows>8?23:22,color:'#161E2E'},margins:{left:12,right:10,top:rows>8?4:7,bottom:rows>8?4:6},anchor:'center'});
         for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
-          const cell=t.getCell(r,c);cell.fill=r===0?'#18384B':(r%2?'#F1F4F6':'#FFFFFF');
-          cell.text.style={typeface:font,fontSize:rows>8?23:22,bold:r===0,color:r===0?'#FFFFFF':'#18384B'};
+          const cell=t.getCell(r,c);cell.fill=r===0?'#161E2E':(r%2?'#F8FAFC':'#FFFFFF');
+          cell.text.style={typeface:font,fontSize:rows>8?23:22,bold:r===0,color:r===0?'#FFFFFF':'#161E2E'};
         }
         owners.push(i+1);
       }
     }
-    text(s,d.caption,58,605,1158,67,19,false,'#3B5867');
+    s.shapes.add({geometry:'rect',position:{left:56,top:599,width:1168,height:78},fill:'#EFF5FC',line:{fill:'none',width:0}});
+    s.shapes.add({geometry:'rect',position:{left:56,top:599,width:4,height:78},fill:'#1B6FEA',line:{fill:'none',width:0}});
+    text(s,d.caption,72,609,1136,62,19,false,'#3D4756');
   }
-  text(s,`${d.backup?'Backup':`${d.seconds} seconds`}    ${i+1} / ${content.length}`,58,686,1158,22,14,false,'#617583');
-  s.speakerNotes.textFrame.setText(d.notes);
+  text(s,`${i+1} / ${content.length}`,1160,690,70,20,14,false,i===0?'#A3B2C6':'#737E8B');
+  s.speakerNotes.textFrame.setText(d.notes+`\nSuggested duration: ${d.seconds} seconds. Design reference: Paz Flashner's production/presentation_styled.pdf. Content: course report and evidence tables.`);
 }
 const candidate=path.join(stage,'candidate.pptx');
 await(await PresentationFile.exportPptx(p)).save(candidate);

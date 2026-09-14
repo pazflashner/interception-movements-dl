@@ -1,6 +1,17 @@
+## September 14 course update
+
+Use `Interception_Movements_Course_Presentation.pptx` for the ten-slide talk and
+`8_pages_draft.pdf` for the eight-page paper. The course deck uses Paz's navy,
+blue and white design with the course narrative and figures. Her styled source
+files remain separate and unchanged. The course figures use cm and cm/s;
+reconstruction MSE is cm². The main feature figure now uses density histograms
+from the existing saved samples; cohort scores and tests are unchanged.
+No model retraining, preprocessing change or revision of the frozen 31-page
+laboratory PDF is included. Methods explanations remain a separate PDF.
+
 # Current manuscript work
 
-The **31-page laboratory PDF is frozen pending Jason's feedback**. The current
+The **31-page laboratory PDF remains frozen; substantive feedback will be addressed after the course presentation**. The current
 course delivery, revised September 14 from Paz's drafts, is:
 
 - `8_pages_draft.pdf`: exactly eight pages, including abstract and references.
@@ -34,8 +45,8 @@ Revision 4 has 31 working pages, 18 figures, 19 tables, 19 typeset equations and
 reviewed with Paz and the advisors. All extended evidence remains in that report.
 
 The separate course version now has an abstract, introduction, focused methods
-and results, discussion and references. Jason's open experimental questions are
-retained in red in its appendix.
+and results, discussion and references. Confirmed laboratory facts from Jason's September 14 comments are incorporated
+in the course version. The frozen laboratory PDF retains the historical questions.
 
 ## Page guide
 

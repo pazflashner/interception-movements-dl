@@ -16,7 +16,7 @@
     "table": null,
     "image": "production/course_assets/task_and_recordings.png",
     "caption": "Free eye movement. All 180 trajectories from the first participant by identifier. Median retained trials: 179.5.",
-    "notes": "The participant moves a finger from the lower starting region to the upper interception region as the target arrives. There are three starting categories on each side, with a related speed range. We excluded four trials without an arrival and 27 very late arrivals. The two low-count participants mostly had fewer files available, not extensive exclusions. Population training excludes the seven test people. We then use some recordings from each test person as context and reserve the other recordings as query. Source: course report section 2; src/data_loading.py, src/preprocessing.py; production/cohort_trial_counts.csv. Task image: production/presentation_assets/task_schematic.png, inherited from Paz’s supplied presentation.",
+    "notes": "The participant moves a finger from the lower starting region to the upper interception region as the target arrives. There are three starting categories on each side, with a related speed range. We excluded four trials without an arrival and 27 very late arrivals. The two low-count participants mostly had fewer files available, not extensive exclusions. Population training excludes the seven test people. We then use some recordings from each test person as context and reserve the other recordings as query. Source: course report section 2; src/data_loading.py, src/preprocessing.py; production/cohort_trial_counts.csv. Task image: production/presentation_assets/task_schematic.png, inherited from Paz’s supplied presentation. Data were collected by Beatris Giterman in Jason Friedman’s laboratory. Spatial coordinates are cm; nominal starting positions are mm from screen center.",
     "seconds": 50,
     "equation": null,
     "backup": false,
@@ -53,8 +53,8 @@
       ]
     ],
     "image": null,
-    "caption": "CVAE and CAE use five task conditions. VAE masks them to zero. Matched n = 3 and 8.",
-    "notes": "First we resample a filtered go-to-end recording onto 100 equally spaced phases. This keeps relative waiting but removes seconds from the coordinate input. In spline plus PCA, one trial gives nine x and nine y spline coefficients. We stack training trials as rows, giving N by 18, and fit PCA on that matrix. The neural model receives the 200 coordinate values directly after training-derived standardization. CVAE and VAE have mean and variance heads and a KL penalty. CAE is deterministic and has no KL penalty. CVAE/CAE receive conditions at encoder and decoder; VAE zeros them. The timing targets are never encoder inputs. The separate methods explanation PDF explains the actual objective and inverse matrices. Sources: src/baseline_spline.py, src/confirmatory_spline.py, src/vae_model.py, src/train.py.",
+    "caption": "VAE: variational autoencoder. CVAE adds task conditions; CAE uses a deterministic code. Matched n = 3 and 8.",
+    "notes": "First we resample a filtered go-to-end recording onto 100 equally spaced phases. This keeps relative waiting but removes seconds from the coordinate input. In spline plus PCA, one trial gives nine x and nine y spline coefficients. We stack training trials as rows, giving N by 18, and fit PCA on that matrix. The neural model receives the 200 coordinate values directly after training-derived standardization. CVAE and VAE have mean and variance heads and a KL penalty. CAE is deterministic and has no KL penalty. CVAE/CAE receive conditions at encoder and decoder; VAE zeros them. The timing targets are never encoder inputs. The separate methods explanation PDF explains the actual objective and inverse matrices. Sources: src/baseline_spline.py, src/confirmatory_spline.py, src/vae_model.py, src/train.py. Five interior knots plus cubic degree three plus one give nine basis coefficients per axis. Timing uses log(t + 0.001) to accommodate zero and compress its scale, then training standardization.",
     "seconds": 65,
     "equation": null,
     "backup": false
@@ -72,7 +72,7 @@
     "layout": "image_chart",
     "charts": [
       {
-        "title": "Mean reconstruction MSE",
+        "title": "Reconstruction MSE (cm²)",
         "categories": [
           "Spline",
           "CAE",
@@ -109,7 +109,7 @@
     "body": "Context codes establish a personal center. We decode 120 draws around it using shared training covariance.",
     "table": null,
     "image": "production/course_assets/generation_slide_n8.png",
-    "caption": "Same participant, separate query recordings. n=8, all models. Both capacities appear in the report. Thin: first 30 paths. Thick: mean of all paths. Equal x/y scale. These examples do not determine the cohort ranking.",
+    "caption": "Same participant, separate query recordings. n=8, all models. Both capacities appear in the report. Thin: first 30 paths. Thick: mean of all paths. Equal x/y scale in cm.",
     "notes": "A fingerprint is the average of the encoded context means. We then add training-derived latent noise to that center and decode 120 movements. All participants share the covariance, but their centers differ. VAE generation here is not simply drawing from the standard-normal training prior. For CVAE the query-condition mixture supplies conditions, but the decoder never receives the actual query paths or their durations. The comparison is between two sets of trials, so there is no correct one-to-one pairing of a generated path with an observed trial. Source: src/context_query.py, src/confirmatory_spline.py, scripts/run_review_controls.py; appendix A4.",
     "seconds": 60,
     "equation": null,
@@ -118,11 +118,11 @@
   },
   {
     "title": "Generated kinematic-feature distributions",
-    "body": "Cumulative curves show individual features. Cohort KS averages all eleven feature discrepancies.",
+    "body": "Histograms show timing, speed and curvature. KS summarizes agreement across eleven features.",
     "table": null,
-    "image": "production/course_assets/features_selected_n8.png",
-    "caption": "Illustration: subject01, n=8. VAE/CVAE beat spline on all three feature metrics at both capacities (BH and Holm-140). VAE has no uniform significant advantage over CVAE.",
-    "notes": "KS measures the largest gap between empirical cumulative curves for one feature. We average eleven KS statistics, not eleven p-values. Energy and MMD instead compare the joint eleven-feature vectors after training standardization. VAE eight has mean KS 0.2151, energy 0.4110 and MMD squared 0.0639. CVAE is close. VAE versus CVAE eight has BH q=.0257 for energy, .137 for KS and .0518 for MMD; none survives Holm. We can select VAE as a practical default but cannot claim it significantly wins every endpoint. Features depend on predicted durations as well as shape. Sources: course report Table 2; audited means and 140-test CSV.",
+    "image": "production/course_assets/feature_densities_n8.png",
+    "caption": "Illustration: subject01, n=8. VAE/CVAE beat spline on all three feature metrics at both capacities (BH and Holm-140). VAE and CVAE give comparable results.",
+    "notes": "KS measures the largest gap between empirical cumulative curves for one feature. We average eleven KS statistics, not eleven p-values. Energy and MMD instead compare the joint eleven-feature vectors after training standardization. VAE eight has mean KS 0.2151, energy 0.4110 and MMD squared 0.0639. CVAE is close. VAE versus CVAE eight has BH q=.0257 for energy, .137 for KS and .0518 for MMD; none survives Holm. We can select VAE as a practical default but cannot claim it significantly wins every endpoint. Features depend on predicted durations as well as shape. Sources: course report Table 2; audited means and 140-test CSV. The figure uses density histograms with twelve shared bins per feature and the same stored samples. Histograms are illustrations; KS still uses the original empirical cumulative distributions without binning.",
     "seconds": 55,
     "equation": null,
     "backup": false,
@@ -174,7 +174,7 @@
     "layout": "two_charts",
     "charts": [
       {
-        "title": "Full-path energy",
+        "title": "Full-path energy (cm)",
         "categories": [
           "Spline",
           "CAE",
@@ -294,7 +294,7 @@
     "table": [
       [
         "Raw path reference",
-        "Energy",
+        "Energy (cm)",
         "MMD²"
       ],
       [
@@ -314,7 +314,7 @@
       ]
     ],
     "image": null,
-    "caption": "No formal test against these references. Reducing 11 correlated features to 9 preserves VAE/CVAE over spline, but weakens a unique VAE claim. No application acceptance threshold was established.",
+    "caption": "Descriptive reference means. Resampling retains all context paths; repeating their mean loses movement variability.",
     "notes": "Our main conclusion is useful compact generation, not that deep learning beats every possible baseline. Keeping the entire context paths and resampling them yields lower mean discrepancies. That uses more participant memory and cannot be summarized as an eight-number fingerprint. Repeating only the context mean is much worse as a distribution despite having a good mean-path error. Direct context behavioral summaries also beat our latent linear probes. These observations describe what compression loses and motivate a richer model. Default selection used this cohort and needs independent confirmation. Sources: full-path summary CSV; production/all_models_direct_context_summary.csv; course Discussion. The new nine-feature sensitivity is covered in Appendix A11. Both variational models retain their corrected advantage over spline, but VAE versus CVAE does not pass BH on any reduced-feature metric.",
     "seconds": 45,
     "equation": null,
@@ -322,10 +322,10 @@
   },
   {
     "title": "Dashboard demonstration",
-    "body": "VAE n=8 default. Compare n=3, CVAE and spline + PCA. Finish with cohort benchmarks.",
+    "body": "VAE n=8 is the default. Explore n=3, CVAE, CAE and spline + PCA alongside the cohort results.",
     "table": null,
     "image": "production/course_assets/generation_slide_n8.png",
-    "caption": "Recorded and generated examples if the live demo is unavailable. Same-session variability, with no claim that each latent coordinate represents a named strategy.",
+    "caption": "Explore recorded and generated paths, feature distributions and model benchmarks for the same session.",
     "notes": "Open the dashboard already running in a browser. Explain that generated curves are samples, not predictions paired with particular recorded trials. Show the VAE eight default, then three dimensions and an alternative model. Do not interpret a single chosen plot as the significance test. VAE does not respond to condition controls because it ignores conditions. Spline condition changes affect only timing; CVAE/CAE use conditions for shape and timing. Finish with Benchmarks. If live launch fails, the slide contains recorded and generated examples from a fixed subject, chosen by identifier. Launch from the repository: python -m streamlit run src/confirmatory_dashboard.py --server.port 8510 --server.address 127.0.0.1 --browser.gatherUsageStats false. Open http://127.0.0.1:8510. Ctrl+C stops the terminal server. Source: production/MULTIMODEL_UPDATE.md; src/confirmatory_dashboard.py; generated-array figure provenance in course_figures.py.",
     "seconds": 80,
     "equation": null,

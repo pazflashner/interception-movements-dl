@@ -1,3 +1,11 @@
+September 14 editorial update: the course presentation now follows Paz's navy
+cover, blue/teal/violet rule and white content-slide design, retaining our ten
+main slides. Confirmed cm units, response-time terminology, data-collection
+credit and spline/timing explanations were incorporated. The main feature
+figure uses shared-bin density histograms from the same saved samples. No
+training, preprocessing, inference protocol or historical score table changed.
+The 31-page laboratory PDF and Paz's styled source deck remain unchanged.
+
 # Course report and presentation, 14 September 2026
 
 Start with **8_pages_draft.pdf**. Its eight pages cover motivation, data,
