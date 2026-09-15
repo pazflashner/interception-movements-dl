@@ -166,7 +166,7 @@ def train_vae(
     val_loader = DataLoader(val_ds, batch_size=cfg.batch_size, shuffle=False)
 
     # Normalisation statistics (fit on train). Timing is standardised
-    # separately: seconds and millimetres are not on a comparable scale.
+    # separately: seconds and centimetres are not on a comparable scale.
     train_mean = torch.from_numpy(train_ds.trajectories.mean(axis=0)).to(device)
     train_std = torch.from_numpy(train_ds.trajectories.std(axis=0) + 1e-8).to(device)
     transformed_train_timing = transform_timing(train_ds.timings, cfg.timing_transform).astype(np.float32)

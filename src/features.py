@@ -6,9 +6,10 @@ and VAE evaluation probes.
 
 Units
 -----
-Timing features are in **seconds**. Spatial quantities remain in the raw
-tracker coordinate unit because the supplied CSV specification does not state
-whether x/y/z are centimetres or millimetres. Temporal normalisation resamples
+Timing features are in **seconds**. Spatial quantities are in the raw tracker
+coordinate unit, confirmed with the lab to be centimetres: the workspace spans
+roughly 25 units and a reach about 13.5, against target start positions the
+apparatus records as 120-160 mm. Temporal normalisation resamples
 every trial onto the same 0-100 % axis, so a gradient taken on ``pos_norm`` is a shape derivative
 whose scale depends on how long the movement lasted. Re-attaching the movement
 duration converts it back to a physical velocity, which is what makes speed
@@ -84,7 +85,7 @@ def features_from_arrays(
     speed = np.linalg.norm(vel, axis=1)
 
     # speed is |Δpos| per normalised frame; the movement spans movement_time_s
-    # over len(speed) - 1 intervals, so dividing by that step recovers mm/s.
+    # over len(speed) - 1 intervals, so dividing by that step recovers cm/s.
     # The physical movement duration restores tracker units per second after
     # temporal normalization to a fixed number of samples.
     peak_speed = float(np.max(speed))

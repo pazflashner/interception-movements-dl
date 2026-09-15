@@ -258,7 +258,7 @@ def evaluate_spline_pca_baseline(
 
     The capacity-matched counterpart to the CVAE: the same number of numbers per
     trial, and a basis that must generalise to subjects it never saw. Reported
-    in the same mm^2 units as ``compute_reconstruction_mse``.
+    in the same cm^2 units as ``compute_reconstruction_mse``.
     """
     T = train_trials[0]["pos_norm"].shape[0]
     n_coef = n_knots + degree + 1

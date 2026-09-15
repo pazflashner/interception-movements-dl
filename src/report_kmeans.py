@@ -234,7 +234,7 @@ def build_report(csv_path: Path, out_path: Path) -> Path:
         f"The 'features' representation is an explicit allowlist of "
         f"{len(config.KMEANS_FEATURE_COLUMNS)} kinematic columns "
         f"({', '.join(config.KMEANS_FEATURE_COLUMNS)}), all in physical units — "
-        f"seconds and mm/s. It deliberately excludes the trial counter (rep), the "
+        f"seconds and cm/s. It deliberately excludes the trial counter (rep), the "
         f"task labels (sp, side), a deterministic duplicate of sp "
         f"(starting_position_mm) and the constant condition column. Those carry no "
         f"subject identity — clustering on them alone scores ARI = -0.001 — but "

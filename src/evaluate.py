@@ -97,7 +97,7 @@ def reconstruct(
     Pass trials through the full model.
 
     Returns (recon_traj, true_traj, recon_timing_s, true_timing_s), all in
-    original units — millimetres for the trajectory, seconds for the timing.
+    original units — centimetres for the trajectory, seconds for the timing.
     ``recon_timing_s`` is empty when the model has no timing head.
 
     ``sample=False`` decodes from the posterior mean μ rather than a draw from
@@ -140,7 +140,7 @@ def compute_reconstruction_mse(
     norm: NormStats,
     device: str = "cpu",
 ) -> float:
-    """Mean per-trial trajectory reconstruction MSE, in original (mm²) scale."""
+    """Mean per-trial trajectory reconstruction MSE, in original (cm²) scale."""
     recon, true, _, _ = reconstruct(model, trials, norm, device)
     return float(np.mean((recon - true) ** 2, axis=1).mean())
 
@@ -620,7 +620,7 @@ def run_full_evaluation(
     # 1. Reconstruction MSE. Two reference points, which measure different
     # things — see src/baseline_spline.py.
     vae_mse = compute_reconstruction_mse(model, test_trials, norm, device)
-    print(f"\nReconstruction MSE (mm^2), held-out test subjects:")
+    print(f"\nReconstruction MSE (cm^2), held-out test subjects:")
     print(f"  CVAE (z={model.latent_dim}, generalises to unseen subjects) : {vae_mse:.6f}")
     if spline_pca_mse is not None:
         verdict = "BETTER" if vae_mse < spline_pca_mse else "worse"
