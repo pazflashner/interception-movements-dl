@@ -56,26 +56,26 @@ SLIDES = [
     {
         "title": "What we set out to answer",
         "seconds": 40,
-        "spacing": 1.3,
         "columns": {
+            "ratio": 0.56,
             "left": [
                 ("heading", "The core question"),
                 ("text", "Human movement is stochastic: perception and motor control "
                          "vary from trial to trial. One participant, one target - and "
                          "every trial takes a different path."),
-                ("figure", "production/presentation_assets/real_trajectories.png", 2.1),
-            ],
-            "right": [
-                ("heading", "Can a compact fingerprint capture that spread?"),
-                ("text", "Compress 200 numbers - the 100 x 2 path - into a 3-to-8 "
+                ("heading-alt", "Can a compact fingerprint capture that spread?"),
+                ("text", "Compress 200 numbers - the 100 × 2 path - into a 3-to-8 "
                          "dimensional fingerprint of an individual's movement "
                          "distribution."),
-                ("equation", "100 x 2 coordinates   ->   n = 3 or 8 latent numbers"
-                             "   (durations predicted)"),
-                ("text", "What would count as success, evaluated on participants the "
-                         "model never trained on:"),
+                ("equation", "100 × 2 coordinates   ———>   "
+                             "n = 3 or 8 latent numbers   (durations predicted)"),
+            ],
+            "right": [
+                ("figure", "production/presentation_assets/real_trajectories.png", 2.6),
             ],
         },
+        "cards_heading": "What would count as success, evaluated on participants the "
+                         "model never trained on",
         "cards": [
             {"eyebrow": "SUCCESS TEST 1", "title": "Reconstruct",
              "text": "Rebuild specific recorded trajectories from the compressed code."},
@@ -83,6 +83,9 @@ SLIDES = [
              "accent": "green",
              "text": "Sample new trajectories matching that person's stochastic "
                      "distribution."},
+            {"eyebrow": "SUCCESS TEST 3", "title": "Stay personal",
+             "text": "The fit must come from that person's own fingerprint, not a "
+                     "generic one."},
         ],
     },
     {
@@ -92,33 +95,43 @@ SLIDES = [
             "rows": [
                 ["Stage in the model", "Spline + PCA  (linear baseline)",
                  "Neural models  (VAE / CVAE / CAE)"],
-                ["Primary input", "The same 100 x 2 normalised trajectory",
-                 "The same 100 x 2 trajectory + 5 task conditions"],
+                ["Primary input", "The same 100 × 2 normalised trajectory",
+                 "The same 100 × 2 trajectory; CVAE and CAE add 5 task conditions"],
                 ["Where standardisation happens", "On the 18 spline coefficients, after fitting",
                  "On the 200 coordinates, with train-set constants"],
                 ["Encoder / compression", "Cubic B-spline fit, 9 coefficients per axis -> PCA to n latents",
                  "Two fully connected 256-unit ReLU layers -> latent n"],
                 ["Decoder / reconstruction", "Inverse PCA -> multiply by the spline basis for the full path",
-                 "Two 256-unit ReLU layers -> 200 coordinates + 2 timing branches"],
+                 "Two 256-unit ReLU layers -> separate heads for 200 coordinates and 2 durations"],
                 ["Timing prediction", "Separate Ridge regression on the PCA scores + conditions",
                  "Dedicated head predicting initiation and movement time"],
             ],
         },
         "callout": {
             "kind": "info",
-            "title": "A fair comparison at identical dimensions",
-            "text": "Models are compared at identical latent dimensions of n = 3 (extreme "
-                    "compression) and n = 8 (extended capacity).",
+            "title": "Three neural variants, one architecture",
+            "text": [
+                ("VAE - variational autoencoder, trained on the trajectory alone. "
+                 "CVAE - conditional variational autoencoder, which also receives the "
+                 "task conditions. CAE - conditional autoencoder, the same network "
+                 "without the variational latent.", False),
+                ("All are compared at identical latent dimensions, n = 3 (extreme "
+                 "compression) and n = 8 (extended capacity).", False),
+            ],
         },
     },
     {
-        "title": "Task 1: reconstructing a recorded trajectory  (Reconstruction)",
+        "title": "Task 1: Trajectory Reconstruction",
         "seconds": 45,
         "columns": {
+            "ratio": 0.62,
+            "left": [
+                ("figure", "production/course_assets/reconstruction_slide.png", 3.6),
+                ("text", "One median-duration trial. Black: recorded; dashed: "
+                         "reconstructed. Both axes in cm at equal scale."),
+            ],
             "right": [
-                ("heading", "Trajectory reconstruction error (MSE)"),
-                ("text", "The model receives a fully observed trajectory, compresses it to n "
-                         "values and tries to rebuild it:"),
+                ("heading", "Trajectory reconstruction error (MSE, cm²)"),
                 ("table", {
                     "rows": [
                         ["Model", "MSE  n=3", "MSE  n=8"],
@@ -130,13 +143,9 @@ SLIDES = [
                     ],
                     "mark": 1,
                 }),
-            ],
-            "left": [
                 ("callout-info", "Key insight on pointwise reconstruction", [
                     ("PCA wins at reconstructing a single trajectory.", True),
-                    ("The linear PCA projection is optimal by definition for minimising "
-                     "squared error. VAE models pay in pointwise accuracy to obtain a "
-                     "continuous, regular and samplable latent space.", False),
+                    ("As a linear projection, PCA is analytically optimal for minimising squared error among all linear methods. VAEs trade off pointwise accuracy to obtain a continuous and samplable latent space.", False),
                 ]),
             ],
         },
@@ -145,48 +154,64 @@ SLIDES = [
         "title": "Task 2: generating a personal movement distribution",
         "seconds": 60,
         "columns": {
-            "right": [
-                ("heading", "How do we generate movements from a fingerprint?"),
-                ("bullet", "Enrollment:", "earlier context trials of the participant, whose mean "
-                                          "defines the personal fingerprint centre."),
-                ("bullet", "Stochastic sampling:", "draw 120 latent vectors around that centre "
-                                                   "using a shared covariance learned from training data."),
-                ("bullet", "Unseen movements:", "query trials are held aside to evaluate the "
-                                                "distribution and are never exposed to the model."),
-                ("equation", "theta_s  =  (1 / |C_s|)  SUM  mu_i          "
-                             "z (b)  ~  N ( theta_s ,  Sigma_train )"),
-            ],
             "left": [
-                ("card", "11 kinematic features",
-                 "Initiation and movement time, peak speed, time to peak, path length, curvature, "
-                 "maximum lateral deviation and endpoints."),
-                ("card", "Distribution comparison metrics",
-                 "KS tests for the marginals, alongside energy discrepancy and MMD squared for the "
-                 "joint structure of all 11 features."),
+                ("heading", "How do we generate movements from a fingerprint?"),
+                ("bullet", "Enrollment:", "earlier context trials of the participant, "
+                                          "whose mean defines the personal fingerprint centre."),
+                ("bullet", "Stochastic sampling:", "draw 120 latent vectors around that "
+                                                   "centre using a shared covariance learned "
+                                                   "from training data."),
+                ("bullet", "Unseen movements:", "query trials are held aside to evaluate "
+                                                "the distribution and are never exposed to "
+                                                "the model."),
+                ("text", "Below, n = 8. Thin: first 30 draws. Thick: their mean. "
+                         "Equal x/y scale, cm."),
             ],
+            "right": [
+                ("equation", "fingerprint centre:   θ_s  =  (1 / |C_s|) Σ c_i"),
+                ("equation", "one generated movement:   z  ∼  "
+                             "N ( θ_s ,  Σ_train )"),
+                ("text", "c_i is the trial's code: the encoder mean μ_i for the "
+                         "neural families, the PCA scores for spline + PCA."),
+            ],
+        },
+        "figure": ("production/course_assets/generation_slide_n8.png", 2.6),
+    },
+    {
+        "title": "How we score a generated distribution",
+        "seconds": 30,
+        "cards": [
+            {"eyebrow": "WHAT WE MEASURE", "title": "11 kinematic features",
+             "text": "Initiation and movement time, peak speed, time to peak, path "
+                     "length, straight-line distance, curvature, maximum lateral "
+                     "deviation and the three endpoint coordinates."},
+            {"eyebrow": "HOW WE COMPARE", "title": "Two views of the distribution",
+             "text": "One KS test per feature, averaged over the 11 into Mean KS. "
+                     "Energy discrepancy and MMD squared judge the joint structure of "
+                     "all 11 at once. Lower is better throughout."},
+        ],
+        "callout": {
+            "kind": "info",
+            "title": "One fixed yardstick for every model",
+            "text": "Feature scales and the RBF bandwidth are fitted on training "
+                    "participants only and then frozen, so every model is measured "
+                    "against the same geometry rather than one tuned to its own output.",
         },
     },
     {
         "title": "Generation results: VAE leads on movement distributions",
         "seconds": 55,
-        "table": {
-            "rows": [
-                ["Model", "n", "Mean KS  (lower = better)", "Energy discrepancy", "MMD squared"],
-                ["Spline + PCA", "3", "0.3251", "0.9774", "0.1815"],
-                ["CVAE", "3", "0.2778", "0.7454", "0.1309"],
-                ["VAE (Unconditional)", "3", "0.2846", "0.7476", "0.1303"],
-                ["Spline + PCA", "8", "0.2548", "0.7347", "0.1153"],
-                ["CVAE", "8", "0.2194", "0.4305", "0.0675"],
-                ["VAE (Unconditional)  -  default", "8", "0.2151", "0.4110", "0.0639"],
-            ],
-            "mark": 6,
-        },
+        "figure": ("production/presentation_assets/mean_ks_chart.png", 3.6),
         "callout": {
             "kind": "info",
             "title": "A reversal in the ranking: VAE wins at generation",
-            "text": "Although Spline + PCA won pointwise reconstruction, VAE and CVAE achieve much "
-                    "better distribution matching (corrected p < 0.001 under BH and Holm). "
-                    "VAE at n = 8 was set as the dashboard default.",
+            "text": [
+                ("Although Spline + PCA won pointwise reconstruction, VAE and CVAE "
+                 "achieve much better distribution matching (corrected p < 0.001 under "
+                 "BH and Holm). VAE at n = 8 was set as the dashboard default.", False),
+                ("The two joint measures agree: at n = 8, VAE reaches energy 0.4110 and "
+                 "MMD squared 0.0639, against 0.7347 and 0.1153 for Spline + PCA.", False),
+            ],
         },
     },
     {
@@ -253,29 +278,6 @@ SLIDES = [
             "command": "python -m streamlit run src/confirmatory_dashboard.py --server.port 8510",
         },
     },
-    {
-        "title": "Conclusions and open questions for the lab",
-        "seconds": 30,
-        "columns": {
-            "right": [
-                ("heading", "Summary of findings"),
-                ("text", "A compact eight-value representation preserves clear personal "
-                         "information and reproduces individual movement distributions."),
-                ("text", "There is a clear split between the model that is best for "
-                         "reconstruction (Spline + PCA) and the one that is best for "
-                         "generation (VAE)."),
-            ],
-            "left": [
-                ("heading-alt", "Open questions for discussion (Prof. Jason Friedman)"),
-                ("bullet", "Stability across sessions:", "does the fingerprint stay stable across "
-                                                         "different days or sessions?"),
-                ("bullet", "Model window start:", "should the window begin at target appearance, "
-                                                  "or at the start of target motion?"),
-                ("bullet", "Consistent timing scaling:", "should physical times be explicitly "
-                                                         "bounded inside the model?"),
-            ],
-        },
-    },
 ]
 
 BACKUP = [
@@ -312,7 +314,7 @@ BACKUP = [
         "table": {
             "rows": [
                 ["Object", "Dimensions", "One row / one column means"],
-                ["Sampled trial", "100 x 2", "Time point / x or y"],
+                ["Sampled trial", "100 × 2", "Time point / x or y"],
                 ["Spline basis B", "100 x 9", "Time point / basis function"],
                 ["Trial coefficient vector", "18", "Nine x coefficients followed by nine y"],
                 ["Training coefficient matrix", "N training x 18", "Trial / coefficient"],

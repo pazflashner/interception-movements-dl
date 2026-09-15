@@ -466,20 +466,30 @@ class Builder:
         if spec.get("body"):
             y = self.body(slide, spec["body"], M, y, INNER)
         if spec.get("columns"):
+            columns = spec["columns"]
             gap = self.U(0.40)
-            cw = (INNER - gap) / 2
-            sides = (("left", M), ("right", M + cw + gap))
+            # "ratio" is the left column's share of the width; halves by default.
+            left_w = int((INNER - gap) * columns.get("ratio", 0.5))
+            sides = (("left", M, left_w),
+                     ("right", M + left_w + gap, int(INNER - gap - left_w)))
             # Measure both columns first so the shorter one can be centred
             # against the taller, instead of leaving a block of white beneath it.
-            depths = {key: self.column(None, spec["columns"][key], x, y, cw, FLOOR) - y
-                      for key, x in sides}
+            depths = {key: self.column(None, columns[key], x, y, w, FLOOR) - y
+                      for key, x, w in sides}
             tallest = max(depths.values())
-            for key, x in sides:
-                self.column(slide, spec["columns"][key],
-                            x, y + (tallest - depths[key]) // 2, cw, FLOOR)
+            for key, x, w in sides:
+                self.column(slide, columns[key],
+                            x, y + (tallest - depths[key]) // 2, w, FLOOR)
             y += tallest
         if spec.get("table"):
             y = self.table(slide, spec["table"], M, y, INNER, min_row=0.48, font=11.5)
+        if spec.get("cards_heading"):
+            # A centred lead line introducing the row of cards beneath it.
+            pt = self.F(17)
+            n = _lines(spec["cards_heading"], INNER, pt)
+            _text(slide, M, y, INNER, int(n * _line_h(pt)), spec["cards_heading"],
+                  size=pt, color=INK, bold=True, align=PP_ALIGN.CENTER)
+            y += int(n * _line_h(pt)) + self.G(0.20)
         if spec.get("cards"):
             cards = spec["cards"]
             gap = self.U(0.34)
@@ -493,9 +503,11 @@ class Builder:
         if spec.get("terminal"):
             y = self.terminal(slide, spec["terminal"], M, y, INNER)
         if spec.get("figure"):
+            # A full-width figure's height is absolute, not scaled: it holds still
+            # while the text around it grows into whatever room is left.
             name, cap = spec["figure"], FLOOR - y
             if not isinstance(name, str):
-                name, cap = name[0], min(cap, int(Inches(name[1]) * self.s))
+                name, cap = name[0], min(cap, int(Inches(name[1])))
             y = self.figure(slide, name, M, y, INNER, cap)
         if spec.get("callout"):
             c = spec["callout"]

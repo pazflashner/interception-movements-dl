@@ -372,12 +372,20 @@ class Deck:
             for paragraph in ([lead] if isinstance(lead, str) else lead):
                 y = self.text(paragraph, M, y, inner, size=12)
         if slide.get("columns"):
-            cw = (inner - COL_GAP) / 2
-            left = self.column(slide["columns"]["left"], M, y, cw)
-            right = self.column(slide["columns"]["right"], M + cw + COL_GAP, y, cw)
+            columns = slide["columns"]
+            lw = (inner - COL_GAP) * columns.get("ratio", 0.5)
+            left = self.column(columns["left"], M, y, lw)
+            right = self.column(columns["right"], M + lw + COL_GAP, y, inner - COL_GAP - lw)
             y = min(left, right)
         if slide.get("table"):
             y = self.table(slide["table"], M, y, inner)
+        if slide.get("cards_heading"):
+            self.c.setFillColorRGB(*INK)
+            self.c.setFont("Helvetica-Bold", 15)
+            for line in wrap(self.c, slide["cards_heading"], "Helvetica-Bold", 15, inner):
+                self.c.drawCentredString(M + inner / 2, y, line)
+                y -= 7.5 * mm
+            y -= 3 * mm
         if slide.get("cards"):
             cards = slide["cards"]
             cw = (inner - COL_GAP * (len(cards) - 1)) / len(cards)
