@@ -10,15 +10,17 @@ window hidden. Launching it again reuses the demo server.
 
 ## Files to present
 
-- **Presentation_Demo.pptx**: 11 editable slides.
-- **Presentation_Demo.pdf**: the same 11 slides, exported by PowerPoint.
+- **Presentation_Demo.pptx**: 12 editable slides.
+- **Presentation_Demo.pdf**: the same 12 slides, exported by PowerPoint.
 - **PAZ_SLIDE_COMMENTS.md**: remaining factual comments on the preserved slides;
   these comments have not been applied to Paz's section.
 
 The source is Paz's pushed presentation at commit **1429c07**. Slides 2–8 are
 unchanged, including their layout and text. Slide 1 adds the requested course
 credits and number. New slides 9–11 cover full-trajectory generation, personal
-context, and the dashboard. There are no backup slides in this copy. Neither
+context, and the dashboard; slide 12 thanks the audience and invites questions.
+New charts label bars with their numerical means; only the main significance
+findings appear in the captions. There are no backup slides in this copy. Neither
 Paz's original presentation nor `src/confirmatory_dashboard.py` was edited.
 
 ## A short live demonstration
@@ -27,8 +29,18 @@ Paz's original presentation nor `src/confirmatory_dashboard.py` was edited.
 2. Move a latent slider to show the trajectory and timing change together.
 3. Optionally select a saved participant fingerprint or switch to n=3.
 
-The sliders are offsets from the selected center, measured in training-latent
-standard deviations. This screen decodes **one latent vector**; it does not draw
+The **Fingerprint preset** selects a latent center: either the population
+center or the mean encoded context trials of a participant. The sliders show
+**offsets**, not the actual latent coordinates. A zero offset means "use this
+preset's value," not "set the latent coordinate to zero." Switching presets can
+therefore leave all sliders at zero while changing the decoded latent vector.
+The **Actual latent z** line shows the values passed to the decoder:
+
+`actual z = preset center + slider offsets × training latent SD`
+
+Offsets are stored separately for each model, dimension and preset. Task-condition
+controls are separate decoder inputs; changing a condition does not change z.
+This screen decodes **one latent vector**; it does not draw
 120 movements or perform the distribution evaluation during the talk. Decoding
 the center does not necessarily produce the mean of the generated paths.
 
@@ -68,7 +80,7 @@ Then open the local URL in Chrome. Stop that terminal-launched server with Ctrl+
 
 ## Rebuilding and checking
 
-`build_slides.mjs` creates only slides 9–11 using the installed Codex presentation
+`build_slides.mjs` creates only slides 9–12 using the installed Codex presentation
 runtime; `assemble_presentation.ps1` combines them with a separate source copy.
 The default source-copy path is `.tmp/demo_build/Paz_latest.pptx`, extracted from
 the commit above, never the open original. Override it with `-SourcePath` if

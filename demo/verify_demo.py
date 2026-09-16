@@ -56,9 +56,21 @@ def verify():
     assert app.metric[0].value == f'{t[0,1]*1000:.0f} ms'
     # The fingerprint source is a context center, never a query trajectory.
     if len(app.selectbox[1].options)>1:
+        previous_latent = next(c.value for c in app.caption if c.value.startswith('Actual latent z'))
         app.selectbox[1].select(app.selectbox[1].options[1])
         rerun(app)
         assert not app.exception
+        current_latent = next(c.value for c in app.caption if c.value.startswith('Actual latent z'))
+        assert previous_latent != current_latent
+        assert all(s.value == 0 for s in app.slider[:-1])
+        # Confirm that the selected preset really reaches the decoder unchanged at zero offsets.
+        from src.confirmatory_dashboard import read_csv
+        fingerprints=read_csv(str(MULTI_ASSETS/'subject_fingerprints.csv'))
+        row=fingerprints[(fingerprints.run==reference_name('unconditional_vae',8)) &
+                         (fingerprints.subject==app.selectbox[1].value)].iloc[0]
+        center=row[[f'z{i+1}' for i in range(8)]].to_numpy(float)
+        _,predicted=decode(model,norm,center,2,1,.64)
+        assert app.metric[0].value == f'{predicted[0,1]*1000:.0f} ms'
     print(f'Passed: {len(checked)} model/dimension combinations, timing order, latent response, context selector, no extra tabs.')
 
 

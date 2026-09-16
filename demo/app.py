@@ -63,15 +63,16 @@ def main():
         name = reference_name(family, int(dim))
         stats = latent_stats[name]
         available = fingerprints[fingerprints.run == name]
-        source = st.selectbox("Fingerprint", ["Training-population center"] + sorted(available.subject.unique()))
+        source = st.selectbox("Fingerprint preset", ["Training-population center"] + sorted(available.subject.unique()),
+            help="Each participant preset is the mean encoded latent vector of their context trials. Sliders adjust that preset.")
         if source == "Training-population center":
             base = np.asarray(stats["training_center"], dtype=float)
         else:
             row = available[available.subject == source].iloc[0]
             base = row[[f"z{i+1}" for i in range(dim)]].to_numpy(float)
-        st.caption("Offsets from the selected center, in training SD.")
+        st.caption("Zero = preset value; offsets are in SD.")
         columns = st.columns(2)
-        offsets = [columns[i % 2].slider(f"z{i+1}", -2.5, 2.5, 0.0, .1,
+        offsets = [columns[i % 2].slider(f"z{i+1} offset", -2.5, 2.5, 0.0, .1,
                     key=f"{name}_{source}_{i}") for i in range(dim)]
         latent = base + np.asarray(offsets) * np.asarray(stats["training_scale"])
         with st.expander("Task conditions", expanded=False):
@@ -93,6 +94,7 @@ def main():
     movement, initiation = map(float, timing[0])  # Decoder order: movement, initiation.
     st.title("Interception movement explorer")
     st.caption(f"Demo · under construction  |  {MODEL_LABELS[family]} · n={dim}  |  Move a latent slider to update the output")
+    st.caption("Actual latent z = [" + ", ".join(f"{v:.2f}" for v in latent) + "]")
     trajectory, prediction = st.columns([2.15, 1], gap="large")
     with trajectory:
         st.subheader("Generated trajectory")

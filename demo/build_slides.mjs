@@ -34,7 +34,7 @@ function slide(title,number) {
   const s=p.slides.add();s.background.fill='#FFFFFF';
   ['#1B6FEA','#17A2A2','#7A5CF0'].forEach((c,i)=>rect(s,i*width/3,0,width/3,7,c));
   text(s,title,82,32,1030,57,32,true);
-  text(s,`${number}/11`,1120,45,78,22,16,false,blue);
+  text(s,`${number}`,1120,45,78,22,16,false,blue);
   rect(s,82,100,1116,1,'#DFE5EE');
   return s;
 }
@@ -48,9 +48,9 @@ function chart(s,d,x,y,w,h,max) {
   const c=s.charts.add('bar',{
     position:{left:x,top:y+43,width:w,height:h-43},categories:d.categories,
     series:d.series.map(({marks,tests,...series})=>({...series,
-      dataLabelOverrides:marks.map((mark,idx)=>({idx,text:mark||' ',position:'outEnd',
+      dataLabelOverrides:series.values.map((value,idx)=>({idx,text:value.toFixed(3),position:'outEnd',
         showValue:false,showCategoryName:false,showSeriesName:false,
-        textStyle:{typeface:font,fontSize:19,fill:navy}}))})),
+        textStyle:{typeface:font,fontSize:w>600?19:16,fill:navy}}))})),
     barOptions:{direction:'column',grouping:'clustered',gapWidth:80},hasLegend:true,
     legend:{position:'bottom',textStyle:{typeface:font,fontSize:19,fill:navy}},
     xAxis:{textStyle:{typeface:font,fontSize:19,fill:navy},line:{fill:'#D6DEE8',width:1}},
@@ -65,10 +65,9 @@ text(s9,'Do generated paths match the held-out set of complete trajectories?',82
 text(s9,'Energy and MMD² compare between-set differences with within-set variability. Lower is better.',82,164,1116,30,21,false,'#4C5969');
 chart(s9,paths.charts[0],82,211,530,310,.16);
 chart(s9,paths.charts[1],668,211,530,310,.10);
-text(s9,'Vs spline, same n:  * BH + Holm < .05     † BH only     ns neither  |  28 participants; paired tests, 80 comparisons',82,530,1116,27,17,false,'#596678');
 callout(s9,'At n=8, VAE and CVAE outperform spline + PCA on both distances',
-  'The finding also survives balancing the x/y axes. VAE and CVAE are not significantly different; n=3 evidence is mixed.');
-s9.speakerNotes.textFrame.setText(paths.notes + '\nExplain: each generated path and each recorded query path is a 200-coordinate vector. This is a set-to-set comparison, not pairing trial 1 with trial 1. Each participant contributes one score per model after averaging training seeds. The bars give equal weight to each of the 28 participants. A significance marker indicates a difference, not automatically an improvement; lower bars are better. Three-dimensional CAE energy is significantly worse under BH only. Exact values and adjusted p-values are in the source course_slides.json and the trajectory_distribution_2026_09_13 CSVs. The selected plot uses raw RMS coordinates, so energy has units cm and MMD² is dimensionless. A smaller distance does not by itself prove absolute physiological realism.');
+  'Paired tests: BH- and Holm-adjusted p < .05. VAE vs CVAE is not significant; n=3 evidence is mixed.');
+s9.speakerNotes.textFrame.setText(paths.notes.split(' Bars show participant-balanced means')[0] + '\nEach generated path and each recorded query path is a 200-coordinate vector. This is a set-to-set comparison, not pairing trial 1 with trial 1. Each participant contributes one score per model after averaging training seeds. Bars give equal weight to each of the 28 participants; labels are means rounded to three decimals. Three-dimensional CAE energy is significantly worse under BH only. Exact values and adjusted p-values are in source course_slides.json and the trajectory_distribution_2026_09_13 CSVs. The selected plot uses raw RMS coordinates, so energy has units cm and MMD² is dimensionless. The full-path adjustment family contains 80 comparisons. At n=8, the VAE/CVAE improvement over spline also survives balancing the axes. A smaller distance does not by itself prove absolute physiological realism.');
 
 const s10=slide('Personal context improves generation',10);
 text(s10,'Replace only the fingerprint center; keep the decoder, noise and conditions fixed.',82,121,1116,60,26);
@@ -80,10 +79,9 @@ controlChart.title='Mean feature KS (lower is better)';
 controlChart.categories=controlChart.categories.slice(1);
 controlChart.series=controlChart.series.map(s=>({...s,values:s.values.slice(1),marks:s.marks.slice(1),tests:s.tests.slice(1)}));
 chart(s10,controlChart,466,211,732,310,.38);
-text(s10,'* Different from own center: BH-adjusted p < .05',466,530,732,27,18,false,'#596678');
 callout(s10,'The correct personal center improves the generated feature distributions',
-  'Both n=8 models improve on population and other-person centers. This supports useful personal information within the session.');
-s10.speakerNotes.textFrame.setText(personal.notes + '\nThe 27/28 count is specifically VAE n=8 mean feature KS, own center versus population center. It is not an identification accuracy and not a claim of individual significance for 27 people. Mean KS: CVAE8 own .219404, population .289636, wrong .317203; VAE8 own .215121, population .284126, wrong .314405. CVAE mean-KS control BH q: population 3.397464752e-7, wrong 2.086162567e-7. VAE both 2.980232239e-8. Each wrong-person result averages alternative test-person centers. CVAE adjustment family has 12 contrasts; VAE n=8 has 6. Sources: studies/review_corrected_evaluation/results/review_controls/fingerprint_paired.csv and production/audit_2026_09_08/uvae8_fingerprint_paired.csv.');
+  'Both n=8 models beat population and other-person centers (BH-adjusted p < .05): useful personal information within the session.');
+s10.speakerNotes.textFrame.setText(personal.notes.split(' Bars show participant-balanced means')[0] + '\nThe 27/28 count is specifically VAE n=8 mean feature KS, own center versus population center. It is not an identification accuracy and not a claim of individual significance for 27 people. Mean KS: CVAE8 own .219404, population .289636, wrong .317203; VAE8 own .215121, population .284126, wrong .314405. CVAE mean-KS control BH q: population 3.397464752e-7, wrong 2.086162567e-7. VAE both 2.980232239e-8. Each wrong-person result averages alternative test-person centers. CVAE adjustment family has 12 contrasts; VAE n=8 has 6. Sources: studies/review_corrected_evaluation/results/review_controls/fingerprint_paired.csv and production/audit_2026_09_08/uvae8_fingerprint_paired.csv.');
 
 const s11=slide('An interactive dashboard',11);
 text(s11,'Explore a latent representation and see its generated trajectory and predicted timing.',82,121,1116,60,26);
@@ -91,6 +89,17 @@ s11.images.add({blob:new Uint8Array(await fs.readFile(path.join(dir,'dashboard_p
   alt:'Actual demo dashboard: latent sliders at left, generated trajectory and timing at right',fit:'contain',
   position:{left:187,top:188,width:906,height:510}});
 s11.speakerNotes.textFrame.setText('Live demo, under construction. Double-click demo/START_DEMO.cmd to open Chrome. The original research dashboard is unchanged. Start with VAE n=8, move a latent offset, then optionally switch to n=3 or another model. Each move decodes one latent vector and separately predicts movement and initiation times. It does not sample a distribution or predict one particular future trial. The selected center is the training-population center or a saved context fingerprint. Offsets are measured in training-latent standard deviations; latent axes do not have established psychological meanings. VAE ignores task-condition controls; spline + PCA uses conditions for timing only. All live references are fold 0, seed 42 for neural models. Source: demo/app.py; src/confirmatory_dashboard.py decode; src/dashboard_models.py. Screenshot: the actual locally running demo.');
+
+const s12=p.slides.add();s12.background.fill='#0E1729';
+['#1B6FEA','#17A2A2','#7A5CF0'].forEach((c,i)=>rect(s12,i*width/3,0,width/3,7,c));
+for(const [value,y,h,size,color] of [
+  ['Thank you',225,95,68,'#FFFFFF'],
+  ['Questions?',335,72,44,'#3EB1EC'],
+  ['Seman Libbiss & Paz Flashner',490,52,29,'#A3B2C6']]) {
+  const t=text(s12,value,82,y,1116,h,size,true,color);
+  t.text.style={typeface:font,fontSize:size,bold:true,color,alignment:'center',autoFit:'none'};
+}
+s12.speakerNotes.textFrame.setText('Thank the audience and invite questions. Seman Libbiss and Paz Flashner.');
 
 const candidate=path.join(stage,'new_slides_candidate.pptx');
 await (await PresentationFile.exportPptx(p)).save(candidate);
@@ -100,9 +109,9 @@ await finalizePresentation({workspaceDir:dir,candidatePath:candidate,finalPath:f
   integrityValidatorPath:path.join(skill,'container_tools/inspect_presentation_package_integrity.py'),
   layoutValidatorPath:path.join(skill,'container_tools/inspect_presentation_layout_geometry.py'),
   layoutArgs:['--expected-slide-size-emu','12191695,6858000','--validate-heading-fit'],
-  explicitTotalSlideCount:3,requiredNativeChartOwnerSlides:[1,2],materializeLiteralChartWorkbooks:true,
+  explicitTotalSlideCount:4,requiredNativeChartOwnerSlides:[1,2],materializeLiteralChartWorkbooks:true,
   fontPolicy:{basis:'reference',families:[font],referencePath:path.join(root,'.tmp/demo_build/Paz_latest.pptx'),
     referenceSha256:createHash('sha256').update(await fs.readFile(path.join(root,'.tmp/demo_build/Paz_latest.pptx'))).digest('hex')},
-  verifyArtifactToolImport:true,receiptPath:path.join(stage,'new_slides.validation.json')});
+  verifyArtifactToolImport:true,receiptPath:path.join(stage,path.basename(final)+'.validation.json')});
 await fs.copyFile(final,path.join(stage,'new_slides.pptx'));
 console.log('New slides finalized: '+final);

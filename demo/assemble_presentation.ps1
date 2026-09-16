@@ -13,7 +13,12 @@ try {
     $powerPoint = New-Object -ComObject PowerPoint.Application
     $deck = $powerPoint.Presentations.Open($workingCopy, 0, 0, 0)
     for ($i=$deck.Slides.Count; $i -gt 8; $i--) { $deck.Slides.Item($i).Delete() }
-    [void]$deck.Slides.InsertFromFile($NewSlidesPath, 8, 1, 3)
+    [void]$deck.Slides.InsertFromFile($NewSlidesPath, 8, 1, 4)
+    # InsertFromFile can inherit the destination master's white background.
+    $closing = $deck.Slides.Item(12)
+    $closing.FollowMasterBackground = 0
+    $closing.Background.Fill.Solid()
+    $closing.Background.Fill.ForeColor.RGB = 14 + 23 * 256 + 41 * 65536
     # Only the title slide is edited within Paz's first eight, per the user's follow-up.
     foreach ($shape in $deck.Slides.Item(1).Shapes) {
         if ($shape.HasTextFrame -and $shape.TextFrame.HasText) {
