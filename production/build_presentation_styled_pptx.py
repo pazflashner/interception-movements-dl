@@ -206,9 +206,10 @@ class Builder:
         for i, line in enumerate(spec["affiliation"]):
             _text(slide, M, Inches(4.98 + 0.30 * i), INNER, Inches(0.34), line,
                   size=12, color=RGBColor(0x8A, 0x95, 0xA4), align=PP_ALIGN.CENTER)
-        _pill(slide, spec["badge"], 0, Inches(6.05),
-              RGBColor(0xC8, 0xD2, 0xDE), RGBColor(0x20, 0x2A, 0x3A),
-              size=12, centre=True)
+        if spec.get("badge"):
+            _pill(slide, spec["badge"], 0, Inches(6.05),
+                  RGBColor(0xC8, 0xD2, 0xDE), RGBColor(0x20, 0x2A, 0x3A),
+                  size=12, centre=True)
         return slide
 
     def header(self, slide, title, seconds=None, index=None, total=None, backup=False):
@@ -218,8 +219,7 @@ class Builder:
             _pill(slide, "BACKUP", W - M, Inches(0.38), MUTED,
                   RGBColor(0xEF, 0xF1, 0xF4), 11)
         else:
-            _pill(slide, f"{seconds} s  |  {index}/{total}", W - M, Inches(0.38),
-                  BLUE, PILL_BG, 11)
+            _pill(slide, f"{index}/{total}", W - M, Inches(0.38), BLUE, PILL_BG, 11)
         _rect(slide, M, Inches(1.04), INNER, Emu(9525), RULE)
 
     # -- blocks: each returns the y to continue from -------------------------

@@ -114,9 +114,10 @@ class Deck:
         self.c.setFont("Helvetica", 10.5)
         for i, line in enumerate(spec["affiliation"]):
             self.c.drawCentredString(W / 2, y - 34 * mm - i * 6 * mm, line)
-        badge = spec["badge"]
-        w = self.c.stringWidth(badge, "Helvetica-Bold", 9.5) + 8 * mm
-        self._pill(badge, (W - w) / 2, 32 * mm, (0.78, 0.84, 0.91), (0.129, 0.165, 0.231))
+        badge = spec.get("badge")
+        if badge:
+            w = self.c.stringWidth(badge, "Helvetica-Bold", 9.5) + 8 * mm
+            self._pill(badge, (W - w) / 2, 32 * mm, (0.78, 0.84, 0.91), (0.129, 0.165, 0.231))
 
     def header(self, title, seconds=None, index=None, total=None, backup=False):
         self._page()
@@ -128,7 +129,7 @@ class Deck:
             self._pill("BACKUP", M if False else W - M - 24 * mm, H - 23 * mm,
                        MUTED, (0.937, 0.945, 0.953))
         else:
-            label = f"{seconds} s   |   {index}/{total}"
+            label = f"{index}/{total}"
             w = self.c.stringWidth(label, "Helvetica-Bold", 9.5) + 8 * mm
             self._pill(label, W - M - w, H - 23 * mm, BLUE, PILL_BG)
         self.c.setStrokeColorRGB(*RULE)

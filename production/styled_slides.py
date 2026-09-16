@@ -26,13 +26,12 @@ TITLE = {
         "Research supervision: Prof. Jason Friedman   |   Course advisor: Moni Shahar",
         "Workshop on Deep Learning, Tel Aviv University",
     ],
-    "badge": "Planned talk: 10 minutes  (11 core slides + backup slides)",
 }
 
 SLIDES = [
     {
         "title": "The experimental task and the data structure",
-        "seconds": 50,
+        "seconds": 45,
         "columns": {
             "right": [
                 ("heading", "The experimental task"),
@@ -99,7 +98,7 @@ SLIDES = [
                  "The same 100 × 2 trajectory; CVAE and CAE add 5 task conditions"],
                 ["Where standardisation happens", "On the 18 spline coefficients, after fitting",
                  "On the 200 coordinates, with train-set constants"],
-                ["Encoder / compression", "Cubic B-spline fit, 9 coefficients per axis -> PCA to n latents",
+                ["Encoder / compression", "Cubic B-spline with 5 knots fit, 9 coefficients per axis -> PCA to n latents",
                  "Two fully connected 256-unit ReLU layers -> latent n"],
                 ["Decoder / reconstruction", "Inverse PCA -> multiply by the spline basis for the full path",
                  "Two 256-unit ReLU layers -> separate heads for 200 coordinates and 2 durations"],
@@ -111,9 +110,9 @@ SLIDES = [
             "kind": "info",
             "title": "Three neural variants, one architecture",
             "text": [
-                ("VAE - variational autoencoder, trained on the trajectory alone. "
-                 "CVAE - conditional variational autoencoder, which also receives the "
-                 "task conditions. CAE - conditional autoencoder, the same network "
+                ("VAE - Variational Autoencoder, trained on the trajectory alone. "
+                 "CVAE - Conditional Variational Autoencoder, which also receives the "
+                 "task conditions. CAE - Conditional Autoencoder, the same network "
                  "without the variational latent.", False),
                 ("All are compared at identical latent dimensions, n = 3 (extreme "
                  "compression) and n = 8 (extended capacity).", False),
@@ -122,7 +121,7 @@ SLIDES = [
     },
     {
         "title": "Task 1: Trajectory Reconstruction",
-        "seconds": 45,
+        "seconds": 55,
         "columns": {
             "ratio": 0.62,
             "left": [
@@ -152,7 +151,7 @@ SLIDES = [
     },
     {
         "title": "Task 2: generating a personal movement distribution",
-        "seconds": 60,
+        "seconds": 45,
         "columns": {
             "left": [
                 ("heading", "How do we generate movements from a fingerprint?"),
@@ -179,24 +178,16 @@ SLIDES = [
     },
     {
         "title": "How we score a generated distribution",
-        "seconds": 30,
+        "seconds": 40,
         "cards": [
             {"eyebrow": "WHAT WE MEASURE", "title": "11 kinematic features",
              "text": "Initiation and movement time, peak speed, time to peak, path "
                      "length, straight-line distance, curvature, maximum lateral "
                      "deviation and the three endpoint coordinates."},
-            {"eyebrow": "HOW WE COMPARE", "title": "Two views of the distribution",
-             "text": "One KS test per feature, averaged over the 11 into Mean KS. "
-                     "Energy discrepancy and MMD squared judge the joint structure of "
-                     "all 11 at once. Lower is better throughout."},
+            {"eyebrow": "HOW WE COMPARE", "title": "Marginal Feature Matching",
+             "text": "One KS test per feature, averaged over the 11 features into Mean KS. "
+                     "Lower is better."},
         ],
-        "callout": {
-            "kind": "info",
-            "title": "One fixed yardstick for every model",
-            "text": "Feature scales and the RBF bandwidth are fitted on training "
-                    "participants only and then frozen, so every model is measured "
-                    "against the same geometry rather than one tuned to its own output.",
-        },
     },
     {
         "title": "Generation results: VAE leads on movement distributions",
@@ -209,8 +200,7 @@ SLIDES = [
                 ("Although Spline + PCA won pointwise reconstruction, VAE and CVAE "
                  "achieve much better distribution matching (corrected p < 0.001 under "
                  "BH and Holm). VAE at n = 8 was set as the dashboard default.", False),
-                ("The two joint measures agree: at n = 8, VAE reaches energy 0.4110 and "
-                 "MMD squared 0.0639, against 0.7347 and 0.1153 for Spline + PCA.", False),
+                
             ],
         },
     },
